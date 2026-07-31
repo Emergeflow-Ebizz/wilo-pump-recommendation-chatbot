@@ -582,35 +582,12 @@
     if (!question.optional) {
       addBotMessage("I'm sorry, I can't recommend a pump based on the information provided so far.");
 
-      state.virtualOptions = [
-        {
-          label: "Explore other pumps",
-          icon: "🔍",
-          subtitle: "Try a different approach",
-          onSelect: function () {
-            addUserMessage("Explore other pumps");
-            addBotMessage("Let me help you explore other pump options. Would you like to try a different application?");
-            state.useCaseSlug = null;
-            state.dynamicAnswers = {};
-            state.clarificationAttempts = {};
-            state.currentQuestion = null;
-            jumpToStep("application");
-            render();
-          }
-        },
-        {
-          label: "No, that's okay",
-          icon: "👋",
-          subtitle: "End this conversation",
-          onSelect: function () {
-            addUserMessage("No, that's okay");
-            jumpToStep("thank-you");
-            render();
-          }
-        }
-      ];
-
-      state.awaitingKind = "options";
+      state.useCaseSlug = null;
+      state.dynamicAnswers = {};
+      state.clarificationAttempts = {};
+      state.clarificationUserInput = {};
+      state.currentQuestion = null;
+      jumpToStep("explore-more");
       render();
       return;
     }
