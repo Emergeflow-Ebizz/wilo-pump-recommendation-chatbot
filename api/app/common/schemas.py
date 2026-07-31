@@ -1,4 +1,16 @@
+import math
+
 from pydantic import BaseModel, Field, field_validator
+
+
+def _require_finite(v: float | None) -> float | None:
+    if v is not None and not math.isfinite(v):
+        raise ValueError("must be a finite number")
+    return v
+
+
+def _normalize_unit(v: str | None) -> str | None:
+    return v.strip().lower() if v is not None else v
 
 
 class Question(BaseModel):
@@ -25,6 +37,21 @@ class WaterTransferRequest(BaseModel):
     confirm_oversize: bool = False
     confirm_oversize_text: str | None = None
 
+    _validate_borewell_size_finite = field_validator("borewell_size")(_require_finite)
+    _validate_well_depth_finite = field_validator("well_depth")(_require_finite)
+    _validate_motor_power_hp_finite = field_validator("motor_power_hp")(_require_finite)
+    _validate_roof_tank_capacity_finite = field_validator("roof_tank_capacity")(_require_finite)
+    _normalize_borewell_unit = field_validator("borewell_unit")(_normalize_unit)
+    _normalize_well_depth_unit = field_validator("well_depth_unit")(_normalize_unit)
+    _normalize_delivery_type = field_validator("delivery_type")(_normalize_unit)
+
+    @field_validator("delivery_type")
+    @classmethod
+    def validate_delivery_type(cls, v):
+        if v not in ("ground_floor", "elevated_tank"):
+            raise ValueError('delivery_type must be "ground_floor" or "elevated_tank"')
+        return v
+
     @field_validator("num_floors")
     @classmethod
     def validate_num_floors(cls, v, info):
@@ -40,6 +67,25 @@ class TankFillingRequest(BaseModel):
     num_floors: int = Field(ge=0)
     motor_power_hp: float | None = Field(default=None, gt=0)
 
+    _validate_tank_capacity_finite = field_validator("tank_capacity")(_require_finite)
+    _validate_motor_power_hp_finite = field_validator("motor_power_hp")(_require_finite)
+    _normalize_inside_or_outside = field_validator("inside_or_outside")(_normalize_unit)
+    _normalize_horizontal_or_vertical = field_validator("horizontal_or_vertical")(_normalize_unit)
+
+    @field_validator("inside_or_outside")
+    @classmethod
+    def validate_inside_or_outside(cls, v):
+        if v not in ("inside", "outside"):
+            raise ValueError('inside_or_outside must be "inside" or "outside"')
+        return v
+
+    @field_validator("horizontal_or_vertical")
+    @classmethod
+    def validate_horizontal_or_vertical(cls, v):
+        if v is not None and v not in ("horizontal", "vertical"):
+            raise ValueError('horizontal_or_vertical must be "horizontal" or "vertical"')
+        return v
+
 
 class PressureBoostingRequest(BaseModel):
     num_floors: int = Field(ge=1)
@@ -50,6 +96,10 @@ class DewateringRequest(BaseModel):
     depth_of_pit: float = Field(gt=0)
     depth_of_pit_unit: str
     motor_power_hp: float | None = Field(default=None, gt=0)
+
+    _validate_depth_of_pit_finite = field_validator("depth_of_pit")(_require_finite)
+    _validate_motor_power_hp_finite = field_validator("motor_power_hp")(_require_finite)
+    _normalize_depth_of_pit_unit = field_validator("depth_of_pit_unit")(_normalize_unit)
 
 
 class PumpRecommendation(BaseModel):

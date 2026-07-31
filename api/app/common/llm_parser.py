@@ -590,6 +590,25 @@ def parse_answer(
         )
         data["value"] = None
 
+    # Defensive: for a question that does NOT require a whole number (e.g.
+    # well_depth, borewell_size, motor_power_hp, tank_capacity - all take any
+    # positive float), the model must never invent a whole-number requirement
+    # on its own initiative and ask for clarification anyway. If a complete,
+    # positive value (and unit, when one is required) was already extracted,
+    # override any spurious needs_clarification and accept the value as-is -
+    # this only applies to the current question, not a redirect (whichever
+    # question redirect_key names has its own requires_integer to honor).
+    if (
+        not data.get("redirect_key")
+        and not question.requires_integer
+        and data.get("value") is not None
+        and data["value"] > 0
+        and (not question.requires_stated_unit or data.get("unit") is not None)
+    ):
+        data["needs_clarification"] = False
+        data["clarification_question"] = None
+        data["skipped"] = False
+
     # Defensive normalization: redirect_key/skipped/needs_clarification are
     # meant to be mutually exclusive (see the system prompt), and a redirect
     # is only usable if it carries a concrete value. If the model ever

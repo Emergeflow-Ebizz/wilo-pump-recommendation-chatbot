@@ -75,16 +75,20 @@ def resolve_sheet_filename(borewell_size: float) -> list[str]:
 
 
 def calculate_head(depth_of_bore_ft: float, num_floors: int) -> float:
-    """Calculate head in feet, then convert to meters for catalog matching."""
+    """Calculate head in feet, then convert to meters for catalog matching.
+
+    Rounded to 2dp so unit round-trip float noise (e.g. 39.00000000000001)
+    never pushes a value into the next catalog head bucket.
+    """
     head_ft = (depth_of_bore_ft + (num_floors * FLOOR_HEIGHT_FT)) * HEAD_SAFETY_FACTOR
-    return ft_to_m(head_ft)
+    return round(ft_to_m(head_ft), 2)
 
 
 def _match_head(catalog: dict, target_head: float) -> float:
     """Match target head to a head in the catalog.
 
-    If target_head truncates to a whole number that exists, use it.
-    Otherwise round UP to the next higher listed head.
+    Always the smallest listed head that is >= target_head - never rounds
+    down, so the safety margin baked into target_head is never eroded.
     """
     heads = {
         point["head"]
@@ -92,11 +96,7 @@ def _match_head(catalog: dict, target_head: float) -> float:
         for point in model["performance_curves"]
     }
 
-    whole_target = int(target_head)
-    if whole_target in heads:
-        return whole_target
-
-    candidates = sorted(h for h in heads if h > whole_target)
+    candidates = sorted(h for h in heads if h >= target_head)
     if not candidates:
         raise NoModelAvailableError(NO_MODEL_AVAILABLE_MESSAGE)
     return candidates[0]

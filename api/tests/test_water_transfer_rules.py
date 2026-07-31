@@ -9,6 +9,7 @@ from app.use_cases.water_transfer.rules import (
     BorewellOversizeConfirmationRequired,
     BorewellTooSmallError,
     NoModelAvailableError,
+    _match_head,
     normalize_borewell_size,
     normalize_well_depth,
     resolve_sheet_filename,
@@ -108,3 +109,16 @@ def test_select_model_no_head_available_raises():
     catalog = {"A": _model(1.0, {5: 50})}
     with pytest.raises(NoModelAvailableError):
         select_model(catalog, 10, desired_hp=None)
+
+
+def test_match_head_never_returns_below_fractional_target():
+    """Regression: a fractional target must never match a lower whole-number
+    head just because int(target_head) happens to exist in the catalog -
+    that would erode the safety margin baked into target_head."""
+    catalog = {"A": _model(1.0, {31: 40, 32: 38})}
+    assert _match_head(catalog, 31.7) == 32
+
+
+def test_match_head_exact_whole_number_target_still_matches_exactly():
+    catalog = {"A": _model(1.0, {31: 40, 32: 38})}
+    assert _match_head(catalog, 31) == 31

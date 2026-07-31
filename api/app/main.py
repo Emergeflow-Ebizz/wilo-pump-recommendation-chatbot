@@ -1,4 +1,7 @@
+import logging
 import os
+import time
+from collections import defaultdict, deque
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -6,10 +9,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logger = logging.getLogger("wilo_pump_chatbot")
 
 from app.common import llm_explainer, llm_parser
 from app.common.schemas import (
@@ -70,6 +77,56 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# In-process per-client sliding-window rate limit. This deployment runs on
+# Vercel serverless, where each function instance is stateless and
+# short-lived - this dict does NOT share state across concurrent instances or
+# survive cold starts, so it cannot enforce a hard global limit. It still
+# blocks single-instance hammering (repeated requests hitting the same warm
+# instance) for free, with no new dependency or infra change. A true
+# cross-instance limit would need an edge/infra-level solution (Vercel's own
+# rate limiting, or a shared store like Redis) - tracked as a follow-up, not
+# implemented here.
+RATE_LIMIT_MAX_REQUESTS = 60
+RATE_LIMIT_WINDOW_SECONDS = 60
+_request_log: dict[str, deque] = defaultdict(deque)
+
+
+@app.middleware("http")
+async def rate_limit_and_log(request: Request, call_next):
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    window = _request_log[client_ip]
+    while window and now - window[0] > RATE_LIMIT_WINDOW_SECONDS:
+        window.popleft()
+
+    if len(window) >= RATE_LIMIT_MAX_REQUESTS:
+        logger.warning("rate limit exceeded: client=%s path=%s", client_ip, request.url.path)
+        return JSONResponse(status_code=429, content={"detail": "Too many requests, please slow down."})
+
+    window.append(now)
+
+    start = time.monotonic()
+    try:
+        response = await call_next(request)
+    except Exception:
+        logger.exception("unhandled error: client=%s method=%s path=%s", client_ip, request.method, request.url.path)
+        raise
+    duration_ms = (time.monotonic() - start) * 1000
+    logger.info(
+        "client=%s method=%s path=%s status=%s duration_ms=%.1f",
+        client_ip, request.method, request.url.path, response.status_code, duration_ms,
+    )
+    return response
+
+
+@app.exception_handler(ValueError)
+def handle_value_error(request: Request, exc: ValueError) -> JSONResponse:
+    """Any ValueError reaching this point is malformed input (e.g. an
+    unrecognized unit string) that slipped past Pydantic's own field
+    validation into rules.py - a client error, not a server bug, so it must
+    surface as a 422 rather than an unhandled 500."""
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
+
 USE_CASES = {
     uc.slug: uc
     for uc in (
@@ -113,6 +170,7 @@ def _explain(reason_message: str, facts: dict) -> str:
     try:
         return llm_explainer.explain_rejection(reason_message, facts)
     except Exception:
+        logger.warning("explain_rejection failed, falling back to raw message: %r", reason_message)
         return reason_message
 
 
@@ -245,7 +303,11 @@ def water_transfer_recommend(request: WaterTransferRequest) -> WaterTransferResp
             confirm_oversize = llm_parser.parse_yes_no(request.confirm_oversize_text)
             explicitly_declined = not confirm_oversize
         except llm_parser.AmbiguousConfirmationError:
-            confirm_oversize = False
+            # Text didn't resolve to a clear yes/no (guaranteed whenever no
+            # LLM key is configured) - fall back to whatever confirm_oversize
+            # was explicitly passed as, instead of forcing it to False and
+            # silently discarding an explicit confirm_oversize=true.
+            pass
 
     try:
         recommendation = uc.select_pump(answers)
@@ -400,23 +462,25 @@ SEND_PUMP_DATA_URL = "https://wiloscan.pumpsearch.com/PumpManagement_V4/api/chat
 
 
 @app.post("/send-pump-data")
-def send_pump_data(request: SendPumpDataRequest) -> dict:
+async def send_pump_data(request: SendPumpDataRequest) -> dict:
     """Proxy pump/user data to the external pump-search API, avoiding browser CORS."""
     api_key = os.environ.get("SEND_PUMP_DATA_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="SEND_PUMP_DATA_API_KEY is not configured")
 
     try:
-        response = httpx.post(
-            SEND_PUMP_DATA_URL,
-            json=request.model_dump(),
-            headers={
-                "Content-Type": "application/json",
-                "X-API-KEY": api_key,
-            },
-            timeout=30,
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                SEND_PUMP_DATA_URL,
+                json=request.model_dump(),
+                headers={
+                    "Content-Type": "application/json",
+                    "X-API-KEY": api_key,
+                },
+                timeout=30,
+            )
     except httpx.RequestError as e:
+        logger.warning("send-pump-data: failed to reach external API: %r", e)
         raise HTTPException(status_code=502, detail=f"Failed to reach external API: {e}") from e
 
     try:

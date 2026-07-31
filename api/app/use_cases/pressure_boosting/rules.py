@@ -40,23 +40,15 @@ def _heads_in_catalog(catalog: dict) -> set:
 def _match_head(catalog: dict, target_head: float, decimal_mode: bool) -> float | None:
     """Match target head to a head in the catalog, or None if none is high enough.
 
-    decimal_mode=True (PB only): round target_head to 1 decimal place; exact
-    match if present, else next-higher head value present.
-    decimal_mode=False (all other sheets): truncate target_head to a whole
-    number; exact match if present, else next-higher whole-number head
-    present. Never round down, never interpolate.
+    Always the smallest listed head that is >= target_head - never rounds
+    down, so the safety margin baked into target_head is never eroded.
+    decimal_mode is retained for API compatibility but no longer changes the
+    matching outcome: rounding target_head before comparing could only ever
+    move the threshold down, which this function must never do.
     """
     heads = _heads_in_catalog(catalog)
 
-    if decimal_mode:
-        target = round(target_head, 1)
-    else:
-        target = int(target_head)
-
-    if target in heads:
-        return target
-
-    candidates = sorted(h for h in heads if h > target)
+    candidates = sorted(h for h in heads if h >= target_head)
     if not candidates:
         return None
     return candidates[0]
@@ -69,13 +61,38 @@ def _flow_at_head(model: dict, head: float) -> float | None:
     return None
 
 
-def resolve_pressure_boosting_catalog(target_head: float) -> tuple[dict, str, float]:
-    """Walk SHEET_SEQUENCE in order; the first sheet with any head >= target wins.
+def _best_flow_at_head(catalog: dict, head: float) -> float:
+    flows = [_flow_at_head(model, head) for model in catalog.values()]
+    return max((f for f in flows if f is not None), default=0.0)
+
+
+def resolve_pressure_boosting_catalog(
+    target_head: float, required_flow_lpm: float | None = None
+) -> tuple[dict, str, float]:
+    """Walk SHEET_SEQUENCE in order to find a sheet meeting the requirement.
+
+    Pass 1 (only when required_flow_lpm is given): the first sheet whose
+    matched head ALSO has a model reaching required_flow_lpm at that head
+    wins - a sheet that can reach the head but not the flow is skipped in
+    favor of a later sheet that can do both, rather than locking in a
+    pump that can't actually deliver enough water.
+
+    Pass 2 (always, and the only pass when required_flow_lpm is None): the
+    first sheet with any head >= target wins regardless of flow - this is
+    the fallback used when no sheet anywhere satisfies both, so the caller
+    still gets the best available answer instead of a hard rejection.
 
     Returns (catalog, sheet_name, matched_head). Raises
     NoPressureBoostingMatchError if no sheet in the sequence has a head high
     enough.
     """
+    if required_flow_lpm is not None:
+        for sheet_name, sheet_file, decimal_mode in SHEET_SEQUENCE:
+            catalog = load_sheet(sheet_file)
+            matched_head = _match_head(catalog, target_head, decimal_mode)
+            if matched_head is not None and _best_flow_at_head(catalog, matched_head) >= required_flow_lpm:
+                return catalog, sheet_name, matched_head
+
     for sheet_name, sheet_file, decimal_mode in SHEET_SEQUENCE:
         catalog = load_sheet(sheet_file)
         matched_head = _match_head(catalog, target_head, decimal_mode)
@@ -138,7 +155,7 @@ class PressureBoostingUseCase(UseCase):
         target_head = calculate_head(num_floors)
         required_flow_lpm = calculate_required_flow(num_floors, bathrooms_per_floor)
 
-        catalog, sheet_name, matched_head = resolve_pressure_boosting_catalog(target_head)
+        catalog, sheet_name, matched_head = resolve_pressure_boosting_catalog(target_head, required_flow_lpm)
         matched_models = select_model(catalog, matched_head, required_flow_lpm)
 
         def build_recommendation(model_name: str, model: dict) -> PumpRecommendation:

@@ -28,7 +28,7 @@ def test_normalize_depth_of_pit_unknown_unit_raises():
 
 def test_calculate_head_applies_safety_factor():
     depth_ft = 10
-    expected = ft_to_m(depth_ft * HEAD_SAFETY_FACTOR)
+    expected = round(ft_to_m(depth_ft * HEAD_SAFETY_FACTOR), 2)
     assert calculate_head(depth_ft) == pytest.approx(expected)
 
 
@@ -54,6 +54,13 @@ def test_match_head_rounds_up():
 def test_match_head_none_when_nothing_high_enough():
     catalog = {"A": _model(1.0, {5: 50})}
     assert _match_head(catalog, 10) is None
+
+
+def test_match_head_never_returns_below_fractional_target():
+    """Regression: a fractional target must never match a lower whole-number
+    head just because int(target_head) happens to exist in the catalog."""
+    catalog = {"A": _model(1.0, {14: 40, 15: 38})}
+    assert _match_head(catalog, 14.6) == 15
 
 
 def test_select_model_exact_hp_match():

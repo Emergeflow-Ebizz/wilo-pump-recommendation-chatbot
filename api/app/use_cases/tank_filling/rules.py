@@ -29,24 +29,19 @@ def _heads_in_catalog(catalog: dict) -> set:
     }
 
 
-def _has_exact_head(catalog: dict, whole_target: int) -> bool:
-    return whole_target in _heads_in_catalog(catalog)
+def _has_exact_head(catalog: dict, target: float) -> bool:
+    return target in _heads_in_catalog(catalog)
 
 
 def _match_head(catalog: dict, target_head: float) -> float:
     """Match target head to a head in the catalog.
 
-    Truncate target_head to a whole number first. If that whole number
-    exists as a head value, use it exactly. Otherwise round UP to the next
-    higher head value present. Never round down, never interpolate.
+    Always the smallest listed head that is >= target_head - never rounds
+    down, so the safety margin baked into target_head is never eroded.
     """
     heads = _heads_in_catalog(catalog)
 
-    whole_target = int(target_head)
-    if whole_target in heads:
-        return whole_target
-
-    candidates = sorted(h for h in heads if h > whole_target)
+    candidates = sorted(h for h in heads if h >= target_head)
     if not candidates:
         raise NoTankFillingMatchError(NO_MODEL_AVAILABLE_MESSAGE)
     return candidates[0]
@@ -116,30 +111,28 @@ def resolve_monoblock_catalog(target_head: float, desired_hp: float | None) -> t
 
     Pass 1: walk MONOBLOCK_SEQUENCE in order (Khushal -> MPM -> Crown AXA ->
     Royal -> Emperor -> WHS-VN -> WHS-MN -> WHS-SN) looking for an EXACT
-    (truncated) head match in each sheet. The first sheet with an exact
-    match wins - regardless of desired_hp. If desired_hp isn't present at
-    that head in that sheet, select_model() falls back to lowest HP, then
-    highest flow, WITHIN THAT SAME SHEET (never a different sheet).
+    head match in each sheet. The first sheet with an exact match wins -
+    regardless of desired_hp. If desired_hp isn't present at that head in
+    that sheet, select_model() falls back to lowest HP, then highest flow,
+    WITHIN THAT SAME SHEET (never a different sheet).
 
     Pass 2: if no sheet in the whole sequence has that exact head, walk the
-    sequence again from the start. The first sheet that has ANY head higher
-    than the target wins - round up to the lowest such head within that
-    sheet. Same per-sheet HP fallback rule applies from there.
+    sequence again from the start. The first sheet that has ANY head >=
+    the target wins - round up to the lowest such head within that sheet,
+    never down. Same per-sheet HP fallback rule applies from there.
 
     Returns (catalog, sheet_name_for_trace). Raises NoTankFillingMatchError
     if no sheet anywhere has the exact head or anything higher.
     """
-    whole_target = int(target_head)
-
     for sheet_name, sheet_file, name_prefix in MONOBLOCK_SEQUENCE:
         catalog = _load_filtered_sheet(sheet_file, name_prefix)
-        if _has_exact_head(catalog, whole_target):
+        if _has_exact_head(catalog, target_head):
             return catalog, sheet_name
 
     for sheet_name, sheet_file, name_prefix in MONOBLOCK_SEQUENCE:
         catalog = _load_filtered_sheet(sheet_file, name_prefix)
         heads = _heads_in_catalog(catalog)
-        if any(h > whole_target for h in heads):
+        if any(h >= target_head for h in heads):
             return catalog, sheet_name
 
     raise NoTankFillingMatchError(NO_MODEL_AVAILABLE_MESSAGE)
@@ -161,7 +154,7 @@ class TankFillingUseCase(UseCase):
         horizontal_or_vertical = answers.get("horizontal_or_vertical")
         num_floors = answers["num_floors"]
         desired_hp = answers.get("motor_power_hp")
-        tank_capacity_litres = answers.get("tank_capacity") if num_floors != 0 else None
+        tank_capacity_litres = answers.get("tank_capacity")
 
         target_head = calculate_head(num_floors)
 

@@ -62,6 +62,29 @@ def test_parse_answer_llm_unavailable_falls_back_to_clarification():
     assert result.value is None
 
 
+def test_parse_answer_ignores_llm_hallucinated_whole_number_requirement():
+    """Regression: well_depth (and similarly borewell_size, motor_power_hp,
+    tank_capacity) does NOT require an integer. If the LLM extracts a
+    complete, valid fractional value+unit but still sets needs_clarification
+    on its own initiative (hallucinating a whole-number rule that was never
+    told to it - only question.requires_integer=True questions get that
+    instruction), the fractional value must still be accepted rather than
+    surfacing a spurious clarification asking the user to round."""
+    fake_response = _answer_json(
+        value=98.42519685,
+        unit="ft",
+        needs_clarification=True,
+        clarification_question="Did you mean 98 feet, or a different whole number?",
+    )
+    with patch("app.common.llm_parser.llm_client.complete", return_value=fake_response):
+        result = parse_answer(WELL_DEPTH, "feet", previous_value=98.42519685, previous_unit=None)
+
+    assert result.value == 98.42519685
+    assert result.unit == "ft"
+    assert result.needs_clarification is False
+    assert result.clarification_question is None
+
+
 def test_parse_answer_rule_based_exact_format():
     result = parse_answer(BOREWELL_SIZE, "5 inch")
 

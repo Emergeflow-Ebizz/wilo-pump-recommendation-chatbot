@@ -24,9 +24,13 @@ def normalize_depth_of_pit(value: float, unit: str) -> float:
 
 
 def calculate_head(depth_of_pit_ft: float) -> float:
-    """Calculate head in feet, then convert to meters for catalog matching."""
+    """Calculate head in feet, then convert to meters for catalog matching.
+
+    Rounded to 2dp so unit round-trip float noise (e.g. 39.00000000000001)
+    never pushes a value into the next catalog head bucket.
+    """
     head_ft = depth_of_pit_ft * HEAD_SAFETY_FACTOR
-    return ft_to_m(head_ft)
+    return round(ft_to_m(head_ft), 2)
 
 
 def _heads_in_catalog(catalog: dict) -> set:
@@ -40,17 +44,12 @@ def _heads_in_catalog(catalog: dict) -> set:
 def _match_head(catalog: dict, target_head: float) -> float | None:
     """Match target head to a head in the catalog, or None if none is high enough.
 
-    Truncates target_head to a whole number; exact match if present, else
-    next-higher whole-number head present. Never rounds down, never
-    interpolates.
+    Always the smallest listed head that is >= target_head - never rounds
+    down, so the safety margin baked into target_head is never eroded.
     """
     heads = _heads_in_catalog(catalog)
 
-    target = int(target_head)
-    if target in heads:
-        return target
-
-    candidates = sorted(h for h in heads if h > target)
+    candidates = sorted(h for h in heads if h >= target_head)
     if not candidates:
         return None
     return candidates[0]
