@@ -88,12 +88,12 @@
           icon: "🌀",
           subtitle: "Steady water pressure",
         },
-        // {
-        //   label: "Dewatering",
-        //   value: "dewatering",
-        //   icon: "🌊",
-        //   subtitle: "Remove unwanted water",
-        // },
+        {
+          label: "Dewatering",
+          value: "dewatering",
+          icon: "🌊",
+          subtitle: "Remove unwanted water",
+        },
         // {
         //   label: "Hot Water Circulation",
         //   value: "hot-water-circulation",
@@ -105,6 +105,7 @@
         if (value === "water-transfer") return "__dynamic__water_transfer";
         if (value === "tank-filling") return "__dynamic__tank_filling";
         if (value === "pressure-boosting") return "__dynamic__pressure_boosting";
+        if (value === "dewatering") return "__dynamic__dewatering";
         return "coming-soon";
       },
     },
@@ -229,11 +230,18 @@
           icon: "🌀",
           subtitle: "Steady water pressure",
         },
+        {
+          label: "Dewatering",
+          value: "dewatering",
+          icon: "🌊",
+          subtitle: "Remove unwanted water",
+        },
       ],
       next: function (value) {
         if (value === "water-transfer") return "__dynamic__water_transfer";
         if (value === "tank-filling") return "__dynamic__tank_filling";
         if (value === "pressure-boosting") return "__dynamic__pressure_boosting";
+        if (value === "dewatering") return "__dynamic__dewatering";
         return "final-goodbye";
       },
     },
