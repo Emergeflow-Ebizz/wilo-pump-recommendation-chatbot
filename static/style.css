@@ -340,6 +340,9 @@ body {
 .row.bot {
   align-self: flex-start;
 }
+.row.bot[style*="max-width"] {
+  max-width: 100% !important;
+}
 .row.user {
   align-self: flex-end;
   align-items: flex-end;
@@ -478,6 +481,7 @@ body {
 .specs {
   display: flex;
   gap: 12px;
+  width: 100%;
 }
 .pump-icon {
   width: 78px;
@@ -494,6 +498,8 @@ body {
 .specs-table {
   flex: 1;
   border-top: 1px solid var(--border);
+  width: 100%;
+  min-width: 0;
 }
 .spec-line {
   display: flex;
@@ -502,6 +508,7 @@ body {
   border-bottom: 1px solid var(--border);
   font-size: 13.5px;
   align-items: center;
+  width: 100%;
 }
 .spec-line span:first-child {
   color: var(--muted);

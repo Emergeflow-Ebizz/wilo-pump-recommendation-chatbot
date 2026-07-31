@@ -926,8 +926,8 @@
         return /head/i.test(key) && !/target/i.test(key);
       },
       label: "Head",
-      format: function (value) {
-        return appendUnitIfPlainNumber(value, "m");
+      format: function (value, unit) {
+        return appendUnitIfPlainNumber(value, unit || "m");
       },
     },
     {
@@ -967,8 +967,8 @@
         return /target/i.test(key) && /head/i.test(key);
       },
       label: "Target Head",
-      format: function (value) {
-        return appendUnitIfPlainNumber(value, "m");
+      format: function (value, unit) {
+        return appendUnitIfPlainNumber(value, unit || "m");
       },
     },
   ]);
@@ -986,9 +986,13 @@
       var rule = TECHNICAL_DETAIL_RULES.find(function (r) {
         return r.test(key);
       });
+      var unit = null;
+      if (rule && /head/i.test(rule.label)) {
+        unit = state.dynamicAnswers[unitFieldNameFor("head")] || null;
+      }
       rows.push({
         label: rule ? rule.label : prettifyKey(key),
-        value: rule ? rule.format(value) : formatDetailValue(value),
+        value: rule ? rule.format(value, unit) : formatDetailValue(value),
       });
     });
     return rows;
@@ -996,7 +1000,7 @@
 
   /** Renders the backend's real {flow, head} performance curve as an SVG line
    * chart, with the pump's actual matched duty point marked on the curve. */
-  function buildPerformanceCurveSVG(curvePoints, matchedHead, flowAtMatch) {
+  function buildPerformanceCurveSVG(curvePoints, matchedHead, flowAtMatch, headUnit) {
     var width = 300;
     var height = 190;
     var padding = 32;
@@ -1071,7 +1075,8 @@
       var dotY = yFor(matchedHead);
       markup += '<circle cx="' + dotX.toFixed(1) + '" cy="' + dotY.toFixed(1) + '" r="5" fill="#2f6f62" stroke="#fff" stroke-width="2" />';
 
-      var tipLines = [formatDetailValue(flowAtMatch), formatDetailValue(matchedHead) + " m"];
+      var unit = headUnit || "m";
+      var tipLines = [formatDetailValue(flowAtMatch), formatDetailValue(matchedHead) + " " + unit];
       var tipW = 56;
       var tipH = 34;
       var tipX = Math.min(Math.max(dotX - tipW / 2, padding), width - padding / 2 - tipW);
@@ -1167,9 +1172,10 @@
     var panel = document.createElement("div");
     panel.className = "pd-panel";
 
+    var headUnit = state.dynamicAnswers[unitFieldNameFor("head")] || null;
     var curveMarkup =
       details.performance_curve && details.performance_curve.length
-        ? buildPerformanceCurveSVG(details.performance_curve, details.matched_head, details.flow)
+        ? buildPerformanceCurveSVG(details.performance_curve, details.matched_head, details.flow, headUnit)
         : null;
 
     if (curveMarkup) {
@@ -1254,7 +1260,11 @@
       var k = document.createElement("span");
       k.textContent = rule.label;
       var v = document.createElement("span");
-      v.textContent = rule.format(details[matchedKey]);
+      var unit = null;
+      if (/head/i.test(rule.label)) {
+        unit = state.dynamicAnswers[unitFieldNameFor("head")] || null;
+      }
+      v.textContent = rule.format(details[matchedKey], unit);
       line.appendChild(k);
       line.appendChild(v);
       table.appendChild(line);
