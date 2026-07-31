@@ -3,8 +3,10 @@ import json
 from unittest.mock import patch
 
 from app.common.llm_client import LLMUnavailableError
-from app.common.llm_parser import AmbiguousConfirmationError, parse_answer, parse_yes_no
+from app.common.llm_parser import AmbiguousConfirmationError, parse_answer, parse_category, parse_yes_no
+from app.use_cases.water_transfer.questions import DELIVERY_TYPE_QUESTION
 from app.use_cases.water_transfer.questions import QUESTIONS as WATER_TRANSFER_QUESTIONS
+from app.use_cases.tank_filling.questions import HORIZONTAL_OR_VERTICAL_QUESTION, INSIDE_OR_OUTSIDE_QUESTION
 
 BOREWELL_SIZE = next(q for q in WATER_TRANSFER_QUESTIONS if q.key == "borewell_size")
 WELL_DEPTH = next(q for q in WATER_TRANSFER_QUESTIONS if q.key == "well_depth")
@@ -237,3 +239,55 @@ def test_parse_yes_no_ambiguous_raises():
             assert False, "expected AmbiguousConfirmationError"
         except AmbiguousConfirmationError:
             pass
+
+
+def test_parse_category_llm_unavailable_falls_back_to_literal_match():
+    with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
+        result = parse_category(DELIVERY_TYPE_QUESTION, "ground_floor", ["ground_floor", "elevated_tank"])
+
+    assert result.category == "ground_floor"
+    assert result.needs_clarification is False
+
+
+def test_parse_category_llm_unavailable_falls_back_to_keyword_ground_floor():
+    with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
+        result = parse_category(DELIVERY_TYPE_QUESTION, "ground floor", ["ground_floor", "elevated_tank"])
+
+    assert result.category == "ground_floor"
+    assert result.needs_clarification is False
+
+
+def test_parse_category_llm_unavailable_falls_back_to_keyword_case_insensitive():
+    with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
+        result = parse_category(DELIVERY_TYPE_QUESTION, "Ground Floor", ["ground_floor", "elevated_tank"])
+
+    assert result.category == "ground_floor"
+
+
+def test_parse_category_llm_unavailable_falls_back_to_keyword_elevated_tank():
+    with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
+        result = parse_category(DELIVERY_TYPE_QUESTION, "it goes to the roof tank", ["ground_floor", "elevated_tank"])
+
+    assert result.category == "elevated_tank"
+
+
+def test_parse_category_llm_unavailable_falls_back_to_keyword_inside_outside():
+    with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
+        result = parse_category(INSIDE_OR_OUTSIDE_QUESTION, "it's kept outdoors", ["inside", "outside"])
+
+    assert result.category == "outside"
+
+
+def test_parse_category_llm_unavailable_falls_back_to_keyword_horizontal_vertical():
+    with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
+        result = parse_category(HORIZONTAL_OR_VERTICAL_QUESTION, "vertical", ["horizontal", "vertical"])
+
+    assert result.category == "vertical"
+
+
+def test_parse_category_llm_unavailable_and_unmatched_needs_clarification():
+    with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
+        result = parse_category(DELIVERY_TYPE_QUESTION, "blah blah unrelated", ["ground_floor", "elevated_tank"])
+
+    assert result.needs_clarification is True
+    assert result.category is None

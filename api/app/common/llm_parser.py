@@ -688,6 +688,47 @@ PARSE_CATEGORY_SYSTEM_PROMPT = (
 )
 
 
+# Keyword synonyms for each known category value, used only when the LLM is
+# unavailable. Keyed by the exact category string rules.py expects; only
+# categories actually present in valid_categories are checked, so this can
+# safely list synonyms for categories from every use case in one place.
+_CATEGORY_KEYWORDS: dict[str, list[str]] = {
+    "ground_floor": ["ground floor", "ground-floor", "ground level", "groundfloor"],
+    "elevated_tank": ["elevated tank", "elevated roof", "roof tank", "terrace tank", "overhead tank", "elevated"],
+    "inside": ["inside", "indoor", "indoors"],
+    "outside": ["outside", "outdoor", "outdoors"],
+    "horizontal": ["horizontal"],
+    "vertical": ["vertical"],
+}
+
+
+def _try_rule_based_category_parse(user_text: str, valid_categories: list[str]) -> str | None:
+    """Attempt to match free text to exactly one of valid_categories via
+    exact match or keyword synonym, without any LLM call.
+
+    Returns the matched category, or None if there's no match or more than
+    one candidate matches (ambiguous - let the caller ask for clarification
+    rather than guessing).
+    """
+    cleaned = user_text.strip().lower()
+    if not cleaned:
+        return None
+
+    if cleaned in valid_categories:
+        return cleaned
+
+    matches = set()
+    for category in valid_categories:
+        for keyword in _CATEGORY_KEYWORDS.get(category, [category]):
+            if keyword in cleaned:
+                matches.add(category)
+                break
+
+    if len(matches) == 1:
+        return next(iter(matches))
+    return None
+
+
 def parse_category(
     question: Question,
     user_text: str,
@@ -718,6 +759,12 @@ def parse_category(
         logger.warning(
             "parse_category: LLM extraction failed for question=%r: %r", question.key, e,
         )
+        rule_based_category = _try_rule_based_category_parse(user_text, valid_categories)
+        if rule_based_category is not None:
+            return ParsedCategory(
+                category=rule_based_category,
+                confirmation_message=f"Got it: {rule_based_category}",
+            )
         if question.optional:
             return ParsedCategory(skipped=True)
         return ParsedCategory(
