@@ -8,17 +8,10 @@
   // file://, the browser sends Origin: null, so the backend's
   // CORSMiddleware needs allow_origins=["*"] (a specific origin won't match).
   //
-  // Locally, `uvicorn app.main:app` serves routes unprefixed
-  // (e.g. /water_transfer/recommend), so file:// / localhost keep hitting
-  // that directly. On Vercel, vercel.json routes "/api/(.*)" to
-  // api/index.py, which mounts the same app under /api - so any other host
-  // uses the relative "/api" prefix instead.
-  var API_BASE_URL =
-    window.location.protocol === "file:" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "localhost"
-      ? "http://127.0.0.1:8000"
-      : "/api";
+  // The FastAPI app is mounted at /api via index.py, so all requests need /api prefix.
+  // When running locally with uvicorn api.index:app, routes are at /api/...
+  // On Vercel, vercel.json routes "/api/(.*)" to api/index.py which also uses /api
+  var API_BASE_URL = "/api";
 
   function prettifyKey(key) {
     return key
