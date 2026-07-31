@@ -304,11 +304,12 @@ def tank_filling_recommend(request: TankFillingRequest) -> TankFillingResponse:
     uc = USE_CASES["tank_filling"]
     facts = {
         "inside_or_outside": request.inside_or_outside,
-        "horizontal_or_vertical": request.horizontal_or_vertical,
         "tank_capacity": request.tank_capacity,
         "num_floors": request.num_floors,
         "desired_motor_power_hp": request.motor_power_hp,
     }
+    if request.inside_or_outside == "inside":
+        facts["horizontal_or_vertical"] = request.horizontal_or_vertical
     target_head = tank_filling_calculate_head(request.num_floors)
 
     try:

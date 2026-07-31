@@ -693,12 +693,24 @@ PARSE_CATEGORY_SYSTEM_PROMPT = (
 # categories actually present in valid_categories are checked, so this can
 # safely list synonyms for categories from every use case in one place.
 _CATEGORY_KEYWORDS: dict[str, list[str]] = {
-    "ground_floor": ["ground floor", "ground-floor", "ground level", "groundfloor"],
-    "elevated_tank": ["elevated tank", "elevated roof", "roof tank", "terrace tank", "overhead tank", "elevated"],
+    "ground_floor": ["ground floor", "ground-floor", "ground level", "groundfloor", "ground"],
+    "elevated_tank": ["elevated tank", "elevated roof", "roof tank", "terrace tank", "overhead tank", "elevated", "roof", "terrace", "tank"],
     "inside": ["inside", "indoor", "indoors"],
     "outside": ["outside", "outdoor", "outdoors"],
     "horizontal": ["horizontal"],
     "vertical": ["vertical"],
+}
+
+# Plain, human-readable label for each category value, shown to the user
+# instead of the internal literal (e.g. "ground_floor") when clarification
+# is needed.
+_CATEGORY_LABELS: dict[str, str] = {
+    "ground_floor": "ground floor",
+    "elevated_tank": "elevated tank",
+    "inside": "inside",
+    "outside": "outside",
+    "horizontal": "horizontal",
+    "vertical": "vertical",
 }
 
 
@@ -763,16 +775,14 @@ def parse_category(
         if rule_based_category is not None:
             return ParsedCategory(
                 category=rule_based_category,
-                confirmation_message=f"Got it: {rule_based_category}",
+                confirmation_message=f"Got it: {_CATEGORY_LABELS.get(rule_based_category, rule_based_category)}",
             )
         if question.optional:
             return ParsedCategory(skipped=True)
+        labels = [_CATEGORY_LABELS.get(c, c) for c in valid_categories]
         return ParsedCategory(
             needs_clarification=True,
-            clarification_question=(
-                f"I couldn't understand that answer for \"{question.prompt}\". "
-                f"Please choose one of: {', '.join(valid_categories)}."
-            ),
+            clarification_question=f"Sorry, I didn't get that. Please choose: {' or '.join(labels)}.",
         )
 
     if not data.get("needs_clarification") and not data.get("skipped") and data.get("category"):
