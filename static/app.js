@@ -78,6 +78,18 @@
       },
       options: [
         {
+          label: "Pressure Boosting",
+          value: "pressure-boosting",
+          icon: "🌀",
+          subtitle: "Steady water pressure",
+        },
+        {
+          label: "Pressure Boosting (Alternative)",
+          value: "pressure-boosting-alt",
+          icon: "🌀",
+          subtitle: "Steady water pressure",
+        },
+        {
           label: "Water extraction from a borewell/well",
           value: "water-transfer",
           icon: "⛽",
@@ -89,12 +101,6 @@
           icon: "💧",
           subtitle: "Ground tank to upper tank",
         },
-        // {
-        //   label: "Pressure Boosting",
-        //   value: "pressure-boosting",
-        //   icon: "🌀",
-        //   subtitle: "Steady water pressure",
-        // },
         // {
         //   label: "Dewatering",
         //   value: "dewatering",
@@ -109,6 +115,7 @@
         // },
       ],
       next: function (value) {
+        if (value === "pressure-boosting" || value === "pressure-boosting-alt") return "__dynamic__pressure_boosting";
         if (value === "water-transfer") return "__dynamic__water_transfer";
         if (value === "tank-filling") return "__dynamic__tank_filling";
         return "coming-soon";
@@ -218,6 +225,18 @@
       },
       options: [
         {
+          label: "Pressure Boosting",
+          value: "pressure-boosting",
+          icon: "🌀",
+          subtitle: "Steady water pressure",
+        },
+        {
+          label: "Pressure Boosting (Alternative)",
+          value: "pressure-boosting-alt",
+          icon: "🌀",
+          subtitle: "Steady water pressure",
+        },
+        {
           label: "Water extraction from a borewell/well",
           value: "water-transfer",
           icon: "⛽",
@@ -231,6 +250,7 @@
         },
       ],
       next: function (value) {
+        if (value === "pressure-boosting" || value === "pressure-boosting-alt") return "__dynamic__pressure_boosting";
         if (value === "water-transfer") return "__dynamic__water_transfer";
         if (value === "tank-filling") return "__dynamic__tank_filling";
         return "final-goodbye";
@@ -374,6 +394,7 @@
     var applicationMap = {
       "water_transfer": "Water Extraction From Borewell",
       "tank_filling": "Transfer of water from a ground-level reservoir to an elevated tank",
+      "pressure_boosting": "Pressure Boosting",
     };
 
     // Determine if contact is email or phone
