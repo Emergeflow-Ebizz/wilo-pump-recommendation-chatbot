@@ -582,22 +582,12 @@
     if (!question.optional) {
       addBotMessage("I'm sorry, I can't recommend a pump based on the information provided so far.");
 
-      addBotMessage(
-        "🙏 Thank you for visiting Wilo!\n\n" +
-        "We appreciate your interest in our products and services. If you need any further assistance, our support team is ready to help. 😊"
-      );
-      addBotHtmlMessage(
-        "Contact Support:<br>" +
-        '📧 <a href="mailto:sales@wilo.com">sales@wilo.com</a><br>' +
-        '🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank" rel="noopener noreferrer">https://wilo.com/in/en/Dealers/</a>'
-      );
-
       state.useCaseSlug = null;
       state.dynamicAnswers = {};
       state.clarificationAttempts = {};
       state.clarificationUserInput = {};
       state.currentQuestion = null;
-      jumpToStep("explore-more");
+      jumpToStep("final-goodbye");
       render();
       return;
     }
