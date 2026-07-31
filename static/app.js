@@ -384,6 +384,7 @@
       "water_transfer": "Water Extraction From Borewell",
       "tank_filling": "Transfer of water from a ground-level reservoir to an elevated tank",
       "pressure_boosting": "Pressure Boosting",
+      "dewatering": "Dewatering",
     };
 
     // Determine if contact is email or phone
@@ -395,20 +396,25 @@
       email: isEmail ? contact : "",
     };
 
+    var headUnit = details.head_unit || "";
+    var headUnitLabel = headUnit === "ft" ? "feet" : "meter";
+    var powerUnit = details.power_unit || "HP";
+    var flowUnit = details.flow_unit || "lpm";
+
     var payload = {
       data: {
         userDetails: userDetails,
         searchDetails: {
           application: applicationMap[state.useCaseSlug] || "Unknown",
-          RequiredHead: details.target_head ? Math.round(details.target_head) + " meter" : "",
-          RequiredPower: state.dynamicAnswers.motor_power_hp ? state.dynamicAnswers.motor_power_hp + " HP" : "",
+          RequiredHead: details.target_head ? Math.round(details.target_head) + " " + headUnitLabel : "",
+          RequiredPower: state.dynamicAnswers.motor_power_hp ? state.dynamicAnswers.motor_power_hp + " " + powerUnit : "",
         },
         selectedPump: {
           pumpModel: pump.model_name || "",
           articleNo: pump.art_no ? String(pump.art_no) : "",
-          motorRating: details.hp ? details.hp + " Hp" : "",
-          selectedHead: details.matched_head ? Math.round(details.matched_head) + " meter" : "",
-          selectedFlow: details.flow ? details.flow + " lpm" : "",
+          motorRating: details.hp ? details.hp + " " + powerUnit : "",
+          selectedHead: details.matched_head ? Math.round(details.matched_head) + " " + headUnitLabel : "",
+          selectedFlow: details.flow ? details.flow + " " + flowUnit : "",
           features: "",
         },
       },
@@ -905,7 +911,7 @@
 
   function appendUnitIfPlainNumber(value, unit) {
     var text = formatDetailValue(value);
-    return /^-?[\d.,]+$/.test(String(value)) ? text + " " + unit : text;
+    return /^-?[\d.,]+$/.test(String(value)) && unit ? text + " " + unit : text;
   }
 
   // Backend "details" fields are internal/engineering data (spec sheet names,
@@ -917,8 +923,8 @@
         return /flow/i.test(key);
       },
       label: "Flow",
-      format: function (value) {
-        return appendUnitIfPlainNumber(value, "lpm");
+      format: function (value, unit) {
+        return appendUnitIfPlainNumber(value, unit || "lpm");
       },
     },
     {
@@ -927,7 +933,7 @@
       },
       label: "Head",
       format: function (value, unit) {
-        return appendUnitIfPlainNumber(value, unit || "m");
+        return appendUnitIfPlainNumber(value, unit);
       },
     },
     {
@@ -935,8 +941,8 @@
         return /^hp$/i.test(key) || /motor/i.test(key) || /power/i.test(key);
       },
       label: "Motor Power",
-      format: function (value) {
-        return appendUnitIfPlainNumber(value, "HP");
+      format: function (value, unit) {
+        return appendUnitIfPlainNumber(value, unit || "HP");
       },
     },
     {
@@ -951,8 +957,8 @@
         return /fill/i.test(key) && /time/i.test(key);
       },
       label: "Fill Time",
-      format: function (value) {
-        return appendUnitIfPlainNumber(value, "min");
+      format: function (value, unit) {
+        return appendUnitIfPlainNumber(value, unit);
       },
     },
   ];
@@ -987,8 +993,16 @@
         return r.test(key);
       });
       var unit = null;
-      if (rule && /head/i.test(rule.label)) {
-        unit = state.dynamicAnswers[unitFieldNameFor("head")] || null;
+      if (rule) {
+        if (/head/i.test(rule.label)) {
+          unit = details.head_unit || state.dynamicAnswers[unitFieldNameFor("head")] || null;
+        } else if (/flow/i.test(rule.label)) {
+          unit = details.flow_unit || "lpm";
+        } else if (/power|motor/i.test(rule.label)) {
+          unit = details.power_unit || "HP";
+        } else if (/fill.*time/i.test(rule.label)) {
+          unit = details.fill_time_unit || null;
+        }
       }
       rows.push({
         label: rule ? rule.label : prettifyKey(key),
@@ -1262,7 +1276,13 @@
       var v = document.createElement("span");
       var unit = null;
       if (/head/i.test(rule.label)) {
-        unit = state.dynamicAnswers[unitFieldNameFor("head")] || null;
+        unit = details.head_unit || state.dynamicAnswers[unitFieldNameFor("head")] || null;
+      } else if (/flow/i.test(rule.label)) {
+        unit = details.flow_unit || "lpm";
+      } else if (/power|motor/i.test(rule.label)) {
+        unit = details.power_unit || "HP";
+      } else if (/fill.*time/i.test(rule.label)) {
+        unit = details.fill_time_unit || null;
       }
       v.textContent = rule.format(details[matchedKey], unit);
       line.appendChild(k);
