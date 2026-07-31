@@ -298,12 +298,16 @@ PARSE_ANSWER_SYSTEM_PROMPT = (
     "and ask a short clarification_question. "
     "EDIT NOT SUPPORTED: If the user's reply clearly tries to change or correct an "
     "answer to a question that is NEITHER the current question NOR listed in the "
-    "other questions given to you (for example, an earlier categorical choice like "
-    "which delivery type, location, or orientation they picked, made before this "
-    "question came up) - this system has no way to go back and edit an answer once "
-    "the conversation has moved past it. Set edit_not_supported=true, value/unit "
-    "null, needs_clarification=false, skipped=false, redirect_key null. Do not use "
-    "REDIRECT for this case - REDIRECT is only for questions in the given list. "
+    "other questions given to you - most often one of the already-answered "
+    "questions listed separately below (if any) that are outside this use case's "
+    "own question list - this system has no way to go back and edit an answer "
+    "once the conversation has moved past it. Set edit_not_supported=true, "
+    "value/unit null, needs_clarification=false, skipped=false, redirect_key null. "
+    "Do not use REDIRECT for this case - REDIRECT is only for questions in the "
+    "given other-questions list. If the reply references something that matches "
+    "neither the current question, the other-questions list, NOR any "
+    "already-answered question given to you, it is not an edit attempt - treat it "
+    "as AMBIGUOUS instead. "
     "Never ask about anything other than THIS question's value/unit. "
     "redirect_key, skipped, needs_clarification, and edit_not_supported are mutually "
     "exclusive."
@@ -388,6 +392,7 @@ def parse_answer(
     previous_unit: str | None = None,
     other_questions: list[Question] = (),
     clarification_attempts: int = 0,
+    locked_in_answers: dict[str, str] | None = None,
 ) -> ParsedAnswer:
     """Parse a free-text answer into a numeric value + unit for `question`.
 
@@ -418,6 +423,14 @@ def parse_answer(
     actually correcting an earlier answer rather than answering the current
     question - the caller is responsible for updating its own answers state
     and re-asking the current question when redirect_key comes back set.
+
+    locked_in_answers, when given, is a {question_key: display_value} map of
+    categorical/earlier answers already collected for this conversation that
+    are OUTSIDE this use case's own question list (e.g. delivery_type,
+    inside_or_outside) - these can never be redirected to (see EDIT NOT
+    SUPPORTED in the system prompt), but the LLM still needs to know they
+    exist and what was chosen, or it has no way to recognize a reply like
+    "terrace" as referring back to one of them rather than being nonsense.
     """
     allowed_units = question.allowed_units
     allowed_units_line = (
@@ -457,6 +470,14 @@ def parse_answer(
         if other_questions
         else ""
     )
+    locked_in_answers_line = (
+        "Already-answered questions from earlier in this conversation that "
+        "are OUTSIDE this use case's question list and CANNOT be edited or "
+        "redirected to (see EDIT NOT SUPPORTED) - each is (question, chosen "
+        f"answer): {list(locked_in_answers.items())!r}\n"
+        if locked_in_answers
+        else ""
+    )
     domain_context_line = f"Domain context: {question.domain_context}\n" if question.domain_context else ""
     user_prompt = (
         f"Question asked: {question.prompt!r}\n"
@@ -468,6 +489,7 @@ def parse_answer(
         f"{domain_context_line}"
         f"{previous_guess}"
         f"{other_questions_line}"
+        f"{locked_in_answers_line}"
         f"User's reply: {user_text!r}\n"
         f"Track what's NEW: compare user's current reply against previous answer. "
         f"If they previously said a number but no unit, and now they say a unit keyword, "

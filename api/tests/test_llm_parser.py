@@ -85,6 +85,23 @@ def test_parse_answer_ignores_llm_hallucinated_whole_number_requirement():
     assert result.clarification_question is None
 
 
+def test_parse_answer_passes_locked_in_answers_into_prompt():
+    """locked_in_answers must reach the LLM prompt verbatim, or it has no
+    grounding to recognize a reply like "terrace" as referring back to an
+    earlier categorical choice (e.g. delivery_type) that isn't in
+    other_questions at all."""
+    fake_response = _answer_json(value=6.0, unit="inch")
+    with patch("app.common.llm_parser.llm_client.complete", return_value=fake_response) as mock_complete:
+        parse_answer(
+            BOREWELL_SIZE, "6 inch",
+            locked_in_answers={"delivery_type": "ground_floor"},
+        )
+
+    prompt_sent = mock_complete.call_args[0][1]
+    assert "delivery_type" in prompt_sent
+    assert "ground_floor" in prompt_sent
+
+
 def test_parse_answer_edit_not_supported_returns_message_no_value():
     """When the user tries to correct an earlier answer that's outside this
     question and not in other_questions (e.g. an already-locked-in

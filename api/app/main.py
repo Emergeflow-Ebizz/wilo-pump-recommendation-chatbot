@@ -185,6 +185,13 @@ class AnswerRequest(BaseModel):
     # falling back to 0 on every request would mean the give-up mechanic in
     # llm_parser.parse_answer could never fire in production.
     unit_ask_attempts: int | None = None
+    # Answers already collected so far this conversation (question_key ->
+    # value), including categorical ones (delivery_type, inside_or_outside,
+    # horizontal_or_vertical) that live outside this use case's own
+    # QUESTIONS list. Optional/additive - omitting it just means the LLM
+    # can't recognize a reply as referring back to one of those (see
+    # locked_in_answers in llm_parser.parse_answer).
+    answers_so_far: dict = {}
 
 
 @app.post("/{use_case_slug}/answer", response_model=ParsedAnswer)
@@ -199,6 +206,15 @@ def parse_free_text_answer(use_case_slug: str, request: AnswerRequest) -> Parsed
     clarification_attempts = (
         request.unit_ask_attempts if request.unit_ask_attempts is not None else request.clarification_attempts
     )
+    # Only categorical answers outside this use case's own question list are
+    # "locked in and uneditable" from parse_answer's point of view - answers
+    # to questions IN the list are already covered by other_questions/redirect.
+    category_questions = CATEGORY_QUESTIONS_BY_SLUG.get(use_case_slug, {})
+    locked_in_answers = {
+        key: value
+        for key, value in request.answers_so_far.items()
+        if key in category_questions and key != request.question_key
+    }
     return llm_parser.parse_answer(
         question,
         request.user_text,
@@ -206,6 +222,7 @@ def parse_free_text_answer(use_case_slug: str, request: AnswerRequest) -> Parsed
         previous_unit=request.previous_unit,
         other_questions=other_questions,
         clarification_attempts=clarification_attempts,
+        locked_in_answers=locked_in_answers or None,
     )
 
 
