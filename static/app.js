@@ -8,17 +8,10 @@
   // file://, the browser sends Origin: null, so the backend's
   // CORSMiddleware needs allow_origins=["*"] (a specific origin won't match).
   //
-  // Locally, `uvicorn app.main:app` serves routes unprefixed
-  // (e.g. /water_transfer/recommend), so file:// / localhost keep hitting
-  // that directly. On Vercel, vercel.json routes "/api/(.*)" to
-  // api/index.py, which mounts the same app under /api - so any other host
-  // uses the relative "/api" prefix instead.
-  var API_BASE_URL =
-    window.location.protocol === "file:" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "localhost"
-      ? "http://127.0.0.1:8000"
-      : "/api";
+  // The FastAPI app is mounted at /api via index.py, so all requests need /api prefix.
+  // When running locally with uvicorn api.index:app, routes are at /api/...
+  // On Vercel, vercel.json routes "/api/(.*)" to api/index.py which also uses /api
+  var API_BASE_URL = "/api";
 
   function prettifyKey(key) {
     return key
@@ -89,12 +82,12 @@
           icon: "💧",
           subtitle: "Ground tank to upper tank",
         },
-        // {
-        //   label: "Pressure Boosting",
-        //   value: "pressure-boosting",
-        //   icon: "🌀",
-        //   subtitle: "Steady water pressure",
-        // },
+        {
+          label: "Pressure Boosting",
+          value: "pressure-boosting",
+          icon: "🌀",
+          subtitle: "Steady water pressure",
+        },
         // {
         //   label: "Dewatering",
         //   value: "dewatering",
@@ -111,6 +104,7 @@
       next: function (value) {
         if (value === "water-transfer") return "__dynamic__water_transfer";
         if (value === "tank-filling") return "__dynamic__tank_filling";
+        if (value === "pressure-boosting") return "__dynamic__pressure_boosting";
         return "coming-soon";
       },
     },
@@ -229,10 +223,17 @@
           icon: "💧",
           subtitle: "Ground tank to upper tank",
         },
+        {
+          label: "Pressure Boosting",
+          value: "pressure-boosting",
+          icon: "🌀",
+          subtitle: "Steady water pressure",
+        },
       ],
       next: function (value) {
         if (value === "water-transfer") return "__dynamic__water_transfer";
         if (value === "tank-filling") return "__dynamic__tank_filling";
+        if (value === "pressure-boosting") return "__dynamic__pressure_boosting";
         return "final-goodbye";
       },
     },
@@ -374,6 +375,7 @@
     var applicationMap = {
       "water_transfer": "Water Extraction From Borewell",
       "tank_filling": "Transfer of water from a ground-level reservoir to an elevated tank",
+      "pressure_boosting": "Pressure Boosting",
     };
 
     // Determine if contact is email or phone
