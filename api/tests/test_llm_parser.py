@@ -85,6 +85,26 @@ def test_parse_answer_ignores_llm_hallucinated_whole_number_requirement():
     assert result.clarification_question is None
 
 
+def test_parse_answer_edit_not_supported_returns_message_no_value():
+    """When the user tries to correct an earlier answer that's outside this
+    question and not in other_questions (e.g. an already-locked-in
+    categorical choice like delivery_type), the LLM signals
+    edit_not_supported instead of forcing it into redirect/clarification -
+    the response must carry no value/unit and a plain explanatory message."""
+    extraction = _answer_json(edit_not_supported=True)
+    message = "Sorry, I can't edit that now - please refresh to choose again."
+    with patch(
+        "app.common.llm_parser.llm_client.complete",
+        side_effect=[extraction, message],
+    ):
+        result = parse_answer(BOREWELL_SIZE, "no terrace not to ground")
+
+    assert result.edit_not_supported is True
+    assert result.value is None
+    assert result.needs_clarification is False
+    assert result.clarification_question == message
+
+
 def test_parse_answer_rule_based_exact_format():
     result = parse_answer(BOREWELL_SIZE, "5 inch")
 

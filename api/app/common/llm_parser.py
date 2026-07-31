@@ -76,10 +76,12 @@ def _parse_answer_schema(
                     "required": ["key", "value", "unit"],
                 },
             },
+            "edit_not_supported": {"type": "boolean"},
         },
         "required": [
             "value", "unit", "needs_clarification", "clarification_question",
             "skipped", "redirect_key", "gave_up", "additional_answers",
+            "edit_not_supported",
         ],
     }
 
@@ -294,8 +296,17 @@ PARSE_ANSWER_SYSTEM_PROMPT = (
     "unit always wins over any previously recorded unit. "
     "AMBIGUOUS: If genuinely unclear, set needs_clarification=true, value/unit null, "
     "and ask a short clarification_question. "
+    "EDIT NOT SUPPORTED: If the user's reply clearly tries to change or correct an "
+    "answer to a question that is NEITHER the current question NOR listed in the "
+    "other questions given to you (for example, an earlier categorical choice like "
+    "which delivery type, location, or orientation they picked, made before this "
+    "question came up) - this system has no way to go back and edit an answer once "
+    "the conversation has moved past it. Set edit_not_supported=true, value/unit "
+    "null, needs_clarification=false, skipped=false, redirect_key null. Do not use "
+    "REDIRECT for this case - REDIRECT is only for questions in the given list. "
     "Never ask about anything other than THIS question's value/unit. "
-    "redirect_key, skipped, and needs_clarification are mutually exclusive."
+    "redirect_key, skipped, needs_clarification, and edit_not_supported are mutually "
+    "exclusive."
 )
 
 
@@ -472,6 +483,26 @@ def parse_answer(
         )
         data = json.loads(raw)
         data["unit"] = _normalize_unit(data.get("unit"), allowed_units)
+
+        if data.get("edit_not_supported"):
+            try:
+                message = llm_client.complete(
+                    "Generate ONE short, friendly chat-message sentence, 15 words "
+                    "maximum, no preamble. Tell the user this system cannot go back "
+                    "and edit an earlier answer once the conversation has moved on, "
+                    "and that they should restart/refresh to choose differently. "
+                    "Output only that one sentence, nothing else.",
+                    f"The user just tried to change an earlier answer while being "
+                    f"asked about {question.key.replace('_', ' ')}. Their reply: "
+                    f"{user_text!r}.",
+                    temperature=1.0,
+                ).strip()
+            except LLMUnavailableError:
+                message = (
+                    "Sorry, I can't go back and change an earlier answer - "
+                    "please refresh and start over to choose differently."
+                )
+            return ParsedAnswer(edit_not_supported=True, clarification_question=message)
     except (LLMUnavailableError, json.JSONDecodeError, ValueError) as e:
         logger.warning(
             "parse_answer: LLM extraction failed for question=%r, falling back "

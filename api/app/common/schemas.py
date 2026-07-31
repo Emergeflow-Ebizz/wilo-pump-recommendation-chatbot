@@ -135,6 +135,7 @@ class ParsedAnswer(BaseModel):
     gave_up: bool = False
     confirmation_message: str | None = None
     additional_answers: list[AdditionalAnswer] = []
+    edit_not_supported: bool = False
 
 
 class ParsedCategory(BaseModel):
