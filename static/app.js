@@ -78,18 +78,6 @@
       },
       options: [
         {
-          label: "Pressure Boosting",
-          value: "pressure-boosting",
-          icon: "🌀",
-          subtitle: "Steady water pressure",
-        },
-        {
-          label: "Pressure Boosting (Alternative)",
-          value: "pressure-boosting-alt",
-          icon: "🌀",
-          subtitle: "Steady water pressure",
-        },
-        {
           label: "Water extraction from a borewell/well",
           value: "water-transfer",
           icon: "⛽",
@@ -100,6 +88,12 @@
           value: "tank-filling",
           icon: "💧",
           subtitle: "Ground tank to upper tank",
+        },
+        {
+          label: "Pressure Boosting",
+          value: "pressure-boosting",
+          icon: "🌀",
+          subtitle: "Steady water pressure",
         },
         // {
         //   label: "Dewatering",
@@ -115,9 +109,9 @@
         // },
       ],
       next: function (value) {
-        if (value === "pressure-boosting" || value === "pressure-boosting-alt") return "__dynamic__pressure_boosting";
         if (value === "water-transfer") return "__dynamic__water_transfer";
         if (value === "tank-filling") return "__dynamic__tank_filling";
+        if (value === "pressure-boosting") return "__dynamic__pressure_boosting";
         return "coming-soon";
       },
     },
@@ -225,18 +219,6 @@
       },
       options: [
         {
-          label: "Pressure Boosting",
-          value: "pressure-boosting",
-          icon: "🌀",
-          subtitle: "Steady water pressure",
-        },
-        {
-          label: "Pressure Boosting (Alternative)",
-          value: "pressure-boosting-alt",
-          icon: "🌀",
-          subtitle: "Steady water pressure",
-        },
-        {
           label: "Water extraction from a borewell/well",
           value: "water-transfer",
           icon: "⛽",
@@ -248,11 +230,17 @@
           icon: "💧",
           subtitle: "Ground tank to upper tank",
         },
+        {
+          label: "Pressure Boosting",
+          value: "pressure-boosting",
+          icon: "🌀",
+          subtitle: "Steady water pressure",
+        },
       ],
       next: function (value) {
-        if (value === "pressure-boosting" || value === "pressure-boosting-alt") return "__dynamic__pressure_boosting";
         if (value === "water-transfer") return "__dynamic__water_transfer";
         if (value === "tank-filling") return "__dynamic__tank_filling";
+        if (value === "pressure-boosting") return "__dynamic__pressure_boosting";
         return "final-goodbye";
       },
     },
