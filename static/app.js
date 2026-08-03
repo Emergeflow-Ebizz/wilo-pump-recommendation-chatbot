@@ -622,7 +622,6 @@
     if (data.needs_clarification || data.edit_not_supported) {
       state.clarificationAttempts[question.key] = (state.clarificationAttempts[question.key] || 0) + 1;
       addBotMessage(data.clarification_question || "Could you clarify that?");
-      addBotMessage(question.prompt);
       state.awaitingKind = "dynamic-input";
       render();
       return;
@@ -697,7 +696,6 @@
         }
       }
       addBotMessage(data.clarification_question || "Could you clarify that?");
-      addBotMessage(question.prompt);
       state.awaitingKind = "dynamic-input";
       render();
       return;
