@@ -599,7 +599,10 @@
   /** Sends the user's free-text reply to the backend's fixed-choice parser
    * (ParsedCategory) for questions like inside_or_outside / horizontal_or_vertical. */
   async function submitCategoryAnswer(question, trimmed) {
-    var payload = { question_key: question.key, user_text: trimmed };
+    var payload = { question_key: question.key, user_text: trimmed, answers_so_far: state.dynamicAnswers };
+    if (state.clarificationAttempts[question.key]) {
+      payload.clarification_attempts = state.clarificationAttempts[question.key];
+    }
 
     var data;
     try {
@@ -616,8 +619,10 @@
       return;
     }
 
-    if (data.needs_clarification) {
+    if (data.needs_clarification || data.edit_not_supported) {
+      state.clarificationAttempts[question.key] = (state.clarificationAttempts[question.key] || 0) + 1;
       addBotMessage(data.clarification_question || "Could you clarify that?");
+      addBotMessage(question.prompt);
       state.awaitingKind = "dynamic-input";
       render();
       return;
@@ -628,13 +633,19 @@
       return;
     }
 
+    if (data.gave_up) {
+      handleUnansweredQuestion(question);
+      return;
+    }
+
+    delete state.clarificationAttempts[question.key];
     state.dynamicAnswers[question.key] = data.category;
     state.currentQuestion = null;
     await fetchNextQuestion(data.confirmation_message);
   }
 
   /** Sends the user's free-text reply to the backend's LLM parser (ParsedAnswer)
-   * for the current question; loops back on needs_clarification without
+   * for the current question; loops back on needs_clarification/edit_not_supported without
    * advancing (tracking retries via clarification_attempts), reroutes the value to
    * redirect_key if the user answered a different question, treats gave_up as
    * an unanswered/optional-skip, otherwise records the parsed value (+ unit)
@@ -645,7 +656,7 @@
     if (state.clarificationUserInput[question.key]) {
       userText = state.clarificationUserInput[question.key] + " " + trimmed;
     }
-    var payload = { question_key: question.key, user_text: userText };
+    var payload = { question_key: question.key, user_text: userText, answers_so_far: state.dynamicAnswers };
     var previousValue = state.dynamicAnswers[question.key];
     if (previousValue !== undefined && previousValue !== null) {
       payload.previous_value = previousValue;
@@ -673,7 +684,7 @@
 
     console.log("[submitFreeTextAnswer] response for", question.key, ":", data);
 
-    if (data.needs_clarification) {
+    if (data.needs_clarification || data.edit_not_supported) {
       state.clarificationAttempts[question.key] = (state.clarificationAttempts[question.key] || 0) + 1;
       // Store the user's original input so we can combine it with their clarification on next attempt
       if (!state.clarificationUserInput[question.key]) {
@@ -686,6 +697,7 @@
         }
       }
       addBotMessage(data.clarification_question || "Could you clarify that?");
+      addBotMessage(question.prompt);
       state.awaitingKind = "dynamic-input";
       render();
       return;
