@@ -817,6 +817,7 @@ def parse_category(
     question: Question,
     user_text: str,
     valid_categories: list[str],
+    clarification_attempts: int = 0,
 ) -> ParsedCategory:
     """Parse a free-text answer into one of `valid_categories` for `question`.
 
@@ -824,6 +825,12 @@ def parse_category(
     horizontal/vertical) so natural phrasing ("it's kept outdoors") maps to
     the exact category string rules.py expects, instead of requiring the
     user to type one of the literal option words.
+
+    clarification_attempts mirrors parse_answer's give-up mechanism: every
+    non-optional question caps at 2 failed clarification attempts, with no
+    exceptions - at attempt 2+, a reply that still doesn't resolve to a
+    category sets gave_up=true instead of asking again, so the user can
+    never get stuck in an infinite re-ask loop.
     """
     user_prompt = (
         f"Question asked: {question.prompt!r}\n"
@@ -851,6 +858,11 @@ def parse_category(
             )
         if question.optional:
             return ParsedCategory(skipped=True)
+        if clarification_attempts >= 2:
+            return ParsedCategory(
+                gave_up=True,
+                clarification_question="We cannot recommend you a model because of missing information.",
+            )
         labels = [_CATEGORY_LABELS.get(c, c) for c in valid_categories]
         return ParsedCategory(
             needs_clarification=True,
@@ -859,6 +871,26 @@ def parse_category(
 
     if not data.get("needs_clarification") and not data.get("skipped") and data.get("category"):
         data["confirmation_message"] = f"Got it: {data['category']}"
+    elif data.get("needs_clarification") and not question.optional and clarification_attempts >= 2:
+        # Give-up threshold: same rule as parse_answer - every non-optional
+        # question caps at 2 failed clarification attempts, no exceptions.
+        data["category"] = None
+        data["needs_clarification"] = False
+        data["gave_up"] = True
+        try:
+            data["clarification_question"] = llm_client.complete(
+                "Generate ONE short, friendly chat-message sentence, 15 words "
+                "maximum, no preamble. Never state a specific number or 'typical' "
+                "value from general knowledge - only use facts given in the user "
+                "message. Output only that one sentence, nothing else.",
+                f"The user couldn't provide the {question.key.replace('_', ' ')} information after "
+                f"being asked twice. Domain context: {question.domain_context or 'none provided.'} "
+                "Generate a brief, friendly message saying we cannot recommend a pump model without "
+                "this information.",
+                temperature=1.0,
+            ).strip()
+        except LLMUnavailableError:
+            data["clarification_question"] = "We cannot recommend you a model because of missing information."
 
     return ParsedCategory(**data)
 

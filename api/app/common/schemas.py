@@ -144,6 +144,7 @@ class ParsedCategory(BaseModel):
     clarification_question: str | None = None
     skipped: bool = False
     confirmation_message: str | None = None
+    gave_up: bool = False
 
 
 class PumpDataUserDetails(BaseModel):

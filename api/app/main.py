@@ -229,6 +229,7 @@ def parse_free_text_answer(use_case_slug: str, request: AnswerRequest) -> Parsed
 class CategoryAnswerRequest(BaseModel):
     question_key: str
     user_text: str
+    clarification_attempts: int = 0
 
 
 @app.post("/{use_case_slug}/answer_category", response_model=ParsedCategory)
@@ -241,7 +242,9 @@ def parse_category_answer(use_case_slug: str, request: CategoryAnswerRequest) ->
             detail=f"Unknown categorical question for {use_case_slug}: {request.question_key}",
         )
     question, valid_categories = entry
-    return llm_parser.parse_category(question, request.user_text, valid_categories)
+    return llm_parser.parse_category(
+        question, request.user_text, valid_categories, request.clarification_attempts
+    )
 
 
 class ExplainModelRequest(BaseModel):

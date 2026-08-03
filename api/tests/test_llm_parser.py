@@ -351,3 +351,49 @@ def test_parse_category_llm_unavailable_and_unmatched_needs_clarification():
 
     assert result.needs_clarification is True
     assert result.category is None
+
+
+def test_parse_category_gives_up_after_two_attempts():
+    """Regression: parse_category must cap at 2 failed clarification
+    attempts, same as parse_answer - an ambiguous reply (e.g. "basement",
+    or a rambling non-answer) must never loop forever asking the same
+    question. At attempt 2+, give up instead of asking again."""
+    extraction = json.dumps({"category": None, "needs_clarification": True})
+    message = "We cannot recommend you a model because of missing information."
+    with patch(
+        "app.common.llm_parser.llm_client.complete",
+        side_effect=[extraction, message],
+    ):
+        result = parse_category(
+            DELIVERY_TYPE_QUESTION, "the very begining one the start of my house the gate",
+            ["ground_floor", "elevated_tank"], clarification_attempts=2,
+        )
+
+    assert result.gave_up is True
+    assert result.needs_clarification is False
+    assert result.category is None
+
+
+def test_parse_category_llm_unavailable_gives_up_after_two_attempts():
+    with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
+        result = parse_category(
+            DELIVERY_TYPE_QUESTION, "basemenet", ["ground_floor", "elevated_tank"], clarification_attempts=2
+        )
+
+    assert result.gave_up is True
+    assert result.category is None
+
+
+def test_parse_category_does_not_give_up_before_second_attempt():
+    extraction = json.dumps({"category": None, "needs_clarification": True})
+    message = "Is that ground floor or an elevated tank?"
+    with patch(
+        "app.common.llm_parser.llm_client.complete",
+        side_effect=[extraction, message],
+    ):
+        result = parse_category(
+            DELIVERY_TYPE_QUESTION, "basemenet", ["ground_floor", "elevated_tank"], clarification_attempts=0
+        )
+
+    assert result.gave_up is False
+    assert result.needs_clarification is True
