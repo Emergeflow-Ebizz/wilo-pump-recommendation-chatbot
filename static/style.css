@@ -324,7 +324,7 @@ body {
 }
 
 .thread {
-  padding: 18px 14px 26px;
+  padding: 18px 8px 26px;
   display: flex;
   flex-direction: column;
   gap: 14px;
