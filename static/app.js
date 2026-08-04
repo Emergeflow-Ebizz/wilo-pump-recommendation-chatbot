@@ -61,6 +61,14 @@
   var pincodeValidate = function (value) {
     return /^\d{6}$/.test(value.trim()) ? null : "Please enter a valid 6-digit pincode.";
   };
+  var nameValidate = function (value) {
+    var trimmed = value.trim();
+    return trimmed.length >= 2 ? null : "Please enter a valid name (at least 2 characters).";
+  };
+  var emailValidate = function (value) {
+    var trimmed = value.trim();
+    return /^\S+@\S+\.\S+$/.test(trimmed) ? null : "Please enter a valid email address.";
+  };
 
   var FLOW = [
     {
@@ -130,6 +138,32 @@
       },
       placeholder: "Email or 10-digit phone number",
       validate: contactValidate,
+      next: function () {
+        var contact = state.answers["lead-contact"] || "";
+        var isEmail = /^\S+@\S+\.\S+$/.test(contact);
+        return isEmail ? "lead-name" : "lead-email";
+      },
+    },
+    {
+      id: "lead-email",
+      kind: "input",
+      bot: function () {
+        return "Please provide your Email address so we can send detailed pump specifications.";
+      },
+      placeholder: "Email address",
+      validate: emailValidate,
+      next: function () {
+        return "lead-name";
+      },
+    },
+    {
+      id: "lead-name",
+      kind: "input",
+      bot: function () {
+        return "What is your name?";
+      },
+      placeholder: "Your name",
+      validate: nameValidate,
       next: function () {
         return "lead-pincode";
       },
@@ -387,13 +421,13 @@
       "dewatering": "Dewatering",
     };
 
-    // Determine if contact is email or phone
+    // Determine if initial contact is email or phone
     var isEmail = /^\S+@\S+\.\S+$/.test(contact);
     var userDetails = {
       pincode: state.answers["lead-pincode"] || "",
-      name: "",
+      name: state.answers["lead-name"] || "",
       contactNumber: isEmail ? "" : contact,
-      email: isEmail ? contact : "",
+      email: isEmail ? contact : (state.answers["lead-email"] || ""),
     };
 
     var headUnit = details.head_unit || "";
@@ -467,6 +501,7 @@
     }
 
     var data;
+    
     try {
       var res = await fetch(API_BASE_URL + "/" + state.useCaseSlug + "/recommend", {
         method: "POST",
@@ -474,6 +509,7 @@
         body: JSON.stringify(payload),
       });
       data = await res.json();
+
     } catch (err) {
       console.error("[runRecommendation] fetch error:", err);
       showUnreachableBackendError(function () {
