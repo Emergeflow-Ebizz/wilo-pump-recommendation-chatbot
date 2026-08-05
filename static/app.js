@@ -952,7 +952,7 @@
     },
     {
       test: function (key) {
-        return /head/i.test(key) && !/target/i.test(key);
+        return /head/i.test(key) && !/target/i.test(key) && !/matched/i.test(key);
       },
       label: "Head",
       format: function (value, unit) {
@@ -989,13 +989,22 @@
   // The "View Pump Details" modal shows more than the summary card: every
   // detail field the backend returns except internal ones (spec sheet name,
   // the raw curve array, which gets its own chart instead of a text row).
-  var TECHNICAL_DETAIL_BLACKLIST = ["sheet", "performance_curve"];
+  var TECHNICAL_DETAIL_BLACKLIST = ["sheet", "performance_curve", "head_unit"];
   var TECHNICAL_DETAIL_RULES = DETAIL_DISPLAY_RULES.concat([
     {
       test: function (key) {
         return /target/i.test(key) && /head/i.test(key);
       },
       label: "Target Head",
+      format: function (value, unit) {
+        return appendUnitIfPlainNumber(value, unit || "m");
+      },
+    },
+    {
+      test: function (key) {
+        return /^matched.*head/i.test(key);
+      },
+      label: "Matched Head",
       format: function (value, unit) {
         return appendUnitIfPlainNumber(value, unit || "m");
       },
@@ -1195,18 +1204,23 @@
 
     var tabs = document.createElement("div");
     tabs.className = "pd-tabs";
+    var tabPanels = {};
     PD_TABS.forEach(function (label, i) {
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "pd-tab" + (i === 0 ? " active" : "");
       btn.textContent = label;
-      if (i !== 0) btn.disabled = true;
+      btn.disabled = false;
       tabs.appendChild(btn);
     });
     el.detailsBody.appendChild(tabs);
 
-    var panel = document.createElement("div");
-    panel.className = "pd-panel";
+    var panelContainer = document.createElement("div");
+    panelContainer.className = "pd-panel-container";
+
+    var overviewPanel = document.createElement("div");
+    overviewPanel.className = "pd-panel active";
+    overviewPanel.setAttribute("data-tab", "Overview");
 
     var headUnit = state.dynamicAnswers[unitFieldNameFor("head")] || null;
     var curveMarkup =
@@ -1218,23 +1232,22 @@
       var panelTitle = document.createElement("div");
       panelTitle.className = "pd-panel-title";
       panelTitle.textContent = "Performance Curve";
-      panel.appendChild(panelTitle);
+      overviewPanel.appendChild(panelTitle);
 
       var chartWrap = document.createElement("div");
       chartWrap.innerHTML = curveMarkup;
-      panel.appendChild(chartWrap);
+      overviewPanel.appendChild(chartWrap);
 
       var legend = document.createElement("div");
       legend.className = "chart-legend";
       legend.innerHTML = '<span class="dot"></span> Your matched operating point';
-      panel.appendChild(legend);
+      overviewPanel.appendChild(legend);
     }
-    el.detailsBody.appendChild(panel);
 
     var techTitle = document.createElement("div");
     techTitle.className = "tech-points-title";
     techTitle.textContent = "Technical Data";
-    el.detailsBody.appendChild(techTitle);
+    overviewPanel.appendChild(techTitle);
 
     var table = document.createElement("div");
     table.className = "specs-table";
@@ -1249,7 +1262,52 @@
       line.appendChild(v);
       table.appendChild(line);
     });
-    el.detailsBody.appendChild(table);
+    overviewPanel.appendChild(table);
+
+    panelContainer.appendChild(overviewPanel);
+
+    var featuresPanel = document.createElement("div");
+    featuresPanel.className = "pd-panel";
+    featuresPanel.setAttribute("data-tab", "Features");
+
+    if (recommendation.features && recommendation.features.length > 0) {
+      var featuresList = document.createElement("ol");
+      featuresList.className = "features-list";
+      recommendation.features.forEach(function (feature) {
+        var li = document.createElement("li");
+        li.className = "feature-item";
+        li.textContent = feature;
+        featuresList.appendChild(li);
+      });
+      featuresPanel.appendChild(featuresList);
+    } else {
+      var noFeatures = document.createElement("p");
+      noFeatures.className = "no-features";
+      noFeatures.textContent = "No features available for this pump.";
+      featuresPanel.appendChild(noFeatures);
+    }
+
+    panelContainer.appendChild(featuresPanel);
+    el.detailsBody.appendChild(panelContainer);
+
+    var tabButtons = tabs.querySelectorAll(".pd-tab");
+    tabButtons.forEach(function (btn, i) {
+      btn.addEventListener("click", function () {
+        tabButtons.forEach(function (b) {
+          b.classList.remove("active");
+        });
+        btn.classList.add("active");
+
+        var panels = panelContainer.querySelectorAll(".pd-panel");
+        panels.forEach(function (panel) {
+          panel.classList.remove("active");
+        });
+        var targetPanel = panelContainer.querySelector('[data-tab="' + PD_TABS[i] + '"]');
+        if (targetPanel) {
+          targetPanel.classList.add("active");
+        }
+      });
+    });
 
     el.detailsBackdrop.hidden = false;
   }
