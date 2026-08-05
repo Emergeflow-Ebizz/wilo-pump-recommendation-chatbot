@@ -106,6 +106,7 @@ class PumpRecommendation(BaseModel):
     model_name: str
     art_no: int | None = None
     details: dict = {}
+    features: list[str] | None = None
     tied_alternatives: list["PumpRecommendation"] = []
 
 

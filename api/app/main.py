@@ -77,6 +77,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# LLM_API_KEY missing degrades every user-facing conversation (stricter
+# regex-only answer parsing, canned rejection/explanation text instead of
+# natural language - see llm_client.py/llm_parser.py/llm_explainer.py
+# fallbacks) without ever raising an error, so it would otherwise go
+# unnoticed until a user complains. Logged at ERROR on every cold start, and
+# surfaced via /health below, so monitoring can catch a missing/expired key
+# immediately instead of only from degraded UX reports.
+if not os.environ.get("LLM_API_KEY"):
+    logger.error(
+        "LLM_API_KEY is not configured - chatbot is running in degraded mode "
+        "(rule-based answer parsing only, canned explanation/rejection text, "
+        "no free-form follow-up answers)."
+    )
+
 # In-process per-client sliding-window rate limit. This deployment runs on
 # Vercel serverless, where each function instance is stateless and
 # short-lived - this dict does NOT share state across concurrent instances or
@@ -126,6 +140,35 @@ def handle_value_error(request: Request, exc: ValueError) -> JSONResponse:
     validation into rules.py - a client error, not a server bug, so it must
     surface as a 422 rather than an unhandled 500."""
     return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+
+@app.get("/health")
+def health() -> JSONResponse:
+    """Reports which optional dependencies are configured, so monitoring can
+    detect a misconfigured deployment (e.g. a missing/expired LLM_API_KEY)
+    instead of it only surfacing as silently degraded chatbot responses.
+
+    Only "llm" affects `status`: it degrades every conversation (see the
+    startup check above). "database" missing is a valid, fully-supported
+    mode (catalog reads fall back to json_new/*.json - see
+    app/common/catalog_loader.py) so it's reported but never degrades status.
+    """
+    llm_configured = bool(os.environ.get("LLM_API_KEY"))
+    checks = {
+        "llm": {
+            "configured": llm_configured,
+            "provider": os.environ.get("LLM_PROVIDER", "anthropic"),
+        },
+        "database": {
+            "configured": bool(os.environ.get("DATABASE_URL")),
+            "catalog_source": "postgres" if os.environ.get("DATABASE_URL") else "json_new",
+        },
+        "send_pump_data": {
+            "configured": bool(os.environ.get("SEND_PUMP_DATA_API_KEY")),
+        },
+    }
+    status = "ok" if llm_configured else "degraded"
+    return JSONResponse(status_code=200, content={"status": status, "checks": checks})
 
 USE_CASES = {
     uc.slug: uc

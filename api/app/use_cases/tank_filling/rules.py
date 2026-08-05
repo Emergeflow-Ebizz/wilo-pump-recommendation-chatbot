@@ -1,4 +1,5 @@
 from app.common.catalog_loader import load_sheet
+from app.common.features import get_features
 from app.common.schemas import PumpRecommendation
 from app.common.units import ft_to_m
 from app.use_cases.base import UseCase

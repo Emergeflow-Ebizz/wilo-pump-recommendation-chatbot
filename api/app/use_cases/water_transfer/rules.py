@@ -1,4 +1,5 @@
 from app.common.catalog_loader import load_sheet
+from app.common.features import get_features
 from app.common.schemas import PumpRecommendation
 from app.common.units import ft_to_m, m_to_ft, mm_to_inch
 from app.use_cases.base import UseCase
@@ -188,7 +189,12 @@ class WaterTransferUseCase(UseCase):
             }
             if tank_capacity_litres is not None and flow_lpm:
                 details["fill_time_minutes"] = calculate_fill_time_minutes(tank_capacity_litres, flow_lpm)
-            return PumpRecommendation(model_name=model_name, art_no=model.get("art_no"), details=details)
+            return PumpRecommendation(
+                model_name=model_name,
+                art_no=model.get("art_no"),
+                details=details,
+                features=get_features(sheet_filenames[0]),
+            )
 
         primary_name, primary_model = matched_models[0]
         recommendation = build_recommendation(primary_name, primary_model)
