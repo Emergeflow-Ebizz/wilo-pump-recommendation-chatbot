@@ -131,7 +131,7 @@ def test_select_model_ties_all_returned():
 def test_resolve_catalog_low_head_matches_first_sheet_pb():
     # PB.json has heads as low as 2, well within a small building's head - it
     # should win before any other sheet in the sequence is even considered.
-    catalog, sheet_name, matched_head = resolve_pressure_boosting_catalog(2.0)
+    catalog, sheet_name, matched_head, sheet_file = resolve_pressure_boosting_catalog(2.0)
     assert sheet_name == "PB"
     assert matched_head >= 2.0
 
@@ -139,7 +139,7 @@ def test_resolve_catalog_low_head_matches_first_sheet_pb():
 def test_resolve_catalog_falls_through_to_later_sheet_when_earlier_sheets_cant_reach():
     # PB tops out well below the heads HWJ-FWJ/FMHIL/HMHIL reach; a very high
     # target head should skip PB/PW and land on a later sheet in the sequence.
-    catalog, sheet_name, matched_head = resolve_pressure_boosting_catalog(29.0)
+    catalog, sheet_name, matched_head, sheet_file = resolve_pressure_boosting_catalog(29.0)
     assert sheet_name in {"HWJ-FWJ", "FMHIL", "HMHIL"}
     assert matched_head >= 29.0
 
@@ -154,7 +154,7 @@ def test_resolve_catalog_skips_sheet_that_reaches_head_but_not_flow():
     can't meet a 45 LPM requirement - the resolver must skip past PB (and PW,
     also short) to HWJ-FWJ, which reaches both, rather than locking onto PB
     just because it was first in the sequence and satisfied head alone."""
-    catalog, sheet_name, matched_head = resolve_pressure_boosting_catalog(12, required_flow_lpm=45)
+    catalog, sheet_name, matched_head, sheet_file = resolve_pressure_boosting_catalog(12, required_flow_lpm=45)
     assert sheet_name == "HWJ-FWJ"
     assert matched_head == 12
 
@@ -164,7 +164,7 @@ def test_resolve_catalog_falls_back_to_head_only_when_no_sheet_meets_flow_anywhe
     matched head, fall back to the first sheet satisfying head alone (old
     behavior) rather than raising - the caller still gets the best available
     answer, with select_model then picking the highest flow within it."""
-    catalog, sheet_name, matched_head = resolve_pressure_boosting_catalog(12, required_flow_lpm=1_000_000)
+    catalog, sheet_name, matched_head, sheet_file = resolve_pressure_boosting_catalog(12, required_flow_lpm=1_000_000)
     assert sheet_name == "PB"
     assert matched_head == 12
 

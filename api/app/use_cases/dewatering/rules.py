@@ -1,4 +1,5 @@
 from app.common.catalog_loader import load_sheet
+from app.common.features import get_features
 from app.common.schemas import PumpRecommendation
 from app.common.units import ft_to_m, m_to_ft
 from app.use_cases.base import UseCase
@@ -62,17 +63,17 @@ def _flow_at_head(model: dict, head: float) -> float | None:
     return None
 
 
-def resolve_dewatering_catalog(target_head: float) -> tuple[dict, str, float]:
+def resolve_dewatering_catalog(target_head: float) -> tuple[dict, str, float, str]:
     """Walk SHEET_SEQUENCE in order; the first sheet with any head >= target wins.
 
-    Returns (catalog, sheet_name, matched_head). Raises NoDewateringMatchError
-    if no sheet in the sequence has a head high enough.
+    Returns (catalog, sheet_name, matched_head, sheet_file). Raises
+    NoDewateringMatchError if no sheet in the sequence has a head high enough.
     """
     for sheet_name, sheet_file in SHEET_SEQUENCE:
         catalog = load_sheet(sheet_file)
         matched_head = _match_head(catalog, target_head)
         if matched_head is not None:
-            return catalog, sheet_name, matched_head
+            return catalog, sheet_name, matched_head, sheet_file
 
     raise NoDewateringMatchError(NO_MODEL_AVAILABLE_MESSAGE)
 
@@ -121,7 +122,7 @@ class DewateringUseCase(UseCase):
         desired_hp = answers.get("motor_power_hp")
 
         target_head = calculate_head(depth_of_pit_ft)
-        catalog, sheet_name, matched_head = resolve_dewatering_catalog(target_head)
+        catalog, sheet_name, matched_head, sheet_file = resolve_dewatering_catalog(target_head)
         matched_models = select_model(catalog, matched_head, desired_hp)
 
         def build_recommendation(model_name: str, model: dict) -> PumpRecommendation:
@@ -134,7 +135,12 @@ class DewateringUseCase(UseCase):
                 "hp": model["motor_rating"]["hp"],
                 "phase": model.get("phase"),
             }
-            return PumpRecommendation(model_name=model_name, art_no=model.get("art_no"), details=details)
+            return PumpRecommendation(
+                model_name=model_name,
+                art_no=model.get("art_no"),
+                details=details,
+                features=get_features(sheet_file),
+            )
 
         primary_name, primary_model = matched_models[0]
         recommendation = build_recommendation(primary_name, primary_model)

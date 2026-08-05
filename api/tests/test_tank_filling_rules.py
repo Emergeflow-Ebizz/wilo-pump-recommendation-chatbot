@@ -89,7 +89,7 @@ def test_has_exact_head_true_and_false():
 def test_resolve_monoblock_catalog_exact_head_first_sheet_wins():
     # Kushal.json has heads as low as 3 - a small target head should resolve
     # there before any later sheet in MONOBLOCK_SEQUENCE is even considered.
-    catalog, sheet_name = resolve_monoblock_catalog(3, desired_hp=None)
+    catalog, sheet_name, sheet_file = resolve_monoblock_catalog(3, desired_hp=None)
     assert sheet_name == "Khushal"
 
 
@@ -97,7 +97,7 @@ def test_resolve_monoblock_catalog_never_matches_below_fractional_target():
     """End-to-end regression against the real catalog: a fractional target
     head must resolve to a sheet reaching at least that head, not one whose
     truncated-integer head happens to already exist."""
-    catalog, sheet_name = resolve_monoblock_catalog(14.6, desired_hp=None)
+    catalog, sheet_name, sheet_file = resolve_monoblock_catalog(14.6, desired_hp=None)
     heads = {p["head"] for m in catalog.values() for p in m["performance_curves"]}
     assert any(h >= 14.6 for h in heads)
 

@@ -1,4 +1,5 @@
 from app.common.catalog_loader import load_sheet
+from app.common.features import get_features
 from app.common.schemas import PumpRecommendation
 from app.common.units import ft_to_m
 from app.use_cases.base import UseCase
@@ -68,7 +69,7 @@ def _best_flow_at_head(catalog: dict, head: float) -> float:
 
 def resolve_pressure_boosting_catalog(
     target_head: float, required_flow_lpm: float | None = None
-) -> tuple[dict, str, float]:
+) -> tuple[dict, str, float, str]:
     """Walk SHEET_SEQUENCE in order to find a sheet meeting the requirement.
 
     Pass 1 (only when required_flow_lpm is given): the first sheet whose
@@ -82,7 +83,7 @@ def resolve_pressure_boosting_catalog(
     the fallback used when no sheet anywhere satisfies both, so the caller
     still gets the best available answer instead of a hard rejection.
 
-    Returns (catalog, sheet_name, matched_head). Raises
+    Returns (catalog, sheet_name, matched_head, sheet_file). Raises
     NoPressureBoostingMatchError if no sheet in the sequence has a head high
     enough.
     """
@@ -91,13 +92,13 @@ def resolve_pressure_boosting_catalog(
             catalog = load_sheet(sheet_file)
             matched_head = _match_head(catalog, target_head, decimal_mode)
             if matched_head is not None and _best_flow_at_head(catalog, matched_head) >= required_flow_lpm:
-                return catalog, sheet_name, matched_head
+                return catalog, sheet_name, matched_head, sheet_file
 
     for sheet_name, sheet_file, decimal_mode in SHEET_SEQUENCE:
         catalog = load_sheet(sheet_file)
         matched_head = _match_head(catalog, target_head, decimal_mode)
         if matched_head is not None:
-            return catalog, sheet_name, matched_head
+            return catalog, sheet_name, matched_head, sheet_file
 
     raise NoPressureBoostingMatchError(NO_MODEL_AVAILABLE_MESSAGE)
 
@@ -155,7 +156,7 @@ class PressureBoostingUseCase(UseCase):
         target_head = calculate_head(num_floors)
         required_flow_lpm = calculate_required_flow(num_floors, bathrooms_per_floor)
 
-        catalog, sheet_name, matched_head = resolve_pressure_boosting_catalog(target_head, required_flow_lpm)
+        catalog, sheet_name, matched_head, sheet_file = resolve_pressure_boosting_catalog(target_head, required_flow_lpm)
         matched_models = select_model(catalog, matched_head, required_flow_lpm)
 
         def build_recommendation(model_name: str, model: dict) -> PumpRecommendation:
@@ -169,7 +170,12 @@ class PressureBoostingUseCase(UseCase):
                 "hp": model["motor_rating"]["hp"],
                 "phase": model.get("phase"),
             }
-            return PumpRecommendation(model_name=model_name, art_no=model.get("art_no"), details=details)
+            return PumpRecommendation(
+                model_name=model_name,
+                art_no=model.get("art_no"),
+                details=details,
+                features=get_features(sheet_file),
+            )
 
         primary_name, primary_model = matched_models[0]
         recommendation = build_recommendation(primary_name, primary_model)

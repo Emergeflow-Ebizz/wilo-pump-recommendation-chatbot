@@ -107,7 +107,7 @@ def _load_filtered_sheet(sheet_file: str, name_prefix: str | None) -> dict:
     return catalog
 
 
-def resolve_monoblock_catalog(target_head: float, desired_hp: float | None) -> tuple[dict, str]:
+def resolve_monoblock_catalog(target_head: float, desired_hp: float | None) -> tuple[dict, str, str]:
     """Resolve which monoblock catalog to select from.
 
     Pass 1: walk MONOBLOCK_SEQUENCE in order (Khushal -> MPM -> Crown AXA ->
@@ -122,19 +122,20 @@ def resolve_monoblock_catalog(target_head: float, desired_hp: float | None) -> t
     the target wins - round up to the lowest such head within that sheet,
     never down. Same per-sheet HP fallback rule applies from there.
 
-    Returns (catalog, sheet_name_for_trace). Raises NoTankFillingMatchError
-    if no sheet anywhere has the exact head or anything higher.
+    Returns (catalog, sheet_name_for_trace, sheet_file). Raises
+    NoTankFillingMatchError if no sheet anywhere has the exact head or
+    anything higher.
     """
     for sheet_name, sheet_file, name_prefix in MONOBLOCK_SEQUENCE:
         catalog = _load_filtered_sheet(sheet_file, name_prefix)
         if _has_exact_head(catalog, target_head):
-            return catalog, sheet_name
+            return catalog, sheet_name, sheet_file
 
     for sheet_name, sheet_file, name_prefix in MONOBLOCK_SEQUENCE:
         catalog = _load_filtered_sheet(sheet_file, name_prefix)
         heads = _heads_in_catalog(catalog)
         if any(h >= target_head for h in heads):
-            return catalog, sheet_name
+            return catalog, sheet_name, sheet_file
 
     raise NoTankFillingMatchError(NO_MODEL_AVAILABLE_MESSAGE)
 
@@ -159,7 +160,7 @@ class TankFillingUseCase(UseCase):
 
         target_head = calculate_head(num_floors)
 
-        def build_recommendation(model_name: str, model: dict, matched_head: float, extra_details: dict) -> PumpRecommendation:
+        def build_recommendation(model_name: str, model: dict, matched_head: float, extra_details: dict, sheet_file: str) -> PumpRecommendation:
             flow_lpm = _flow_at_head(model, matched_head)
             details = {
                 "target_head": target_head,
@@ -171,30 +172,37 @@ class TankFillingUseCase(UseCase):
             }
             if tank_capacity_litres is not None and flow_lpm:
                 details["fill_time_minutes"] = calculate_fill_time_minutes(tank_capacity_litres, flow_lpm)
-            return PumpRecommendation(model_name=model_name, art_no=model.get("art_no"), details=details)
+            return PumpRecommendation(
+                model_name=model_name,
+                art_no=model.get("art_no"),
+                details=details,
+                features=get_features(sheet_file),
+            )
 
-        def build_from_catalog(catalog: dict, extra_details: dict) -> PumpRecommendation:
+        def build_from_catalog(catalog: dict, extra_details: dict, sheet_file: str) -> PumpRecommendation:
             matched_models = select_model(catalog, target_head, desired_hp)
             matched_head = _match_head(catalog, target_head)
             primary_name, primary_model = matched_models[0]
-            recommendation = build_recommendation(primary_name, primary_model, matched_head, extra_details)
+            recommendation = build_recommendation(primary_name, primary_model, matched_head, extra_details, sheet_file)
             recommendation.tied_alternatives = [
-                build_recommendation(name, model, matched_head, extra_details)
+                build_recommendation(name, model, matched_head, extra_details, sheet_file)
                 for name, model in matched_models[1:]
             ]
             return recommendation
 
         if inside_or_outside == "inside":
             if horizontal_or_vertical in ("horizontal", "vertical"):
+                sheet_file = OPENWELL_SHEETS[horizontal_or_vertical]
                 catalog = resolve_openwell_catalog(horizontal_or_vertical)
-                return build_from_catalog(catalog, {"orientation": horizontal_or_vertical})
+                return build_from_catalog(catalog, {"orientation": horizontal_or_vertical}, sheet_file)
 
             # No orientation answered: recommend both horizontal and vertical independently.
             results = []
             for candidate_orientation in ("horizontal", "vertical"):
+                sheet_file = OPENWELL_SHEETS[candidate_orientation]
                 catalog = resolve_openwell_catalog(candidate_orientation)
                 try:
-                    results.append(build_from_catalog(catalog, {"orientation": candidate_orientation}))
+                    results.append(build_from_catalog(catalog, {"orientation": candidate_orientation}, sheet_file))
                 except NoTankFillingMatchError:
                     continue
 
@@ -206,8 +214,8 @@ class TankFillingUseCase(UseCase):
             return primary
 
         elif inside_or_outside == "outside":
-            catalog, sheet_name = resolve_monoblock_catalog(target_head, desired_hp)
-            return build_from_catalog(catalog, {"sheet": sheet_name})
+            catalog, sheet_name, sheet_file = resolve_monoblock_catalog(target_head, desired_hp)
+            return build_from_catalog(catalog, {"sheet": sheet_name}, sheet_file)
 
         else:
             raise ValueError(f"Unknown value for inside_or_outside: {inside_or_outside}")

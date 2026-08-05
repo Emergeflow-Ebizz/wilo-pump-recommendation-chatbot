@@ -100,7 +100,7 @@ def test_select_model_ties_all_returned():
 
 
 def test_resolve_dewatering_catalog_walks_mnc_challenger_initial_waste_in_order():
-    catalog, sheet_name, matched_head = resolve_dewatering_catalog(1)
+    catalog, sheet_name, matched_head, sheet_file = resolve_dewatering_catalog(1)
     assert sheet_name == "MNC"
 
 
