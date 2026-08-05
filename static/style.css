@@ -147,8 +147,8 @@ body {
   border-bottom: 2px solid transparent;
 }
 .pd-tab.active {
-  color: #FFD700;
-  border-bottom-color: #FFD700;
+  color: var(--teal);
+  border-bottom-color: var(--teal);
 }
 .pd-tab[disabled] {
   color: #c3cbc9;
@@ -340,8 +340,9 @@ body {
 .row.bot {
   align-self: flex-start;
 }
-.row.bot[style*="max-width"] {
+.row.bot[style*="gap"] {
   max-width: 100% !important;
+  width: calc(100% - 20px);
 }
 .row.user {
   align-self: flex-end;
@@ -429,7 +430,7 @@ body {
 }
 
 .card {
-  align-self: stretch;
+  width: 100%;
   background: #fff;
   border-radius: 14px;
   overflow: hidden;

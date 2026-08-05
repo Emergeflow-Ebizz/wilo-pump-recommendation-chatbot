@@ -1170,11 +1170,10 @@
     return key ? details[key] : null;
   }
 
-  var PD_TABS = ["Overview", "Performance", "Dimensions", "Docs"];
+  var PD_TABS = ["Overview", "Features"];
 
   function openPumpDetailsModal(recommendation) {
     el.detailsBody.innerHTML = "";
-    el.detailsFav.setAttribute("aria-pressed", "false");
 
     var details = recommendation.details || {};
     var subtitle = findPumpSubtitle(details);
@@ -1523,7 +1522,6 @@
     el.detailsBackdrop = document.getElementById("details-backdrop");
     el.detailsBody = document.getElementById("details-body");
     el.detailsClose = document.getElementById("details-close");
-    el.detailsFav = document.getElementById("details-fav");
     el.menuBtn = document.getElementById("menu-btn");
     el.menuDropdown = document.getElementById("menu-dropdown");
     el.menuRestart = document.getElementById("menu-restart");
@@ -1538,10 +1536,6 @@
     });
 
     el.detailsClose.addEventListener("click", closePumpDetailsModal);
-    el.detailsFav.addEventListener("click", function () {
-      var pressed = el.detailsFav.getAttribute("aria-pressed") === "true";
-      el.detailsFav.setAttribute("aria-pressed", pressed ? "false" : "true");
-    });
     el.detailsBackdrop.addEventListener("click", function (event) {
       if (event.target === el.detailsBackdrop) closePumpDetailsModal();
     });
