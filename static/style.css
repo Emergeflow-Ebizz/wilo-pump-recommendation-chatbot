@@ -648,13 +648,13 @@ body {
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--text);
-  background: var(--teal-light);
-  border-left: 4px solid var(--teal);
+  background: #FFF8E7;
+  border-left: 4px solid #FFB400;
   text-indent: -16px;
 }
 .feature-item::before {
   content: "✓";
-  color: var(--teal);
+  color: #FFB400;
   font-weight: bold;
   margin-right: 12px;
 }
@@ -663,6 +663,6 @@ body {
   text-align: center;
   color: var(--muted);
   font-size: 13.5px;
-  background: var(--teal-light);
+  background: #FFF8E7;
   border-radius: 8px;
 }
