@@ -531,27 +531,87 @@
 
     if (data.status === "confirmation_required") {
       addBotMessage(data.message || "This selection looks oversized for your setup. Do you want to proceed anyway?");
-      state.awaitingKind = "options";
-      state.virtualOptions = [
-        {
-          label: "Yes, use it anyway",
-          icon: "✅",
-          subtitle: "Proceed with this setup",
-          onSelect: function () {
-            addUserMessage("Yes, use it anyway");
-            return runRecommendation(true);
-          },
-        },
-        {
-          label: "No, don't use it",
-          icon: "✋",
-          subtitle: "Decline the oversized pump",
-          onSelect: function () {
-            addUserMessage("No, don't use it");
-            return runRecommendation(false);
-          },
-        },
-      ];
+      state.awaitingKind = "text";
+      state.confirmationHandler = function (userInput) {
+        var normalized = userInput.toLowerCase().trim();
+        if (normalized === "yes" || normalized === "y") {
+          addUserMessage(userInput);
+          return runRecommendation(true);
+        } else if (normalized === "no" || normalized === "n") {
+          addUserMessage(userInput);
+          addBotMessage("I understand. Let me show you pumps from other applications that might work better for your setup.");
+
+          state.confirmationHandler = null;
+          state.awaitingKind = "options";
+          state.virtualOptions = [
+            {
+              label: "Water Transfer",
+              icon: "💧",
+              subtitle: "Extract water from borewell to tank",
+              onSelect: function () {
+                addUserMessage("Water Transfer");
+                state.virtualOptions = null;
+                state.useCaseSlug = "water_transfer";
+                state.dynamicAnswers = {};
+                state.clarificationAttempts = {};
+                state.clarificationUserInput = {};
+                state.currentQuestion = null;
+                fetchNextQuestion().then(render);
+              },
+            },
+            {
+              label: "Tank Filling",
+              icon: "🏢",
+              subtitle: "Fill elevated tank from ground level",
+              onSelect: function () {
+                addUserMessage("Tank Filling");
+                state.virtualOptions = null;
+                state.useCaseSlug = "tank_filling";
+                state.dynamicAnswers = {};
+                state.clarificationAttempts = {};
+                state.clarificationUserInput = {};
+                state.currentQuestion = null;
+                fetchNextQuestion().then(render);
+              },
+            },
+            {
+              label: "Pressure Boosting",
+              icon: "⚡",
+              subtitle: "Increase water pressure",
+              onSelect: function () {
+                addUserMessage("Pressure Boosting");
+                state.virtualOptions = null;
+                state.useCaseSlug = "pressure_boosting";
+                state.dynamicAnswers = {};
+                state.clarificationAttempts = {};
+                state.clarificationUserInput = {};
+                state.currentQuestion = null;
+                fetchNextQuestion().then(render);
+              },
+            },
+            {
+              label: "Dewatering",
+              icon: "🔄",
+              subtitle: "Remove water from flooded areas",
+              onSelect: function () {
+                addUserMessage("Dewatering");
+                state.virtualOptions = null;
+                state.useCaseSlug = "dewatering";
+                state.dynamicAnswers = {};
+                state.clarificationAttempts = {};
+                state.clarificationUserInput = {};
+                state.currentQuestion = null;
+                fetchNextQuestion().then(render);
+              },
+            },
+          ];
+          render();
+          return Promise.resolve();
+        } else {
+          addBotMessage("Please type 'yes' or 'no' to proceed.");
+          return Promise.resolve();
+        }
+      };
       render();
       return;
     }
@@ -952,7 +1012,7 @@
     },
     {
       test: function (key) {
-        return /head/i.test(key) && !/target/i.test(key) && !/matched/i.test(key);
+        return /matched_head/i.test(key);
       },
       label: "Head",
       format: function (value, unit) {
@@ -1236,7 +1296,7 @@
 
       var chartWrap = document.createElement("div");
       chartWrap.innerHTML = curveMarkup;
-      overviewPanel.appendChild(chartWrap);
+      overviewPanel.appendChild(chartWrap); 
 
       var legend = document.createElement("div");
       legend.className = "chart-legend";
@@ -1542,8 +1602,8 @@
     }
 
     var isInputStep =
-      (state.awaitingKind === "input" || state.awaitingKind === "dynamic-input") &&
-      !state.virtualOptions;
+      ((state.awaitingKind === "input" || state.awaitingKind === "dynamic-input" || state.awaitingKind === "text") &&
+      !state.virtualOptions) || !!state.confirmationHandler;
     el.composerInput.disabled = !isInputStep;
     el.composerInput.placeholder = composerPlaceholder();
     if (!isInputStep) el.composerInput.value = "";
@@ -1565,7 +1625,9 @@
     var value = el.composerInput.value;
     if (!value.trim()) return;
     el.composerInput.value = "";
-    if (state.awaitingKind === "dynamic-input") {
+    if (state.confirmationHandler) {
+      state.confirmationHandler(value);
+    } else if (state.awaitingKind === "dynamic-input") {
       submitDynamicAnswer(value);
     } else {
       submitText(value);
