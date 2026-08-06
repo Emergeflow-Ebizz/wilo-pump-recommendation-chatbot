@@ -561,9 +561,9 @@ body {
   box-shadow: 0 4px 12px rgba(63, 143, 127, 0.3);
 }
 .select-btn.selected {
-  background: #4CAF50;
-  color: #fff;
-  border-color: #45a049;
+  background: #FFB400;
+  color: #2c2c2c;
+  border-color: #FF9500;
   font-weight: 800;
 }
 .section-tag {
