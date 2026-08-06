@@ -1,12 +1,15 @@
 :root {
-  --bg: #eef1f2;
+  --bg: #f5f5f5;
   --panel: #ffffff;
-  --teal: #3f8f7f;
-  --teal-dark: #2f6f62;
-  --teal-light: #e3f3ef;
-  --text: #1c2a28;
-  --muted: #6b7a78;
-  --border: #e4e7e6;
+  --teal: #009C82;
+  --teal-dark: #007A66;
+  --teal-light: #b3e5dc;
+  --text: #505050;
+  --muted: #787878;
+  --border: #d4d4d4;
+  --yellow: #FFB400;
+  --grey-cool: #787878;
+  --grey-gun: #505050;
 }
 * {
   box-sizing: border-box;
