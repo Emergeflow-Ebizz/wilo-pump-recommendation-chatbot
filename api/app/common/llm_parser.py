@@ -143,33 +143,29 @@ def _generate_clarification_question(
         f"{user_reply_line}"
         f"They've been asked {attempts + 1} time(s) about this question. "
         f"If the user's reply shows they don't know HOW to find or determine this "
-        f"value (e.g. 'idk how would I know', 'not sure where to check') rather than "
-        f"just being noncommittal, fold in ONE short practical pointer. Otherwise "
-        f"just ask again in different words. "
+        f"value, rather than just being noncommittal, fold in ONE short practical "
+        f"pointer. Otherwise just ask again in different words. "
         f"If the reason is missing_unit and the user's reply stated a unit that "
-        f"is NOT one of the valid units listed above (e.g. they said cm/km for a "
-        f"ft/m question) - don't ask a vague 'did you mean X or Y' question and "
-        f"don't do the conversion yourself. State plainly which units this "
-        f"question accepts and ask them to restate the number in one of those, "
-        f"e.g. 'This only accepts ft or m - what's that in one of those?' "
-        f"ONE sentence, 15 words max, no preamble. "
-        f"Example of the right length/style: 'Check your borewell papers for the "
-        f"diameter - is it in inches or mm?' Output only that one sentence, nothing else."
+        f"is NOT one of the valid units listed above - don't ask a vague 'did you "
+        f"mean X or Y' question and don't do the conversion yourself. State plainly "
+        f"which units this question accepts and ask them to restate the number in "
+        f"one of those. "
+        f"ONE sentence, 15 words max, no preamble. Output only that one sentence, "
+        f"nothing else."
     )
 
     try:
         response = llm_client.complete(
             "Generate ONE short chat-message sentence, 15 words maximum, for a "
             "pump-selection follow-up question. Hard rules: (1) exactly one "
-            "sentence, no more than 15 words, no preamble or empathy opener like "
-            "'I understand' or 'no problem' - go straight to the point. (2) Never "
-            "state any specific number, size, range, or 'typical'/'most common' "
-            "value for what the user is being asked, even a plausible-sounding one "
-            "from general knowledge, unless that exact number appears in the "
-            "domain context given in the user message - a guessed number risks the "
-            "user parroting it back instead of their real answer. (3) At most one "
-            "practical pointer (e.g. 'check your paperwork') folded into that same "
-            "single sentence - never a list of options.",
+            "sentence, no more than 15 words, no preamble or empathy opener - go "
+            "straight to the point. (2) Never state any specific number, size, "
+            "range, or 'typical'/'most common' value for what the user is being "
+            "asked, even a plausible-sounding one from general knowledge, unless "
+            "that exact number appears in the domain context given in the user "
+            "message - a guessed number risks the user parroting it back instead "
+            "of their real answer. (3) At most one practical pointer folded into "
+            "that same single sentence - never a list of options.",
             prompt,
             temperature=1.0,  # High temp for natural variety
         ).strip()
