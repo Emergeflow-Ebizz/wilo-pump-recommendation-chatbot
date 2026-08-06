@@ -39,11 +39,10 @@ def _parse_answer_schema(
             if unit not in combined_units:
                 combined_units.append(unit)
 
-    # No enum here on purpose: the model is asked to normalize noisy input
-    # (typos, filler like "inchhhhh", casing) into a canonical unit itself,
-    # but forcing an enum on a tool-use call makes the provider reject the
-    # whole response when it can't map cleanly - safer to accept any string
-    # and let _normalize_unit() below fuzzy-correct it on our side.
+    # No enum here on purpose: constraining a tool-use call to an enum makes
+    # the provider reject the whole response when the model's raw unit text
+    # doesn't map cleanly - safer to accept any string and let
+    # _normalize_unit() below reconcile it against the allowed list.
     unit_schema = {"type": ["string", "null"]}
 
     redirect_schema = {"type": ["string", "null"]}
@@ -146,7 +145,14 @@ def _generate_clarification_question(
         f"If the user's reply shows they don't know HOW to find or determine this "
         f"value (e.g. 'idk how would I know', 'not sure where to check') rather than "
         f"just being noncommittal, fold in ONE short practical pointer. Otherwise "
-        f"just ask again in different words. ONE sentence, 15 words max, no preamble. "
+        f"just ask again in different words. "
+        f"If the reason is missing_unit and the user's reply stated a unit that "
+        f"is NOT one of the valid units listed above (e.g. they said cm/km for a "
+        f"ft/m question) - don't ask a vague 'did you mean X or Y' question and "
+        f"don't do the conversion yourself. State plainly which units this "
+        f"question accepts and ask them to restate the number in one of those, "
+        f"e.g. 'This only accepts ft or m - what's that in one of those?' "
+        f"ONE sentence, 15 words max, no preamble. "
         f"Example of the right length/style: 'Check your borewell papers for the "
         f"diameter - is it in inches or mm?' Output only that one sentence, nothing else."
     )
@@ -238,16 +244,10 @@ PARSE_ANSWER_SYSTEM_PROMPT = (
     "You extract a numeric value and its unit from a user's free-text reply "
     "to a specific question. Return only what the user actually said - do not "
     "validate, do not decide whether to ask follow-up questions, just extract. "
-    "The user's text will often be noisy - typos, casing, repeated letters, "
-    "filler words, scrambled spelling. Use your own judgment as a fluent "
-    "language model to read past that noise, the same way you'd read a typo "
-    "in any other conversation. For unit words specifically: you're always "
-    "given the exact list of valid unit strings for this question - if the "
-    "user's word is a clear, confident match to one of those exact strings "
-    "despite typos or scrambled letters, normalize it to that canonical "
-    "string; don't refuse to recognize a unit just because it isn't spelled "
-    "perfectly. Only ask for clarification if it's genuinely ambiguous which "
-    "allowed unit (if any) they meant. NEVER perform unit conversion "
+    "For unit words: normalize the user's word to the exact matching string "
+    "from the valid units list given to you. Only ask for clarification if "
+    "it's genuinely ambiguous which valid unit (if any) they meant. NEVER "
+    "perform unit conversion "
     "yourself - if the user's stated unit is a real, different unit that "
     "isn't a typo/spelling match for one of the exact valid unit strings "
     "(e.g. they said 'cm' or 'km' for a question whose valid units are only "
@@ -610,20 +610,31 @@ def parse_answer(
         data["unit"] = None
         data["needs_clarification"] = False
         data["gave_up"] = True
+        allowed_units_note = (
+            f" The valid units for this question are: {', '.join(question.allowed_units)}."
+            if question.allowed_units
+            else ""
+        )
         try:
             data["clarification_question"] = llm_client.complete(
                 "Generate ONE short, friendly chat-message sentence, 15 words "
                 "maximum, no preamble. Never state a specific number or 'typical' "
                 "value from general knowledge - only use facts given in the user "
-                "message. Output only that one sentence, nothing else.",
+                "message. If valid units are named in the user message, state them "
+                "plainly so the user understands what would have worked. Output "
+                "only that one sentence, nothing else.",
                 f"The user couldn't provide the {question.key.replace('_', ' ')} information after "
-                f"being asked twice. Domain context: {question.domain_context or 'none provided.'} "
+                f"being asked twice.{allowed_units_note} Domain context: {question.domain_context or 'none provided.'} "
                 "Generate a brief, friendly message saying we cannot recommend a pump model without "
                 "this information.",
                 temperature=1.0,
             ).strip()
         except LLMUnavailableError:
-            data["clarification_question"] = "We cannot recommend you a model because of missing information."
+            data["clarification_question"] = (
+                f"We cannot recommend you a model without this in {' or '.join(question.allowed_units)}."
+                if question.allowed_units
+                else "We cannot recommend you a model because of missing information."
+            )
     elif not_redirect_or_skip and missing_required_info and data.get("needs_clarification"):
         # Clarification question: generate it with high temperature so the
         # wording varies and it's grounded in this question's domain
