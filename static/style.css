@@ -618,3 +618,37 @@ body {
   padding: 0 16px 8px;
   background: #fff;
 }
+.pd-panel-container {
+  margin-top: 16px;
+}
+.pd-panel {
+  display: none;
+}
+.pd-panel.active {
+  display: block;
+}
+.features-list {
+  list-style: decimal;
+  list-style-position: inside;
+  padding: 8px 0;
+  margin: 0;
+  counter-reset: item;
+}
+.feature-item {
+  padding: 14px 14px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--teal-light);
+  border-left: 4px solid var(--teal);
+}
+.no-features {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13.5px;
+  background: var(--teal-light);
+  border-radius: 8px;
+}
