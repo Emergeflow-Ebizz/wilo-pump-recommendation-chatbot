@@ -239,19 +239,17 @@ body {
 .menu-btn {
   background: none;
   border: none;
-  padding: 6px 8px;
-  color: #666;
+  padding: 4px;
+  color: var(--teal);
   cursor: pointer;
   font-family: inherit;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  justify-content: center;
 }
 .menu-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
 }
 .menu-dropdown {
   position: absolute;
