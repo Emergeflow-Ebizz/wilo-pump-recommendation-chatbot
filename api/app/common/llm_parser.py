@@ -812,6 +812,21 @@ _CATEGORY_LABELS: dict[str, str] = {
 }
 
 
+def _category_label(category: str) -> str:
+    """Human-readable label for a category value.
+
+    Falls back to underscore-to-space rather than the raw literal, so a new
+    category added to CATEGORY_QUESTIONS_BY_SLUG without a matching
+    _CATEGORY_LABELS entry can never surface a raw snake_case string to the
+    user - it just logs so the gap gets noticed and filled in.
+    """
+    label = _CATEGORY_LABELS.get(category)
+    if label is None:
+        logger.warning("parse_category: no _CATEGORY_LABELS entry for %r", category)
+        return category.replace("_", " ")
+    return label
+
+
 def _try_rule_based_category_parse(user_text: str, valid_categories: list[str]) -> str | None:
     """Attempt to match free text to exactly one of valid_categories via
     exact match or keyword synonym, without any LLM call.
@@ -880,7 +895,7 @@ def parse_category(
         if rule_based_category is not None:
             return ParsedCategory(
                 category=rule_based_category,
-                confirmation_message=f"Got it: {_CATEGORY_LABELS.get(rule_based_category, rule_based_category)}",
+                confirmation_message=f"Got it: {_category_label(rule_based_category)}",
             )
         if question.optional:
             return ParsedCategory(skipped=True)
@@ -889,14 +904,14 @@ def parse_category(
                 gave_up=True,
                 clarification_question="We cannot recommend you a model because of missing information.",
             )
-        labels = [_CATEGORY_LABELS.get(c, c) for c in valid_categories]
+        labels = [_category_label(c) for c in valid_categories]
         return ParsedCategory(
             needs_clarification=True,
             clarification_question=f"Sorry, I didn't get that. Please choose: {' or '.join(labels)}.",
         )
 
     if not data.get("needs_clarification") and not data.get("skipped") and data.get("category"):
-        data["confirmation_message"] = f"Got it: {data['category']}"
+        data["confirmation_message"] = f"Got it: {_category_label(data['category'])}"
     elif data.get("needs_clarification") and not question.optional and clarification_attempts >= 2:
         # Give-up threshold: same rule as parse_answer - every non-optional
         # question caps at 2 failed clarification attempts, no exceptions.

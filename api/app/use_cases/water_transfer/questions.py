@@ -75,7 +75,7 @@ QUESTIONS: list[Question] = [
 
 DELIVERY_TYPE_QUESTION = Question(
     key="delivery_type",
-    prompt="Is the pumped water to be delivered to ground-floor level, or to an elevated roof/terrace tank?",
+    prompt="Is the pumped water to be delivered to the ground floor, or to an elevated roof/terrace tank?",
     domain_context=(
         "Determines which follow-up questions are asked. Ground-floor delivery "
         "requires only borewell diameter, depth, and optional motor power. "
