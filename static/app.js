@@ -141,7 +141,7 @@
       next: function () {
         var contact = state.answers["lead-contact"] || "";
         var isEmail = /^\S+@\S+\.\S+$/.test(contact);
-        return isEmail ? "lead-name" : "lead-email";
+        return isEmail ? "lead-pincode" : "lead-email";
       },
     },
     {
@@ -152,18 +152,6 @@
       },
       placeholder: "Email address",
       validate: emailValidate,
-      next: function () {
-        return "lead-name";
-      },
-    },
-    {
-      id: "lead-name",
-      kind: "input",
-      bot: function () {
-        return "What is your name?";
-      },
-      placeholder: "Your name",
-      validate: nameValidate,
       next: function () {
         return "lead-pincode";
       },
