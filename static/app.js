@@ -79,13 +79,13 @@
       },
       options: [
         {
-          label: "Water extraction from a borewell/well",
+          label: "Water extraction from a borewell",
           value: "water-transfer",
           icon: "⛽",
           subtitle: "Borewell to overhead tank",
         },
         {
-          label: "Transfer of water from a ground-level reservoir to an elevated tank",
+          label: "Transfer of water from a ground level reservoir to an elevated tank",
           value: "tank-filling",
           icon: "💧",
           subtitle: "Ground tank to upper tank",
@@ -247,13 +247,13 @@
       },
       options: [
         {
-          label: "Water extraction from a borewell/well",
+          label: "Water extraction from a borewell",
           value: "water-transfer",
           icon: "⛽",
           subtitle: "Borewell to overhead tank",
         },
         {
-          label: "Transfer of water from a ground-level reservoir to an elevated tank",
+          label: "Transfer of water from a ground level reservoir to an elevated tank",
           value: "tank-filling",
           icon: "💧",
           subtitle: "Ground tank to upper tank",
@@ -416,7 +416,7 @@
     // Map application type based on use case
     var applicationMap = {
       "water_transfer": "Water Extraction From Borewell",
-      "tank_filling": "Transfer of water from a ground-level reservoir to an elevated tank",
+      "tank_filling": "Transfer of water from a ground level reservoir to an elevated tank",
       "pressure_boosting": "Pressure Boosting",
       "dewatering": "Dewatering",
     };
@@ -1331,7 +1331,7 @@
     featuresPanel.setAttribute("data-tab", "Features");
 
     if (recommendation.features && recommendation.features.length > 0) {
-      var featuresList = document.createElement("ol");
+      var featuresList = document.createElement("ul");
       featuresList.className = "features-list";
       recommendation.features.forEach(function (feature) {
         var li = document.createElement("li");

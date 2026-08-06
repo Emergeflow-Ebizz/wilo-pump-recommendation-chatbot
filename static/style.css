@@ -628,14 +628,13 @@ body {
   display: block;
 }
 .features-list {
-  list-style: decimal;
+  list-style: none;
   list-style-position: inside;
   padding: 8px 0;
   margin: 0;
-  counter-reset: item;
 }
 .feature-item {
-  padding: 14px 14px;
+  padding: 14px 14px 14px 30px;
   margin-bottom: 8px;
   border-radius: 8px;
   font-size: 13.5px;
@@ -643,6 +642,13 @@ body {
   color: var(--text);
   background: var(--teal-light);
   border-left: 4px solid var(--teal);
+  text-indent: -16px;
+}
+.feature-item::before {
+  content: "✓";
+  color: var(--teal);
+  font-weight: bold;
+  margin-right: 12px;
 }
 .no-features {
   padding: 24px 16px;
