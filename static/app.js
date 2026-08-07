@@ -23,7 +23,7 @@
 
   function formatDetailValue(value) {
     if (typeof value === "number" && !Number.isInteger(value)) {
-      return String(Math.round(value * 100) / 100);``
+      return String(Math.round(value * 100) / 100);
     }
     return String(value);
   }
@@ -75,38 +75,33 @@
       id: "application",
       kind: "options",
       bot: function () {
-        return "Hi there! I can help you pick the right Wilo pump. What's your application?";
+        return "Hi there! I can help you pick right Wilo pump for you Select your application from below list to start..";
       },
       options: [
         {
-          label: "Water extraction from a borewell",
+          label: "Water Transfer from well to Overhead tank",
           value: "water-transfer",
-          icon: "⛽",
-          subtitle: "Borewell to overhead tank",
+          icon: "./Water Transfer from well to Overhead tank.png",
         },
         {
           label: "Transfer of water from a ground level reservoir to an elevated tank",
           value: "tank-filling",
-          icon: "💧",
-          subtitle: "Ground tank to upper tank",
+          icon: "./Tank Filling from Ground tank to upper tank.png",
         },
         {
           label: "Pressure Boosting",
           value: "pressure-boosting",
-          icon: "🌀",
-          subtitle: "Steady water pressure",
+          icon: "./Pressure Boosting.png",
         },
         {
           label: "Dewatering",
           value: "dewatering",
-          icon: "🌊",
-          subtitle: "Remove unwanted water",
+          icon: "./Dewatering.png",
         },
         // {
         //   label: "Hot Water Circulation",
         //   value: "hot-water-circulation",
         //   icon: "♨️",
-        //   subtitle: "Hot water recirculation",
         // },
       ],
       next: function (value) {
@@ -124,7 +119,6 @@
         return "That application isn't available yet, we're still adding support for it. For now you can try Water Transfer, or pick another application below.";
       },
       options: [
-        { label: "Back to applications", value: "back", icon: "↩️", subtitle: "Choose a different one" },
       ],
       next: function () {
         return "application";
@@ -176,31 +170,33 @@
         if (state.selectedPump) {
           var pump = state.selectedPump.recommendation;
           var details = pump.details || {};
-          msg += "\n\nSelected Pump:\n" + (pump.model_name || "Unknown model");
+          msg += "<br><br><strong style='font-size: 15px; color: #505050;'>Selected Pump:</strong><br>";
+          msg += "<span style='color: #009C82; font-weight: bold;'>" + (pump.model_name || "Unknown model") + "</span>";
           DETAIL_DISPLAY_RULES.forEach(function (rule) {
             var matchedKey = Object.keys(details).find(rule.test);
             if (matchedKey != null && details[matchedKey] != null && details[matchedKey] !== "") {
-              msg += "\n" + rule.label + ": " + rule.format(details[matchedKey]);
+              msg += "<br><strong>" + rule.label + ":</strong> " + rule.format(details[matchedKey]);
             }
           });
           if (pump.art_no != null) {
-            msg += "\nArticle No.: " + String(pump.art_no);
+            msg += "<br><strong>Article No.:</strong> " + String(pump.art_no);
           }
+          return msg;
         }
         return msg;
       },
       followUp: function () {
         return [
           {
-            kind: "text",
-            text:
-              "🙏 Thank you for visiting Wilo!\n\n" +
+            kind: "html",
+            html:
+              "<strong>🙏 Thank you for visiting Wilo!</strong><br><br>" +
               "We appreciate your interest in our products and services. If you need any further assistance, our support team is ready to help. 😊",
           },
           {
             kind: "html",
             html:
-              "Contact Support:<br>" +
+              "<strong>Contact Support:</strong><br>" +
               '📧 <a href="mailto:sales@wilo.com">sales@wilo.com</a><br>' +
               '🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank" rel="noopener noreferrer">https://wilo.com/in/en/Dealers/</a>',
           },
@@ -220,7 +216,7 @@
       validate: function (value) {
         var trimmed = value.toLowerCase().trim();
         if (trimmed === "yes" || trimmed === "no") return null;
-        return "Please answer with 'yes' or 'no'.";
+        return "Please respond with either 'Yes' or 'No'.";
       },
       next: function () {
         var answer = state.answers["explore-more"];
@@ -235,28 +231,24 @@
       },
       options: [
         {
-          label: "Water extraction from a borewell",
+          label: "Water Transfer from well to Overhead tank",
           value: "water-transfer",
-          icon: "⛽",
-          subtitle: "Borewell to overhead tank",
+          icon: "./Water Transfer from well to Overhead tank.png",
         },
         {
           label: "Transfer of water from a ground level reservoir to an elevated tank",
           value: "tank-filling",
-          icon: "💧",
-          subtitle: "Ground tank to upper tank",
+          icon: "./Tank Filling from Ground tank to upper tank.png",
         },
         {
           label: "Pressure Boosting",
           value: "pressure-boosting",
-          icon: "🌀",
-          subtitle: "Steady water pressure",
+          icon: "./Pressure Boosting.png",
         },
         {
           label: "Dewatering",
           value: "dewatering",
-          icon: "🌊",
-          subtitle: "Remove unwanted water",
+          icon: "./Dewatering.png",
         },
       ],
       next: function (value) {
@@ -314,7 +306,12 @@
   /** Adds a step's main bot message, then any followUp messages (text or
    * html) it defines, e.g. the multi-message sign-off on "thank-you". */
   function addStepMessages(step, answers) {
-    addBotMessage(step.bot(answers));
+    var botMsg = step.bot(answers);
+    if (step.id === "thank-you" && state.selectedPump) {
+      addBotHtmlMessage(botMsg);
+    } else {
+      addBotMessage(botMsg);
+    }
     if (!step.followUp) return;
     step.followUp(answers).forEach(function (msg) {
       if (msg.kind === "html") addBotHtmlMessage(msg.html);
@@ -381,7 +378,6 @@
       {
         label: "Retry",
         icon: "🔁",
-        subtitle: "Try connecting again",
         onSelect: function () {
           addUserMessage("Retry");
           return retryFn();
@@ -535,7 +531,6 @@
             {
               label: "Water Transfer",
               icon: "💧",
-              subtitle: "Extract water from borewell to tank",
               onSelect: function () {
                 addUserMessage("Water Transfer");
                 state.virtualOptions = null;
@@ -550,7 +545,6 @@
             {
               label: "Tank Filling",
               icon: "🏢",
-              subtitle: "Fill elevated tank from ground level",
               onSelect: function () {
                 addUserMessage("Tank Filling");
                 state.virtualOptions = null;
@@ -565,7 +559,6 @@
             {
               label: "Pressure Boosting",
               icon: "⚡",
-              subtitle: "Increase water pressure",
               onSelect: function () {
                 addUserMessage("Pressure Boosting");
                 state.virtualOptions = null;
@@ -580,7 +573,6 @@
             {
               label: "Dewatering",
               icon: "🔄",
-              subtitle: "Remove water from flooded areas",
               onSelect: function () {
                 addUserMessage("Dewatering");
                 state.virtualOptions = null;
@@ -850,7 +842,21 @@
       state.clarificationAttempts = {};
       state.clarificationUserInput = {};
       state.currentQuestion = null;
-      return fetchNextQuestion(); // returns a Promise
+      // Add confirmation message with selected application
+      var appName = "";
+      if (state.useCaseSlug === "water_transfer") appName = "Water Transfer from well to Overhead tank";
+      else if (state.useCaseSlug === "tank_filling") appName = "Transfer of water from a ground level reservoir to an elevated tank";
+      else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
+      else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
+
+      addBotHtmlMessage("Hi There, you have selected application as<br><strong>" + appName + "</strong>");
+
+      // Remove greeting message after application selection
+      if (state.messages.length > 1) {
+        state.messages.splice(1, 1);
+      }
+
+      return fetchNextQuestion();
     }
     var nextStep = getStep(nextId);
     addStepMessages(nextStep, state.answers);
@@ -876,7 +882,12 @@
     var step = getStep(state.currentStepId);
     if (step.kind !== "options") return;
     state.answers[step.id] = value;
-    addUserMessage(label);
+    
+    // Don't show user message for initial application selection
+    if (step.id !== "application") {
+      addUserMessage(label);
+    }
+    
     advance(step, value);
     render();
   }
@@ -927,7 +938,7 @@
 
     var greet = document.createElement("p");
     greet.className = "greet";
-    greet.textContent = "👋 Hi! I'm your";
+    greet.innerHTML = "<strong style='font-size: 16px;'>👋 Hi I am Boondiram!</strong>";
 
     var brand = document.createElement("p");
     brand.className = "brand-name";
@@ -1448,8 +1459,16 @@
     if (isSelected) selectBtn.classList.add("selected");
     selectBtn.addEventListener("click", function () {
       state.selectedPump = { recommendation: recommendation, tierLabel: tierLabel };
-      addUserMessage("Select");
-      addBotMessage("Great! You've selected " + recommendation.model_name + ". Now, let me collect your details to connect you with a dealer.");
+
+      var appName = "";
+      if (state.useCaseSlug === "water_transfer") appName = "Water Transfer from well to Overhead tank";
+      else if (state.useCaseSlug === "tank_filling") appName = "Transfer of water from a ground level reservoir to an elevated tank";
+      else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
+      else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
+
+      var pumpModel = recommendation.model_name || "pump";
+      var html = "Great! You've selected <span style='color: #009C82;'>" + pumpModel + "</span>. Now, let me collect your details to connect you with a dealer.";
+      addBotHtmlMessage(html);
       jumpToStep("lead-contact");
       render();
     });
@@ -1494,7 +1513,16 @@
 
     var icon = document.createElement("span");
     icon.className = "option-icon";
-    icon.textContent = option.icon || "•";
+
+    if (option.icon && /\.(png|jpg|jpeg|gif|svg)$/i.test(option.icon)) {
+      var img = document.createElement("img");
+      img.src = option.icon;
+      img.alt = option.label;
+      img.className = "option-image";
+      icon.appendChild(img);
+    } else {
+      icon.textContent = option.icon || "•";
+    }
 
     var text = document.createElement("span");
     text.className = "option-text";
@@ -1547,6 +1575,7 @@
     if (state.awaitingKind === "input") return getStep(state.currentStepId).placeholder;
     if (state.awaitingKind === "loading") return "Checking...";
     return "Choose an option above";
+
   }
 
   function render() {
