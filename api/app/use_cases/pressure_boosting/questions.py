@@ -3,7 +3,7 @@ from app.common.schemas import Question
 QUESTIONS: list[Question] = [
     Question(
         key="num_floors",
-        prompt="How many floors does the building have?",
+        prompt="Please specify the number of floors in the building",
         requires_integer=True,
         min_value=1,
         domain_context=(
@@ -15,7 +15,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="bathrooms_per_floor",
-        prompt="How many bathrooms are there per floor?",
+        prompt="Please specify the number of bathrooms per floor",
         requires_integer=True,
         min_value=1,
         domain_context=(

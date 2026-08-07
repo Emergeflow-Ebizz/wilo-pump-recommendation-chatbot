@@ -3,7 +3,7 @@ from app.common.schemas import Question
 QUESTIONS: list[Question] = [
     Question(
         key="borewell_size",
-        prompt="What is the borewell diameter? (mm or inches accepted)",
+        prompt="Please provide the borewell diameter (in mm or inches)",
         unit="inch",
         allowed_units=["inch", "mm"],
         requires_stated_unit=True,
@@ -19,7 +19,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="well_depth",
-        prompt="What is the borewell depth? (meters or feet accepted)",
+        prompt="Please provide the total borewell depth (in meters or feet)",
         unit="ft",
         allowed_units=["ft", "m"],
         requires_stated_unit=True,
@@ -33,7 +33,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="motor_power_hp",
-        prompt="Do you have a required motor power rating (HP)? (optional)",
+        prompt="if available, please specify the required motor power rating (in HP)",
         unit="hp",
         optional=True,
         allowed_units=["hp"],
@@ -46,7 +46,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="num_floors",
-        prompt="To how many floors above ground level is the water to be delivered?",
+        prompt="Please specify the number of floors above ground level where the water needs to be delivered?",
         requires_integer=True,
         min_value=1,
         domain_context=(
@@ -58,8 +58,7 @@ QUESTIONS: list[Question] = [
     Question(
         key="roof_tank_capacity",
         prompt=(
-            "What is the capacity of the elevated tank, in liters? This enables "
-            "an estimate of fill duration. (optional)"
+            "Please provide the tank capacity (in litres). This helps us estimate the approximate tank filling time (optional)"
         ),
         unit="litres",
         optional=True,
@@ -75,7 +74,7 @@ QUESTIONS: list[Question] = [
 
 DELIVERY_TYPE_QUESTION = Question(
     key="delivery_type",
-    prompt="Is the pumped water to be delivered to the ground floor, or to an elevated roof/terrace tank?",
+    prompt="Will the pumped water be delivered to the ground floor or to an overhead/terrace water tank",
     domain_context=(
         "Determines which follow-up questions are asked. Ground-floor delivery "
         "requires only borewell diameter, depth, and optional motor power. "

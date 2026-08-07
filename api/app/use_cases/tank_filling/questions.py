@@ -3,7 +3,7 @@ from app.common.schemas import Question
 QUESTIONS: list[Question] = [
     Question(
         key="tank_capacity",
-        prompt="What is the capacity of the receiving tank, in liters? (optional)",
+        prompt="Please provide the tank capacity (in litres). This helps us estimate the approximate tank filling time (optional)",
         unit="litres",
         optional=True,
         allowed_units=["litres"],
@@ -16,7 +16,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="num_floors",
-        prompt="To how many floors above the reservoir is the water to be delivered?",
+        prompt="Please specify the number of floors above the reservoir where the water needs to be delivered",
         requires_integer=True,
         domain_context=(
             "Used to calculate the total head the pump must overcome - each "
@@ -27,7 +27,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="motor_power_hp",
-        prompt="Do you have a required motor power rating (HP)? (optional)",
+        prompt="if available, please specify the required motor power rating (in HP)",
         optional=True,
         allowed_units=["hp"],
         domain_context=(
@@ -41,7 +41,7 @@ QUESTIONS: list[Question] = [
 
 INSIDE_OR_OUTSIDE_QUESTION = Question(
     key="inside_or_outside",
-    prompt="Pump is Inside the tank or Outside the tank",
+    prompt="Please specify whether the pump is inside the tank or outside the tank",
     domain_context=(
         "Determines whether a submersible or a surface (ground-level) pump "
         "model is required - this is a hard selection criterion, not a "
@@ -51,7 +51,7 @@ INSIDE_OR_OUTSIDE_QUESTION = Question(
 
 HORIZONTAL_OR_VERTICAL_QUESTION = Question(
     key="horizontal_or_vertical",
-    prompt="Is your tank Horizontal or vertical (optional)?",
+    prompt="if available, please specify whether the tank is horizontal or vertical",
     optional=True,
     domain_context=(
         "Optional - only relevant for outside/ground-level installations, "
