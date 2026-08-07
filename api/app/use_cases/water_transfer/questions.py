@@ -3,7 +3,7 @@ from app.common.schemas import Question
 QUESTIONS: list[Question] = [
     Question(
         key="borewell_size",
-        prompt="Please provide the borewell diameter (in mm or inches)",
+        prompt="Please provide the borewell diameter (in **mm** or **inches**)",
         unit="inch",
         allowed_units=["inch", "mm"],
         requires_stated_unit=True,
@@ -19,7 +19,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="well_depth",
-        prompt="Please provide the total borewell depth (in meters or feet)",
+        prompt="Please provide the total borewell depth (in **meters** or **feet**)",
         unit="ft",
         allowed_units=["ft", "m"],
         requires_stated_unit=True,
@@ -33,7 +33,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="motor_power_hp",
-        prompt="if available, please specify the required motor power rating (in HP)",
+        prompt="if available, please specify the required motor power rating (in **HP**)",
         unit="hp",
         optional=True,
         allowed_units=["hp"],
@@ -58,7 +58,7 @@ QUESTIONS: list[Question] = [
     Question(
         key="roof_tank_capacity",
         prompt=(
-            "Please provide the tank capacity (in litres). This helps us estimate the approximate tank filling time (optional)"
+            "Please provide the tank capacity (in **litres**). This helps us estimate the approximate tank filling time (optional)"
         ),
         unit="litres",
         optional=True,
@@ -74,7 +74,7 @@ QUESTIONS: list[Question] = [
 
 DELIVERY_TYPE_QUESTION = Question(
     key="delivery_type",
-    prompt="Will the pumped water be delivered to the ground floor or to an overhead/terrace water tank",
+    prompt="Will the pumped water be delivered to the **ground floor** or to an **overhead/terrace water tank**",
     domain_context=(
         "Determines which follow-up questions are asked. Ground-floor delivery "
         "requires only borewell diameter, depth, and optional motor power. "

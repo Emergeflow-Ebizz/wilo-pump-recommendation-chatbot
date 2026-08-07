@@ -3,7 +3,7 @@ from app.common.schemas import Question
 QUESTIONS: list[Question] = [
     Question(
         key="tank_capacity",
-        prompt="Please provide the tank capacity (in litres). This helps us estimate the approximate tank filling time (optional)",
+        prompt="Please provide the tank capacity (in **litres**). This helps us estimate the approximate tank filling time (optional)",
         unit="litres",
         optional=True,
         allowed_units=["litres"],
@@ -27,7 +27,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="motor_power_hp",
-        prompt="if available, please specify the required motor power rating (in HP)",
+        prompt="if available, please specify the required motor power rating (in **HP**)",
         optional=True,
         allowed_units=["hp"],
         domain_context=(

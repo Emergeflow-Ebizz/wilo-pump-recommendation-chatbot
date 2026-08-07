@@ -3,7 +3,7 @@ from app.common.schemas import Question
 QUESTIONS: list[Question] = [
     Question(
         key="depth_of_pit",
-        prompt="Please provide the depth of the pit or sump (in meters or feet)",
+        prompt="Please provide the depth of the pit or sump (in **meters** or **feet**)",
         unit="ft",
         allowed_units=["ft", "m"],
         requires_stated_unit=True,
@@ -17,7 +17,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="motor_power_hp",
-        prompt="if available, please specify the required motor power rating (in HP)",
+        prompt="if available, please specify the required motor power rating (in **HP**)",
         unit="hp",
         optional=True,
         allowed_units=["hp"],
