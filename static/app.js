@@ -727,10 +727,6 @@
    * and moves to the next question. */
   async function submitFreeTextAnswer(question, trimmed) {
     var userText = trimmed;
-    // If we're in a clarification turn, combine the original input with the clarification
-    if (state.clarificationUserInput[question.key]) {
-      userText = state.clarificationUserInput[question.key] + " " + trimmed;
-    }
     var payload = { question_key: question.key, user_text: userText, answers_so_far: state.dynamicAnswers };
     var previousValue = state.dynamicAnswers[question.key];
     if (previousValue !== undefined && previousValue !== null) {
@@ -761,10 +757,6 @@
 
     if (data.needs_clarification || data.edit_not_supported) {
       state.clarificationAttempts[question.key] = (state.clarificationAttempts[question.key] || 0) + 1;
-      // Store the user's original input so we can combine it with their clarification on next attempt
-      if (!state.clarificationUserInput[question.key]) {
-        state.clarificationUserInput[question.key] = trimmed;
-      }
       if (data.previous_value !== undefined) {
         state.dynamicAnswers[question.key] = data.previous_value;
         if (data.previous_unit !== undefined) {
@@ -803,7 +795,6 @@
     console.log("[submitFreeTextAnswer] accepted:", question.key, "=", data.value, unit ? "(unit: " + unit + ")" : "");
     console.log("[submitFreeTextAnswer] state.dynamicAnswers:", state.dynamicAnswers);
 
-    // Clear clarification tracking now that this question is resolved
     delete state.clarificationUserInput[question.key];
     delete state.clarificationAttempts[question.key];
 
