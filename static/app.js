@@ -166,7 +166,7 @@
       id: "thank-you",
       kind: "final",
       bot: function () {
-        var msg = "✅ Thank you! Our dealer will reach out to you shortly, and your details have been shared with dealer.";
+        var msg = "Thank you! Our dealer will reach out to you shortly, and your details have been shared with dealer.";
         if (state.selectedPump) {
           var pump = state.selectedPump.recommendation;
           var details = pump.details || {};
@@ -1281,6 +1281,18 @@
     overviewPanel.className = "pd-panel active";
     overviewPanel.setAttribute("data-tab", "Overview");
 
+    var imageUrl = recommendation.image_url || details.image_url;
+    if (imageUrl) {
+      var imgContainer = document.createElement("div");
+      imgContainer.className = "pd-image-container";
+      var img = document.createElement("img");
+      img.src = imageUrl;
+      img.alt = recommendation.model_name || "Pump image";
+      img.className = "pd-image";
+      imgContainer.appendChild(img);
+      overviewPanel.appendChild(imgContainer);
+    }
+
     var headUnit = state.dynamicAnswers[unitFieldNameFor("head")] || null;
     var curveMarkup =
       details.performance_curve && details.performance_curve.length
@@ -1401,7 +1413,17 @@
 
     var icon = document.createElement("div");
     icon.className = "pump-icon";
-    icon.innerHTML = PUMP_ICON_SVG;
+
+    var imageUrl = recommendation.image_url || details.image_url;
+    if (imageUrl) {
+      var img = document.createElement("img");
+      img.src = imageUrl;
+      img.alt = recommendation.model_name || "Pump image";
+      img.className = "pump-icon-image";
+      icon.appendChild(img);
+    } else {
+      icon.innerHTML = PUMP_ICON_SVG;
+    }
 
     var table = document.createElement("div");
     table.className = "specs-table";
