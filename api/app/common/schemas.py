@@ -107,6 +107,7 @@ class PumpRecommendation(BaseModel):
     art_no: int | None = None
     details: dict = {}
     features: list[str] | None = None
+    image_url: str | None = None
     tied_alternatives: list["PumpRecommendation"] = []
 
 

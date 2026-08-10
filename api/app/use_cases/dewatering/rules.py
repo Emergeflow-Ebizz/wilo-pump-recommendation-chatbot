@@ -1,5 +1,6 @@
 from app.common.catalog_loader import load_sheet
 from app.common.features import get_features
+from app.common.images import get_image_url
 from app.common.schemas import PumpRecommendation
 from app.common.units import ft_to_m, m_to_ft
 from app.use_cases.base import UseCase
@@ -140,6 +141,7 @@ class DewateringUseCase(UseCase):
                 art_no=model.get("art_no"),
                 details=details,
                 features=get_features(sheet_file),
+                image_url=get_image_url(sheet_file),
             )
 
         primary_name, primary_model = matched_models[0]
