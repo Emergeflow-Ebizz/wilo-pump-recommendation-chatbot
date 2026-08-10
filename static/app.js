@@ -849,7 +849,7 @@
       else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
       else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
 
-      addBotHtmlMessage("Hi There, you have selected application as<br><strong>" + appName + "</strong>");
+      addBotHtmlMessage("Hi There, you have selected application as<br><strong style='color: #009C82;'>" + appName + "</strong>");
 
       // Remove greeting message after application selection
       if (state.messages.length > 1) {
@@ -1467,7 +1467,7 @@
       else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
 
       var pumpModel = recommendation.model_name || "pump";
-      var html = "Great! You've selected <span style='color: #009C82;'>" + pumpModel + "</span>. Now, let me collect your details to connect you with a dealer.";
+      var html = "Great! You've selected <span style='color: #009C82; font-weight: bold;'>" + pumpModel + "</span>. Now, let me collect your details to connect you with a dealer.";
       addBotHtmlMessage(html);
       jumpToStep("lead-contact");
       render();
@@ -1554,7 +1554,8 @@
     if (message.kind === "html") {
       bubble.innerHTML = message.html;
     } else {
-      bubble.textContent = message.text;
+      var parsedHTML = message.text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      bubble.innerHTML = parsedHTML;
     }
 
     var time = document.createElement("div");
