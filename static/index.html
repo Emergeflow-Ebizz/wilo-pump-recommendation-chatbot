@@ -19,14 +19,20 @@
             <div class="status"><span class="dot"></span>Online</div>
           </div>
           <div class="menu-wrap">
-            <button type="button" class="menu-btn" id="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">
+            <button type="button" class="menu-btn" id="menu-btn" aria-label="Refresh Chat" aria-haspopup="true" aria-expanded="false">
               <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
                 <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="currentColor"/>
               </svg>
             </button>
-            <div class="menu-dropdown" id="menu-dropdown" hidden>
-              <button type="button" class="menu-item" id="menu-restart">🔄 Restart</button>
-              <button type="button" class="menu-item" id="menu-continue">✅ Continue</button>
+          </div>
+        </div>
+
+        <div class="confirmation-modal" id="confirmation-modal" hidden>
+          <div class="confirmation-content">
+            <div class="confirmation-message">Do you want to refresh the chat?</div>
+            <div class="confirmation-buttons">
+              <button type="button" class="confirm-btn cancel-btn" id="confirm-cancel">Cancel</button>
+              <button type="button" class="confirm-btn refresh-btn" id="confirm-refresh">Refresh</button>
             </div>
           </div>
         </div>

@@ -711,3 +711,70 @@ body {
   background: #fff;
   border-radius: 8px;
 }
+
+.confirmation-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+}
+
+.confirmation-modal[hidden] {
+  display: none;
+}
+
+.confirmation-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 300px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.confirmation-message {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 24px;
+}
+
+.confirmation-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirm-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn {
+  background: #e8e8e8;
+  color: var(--text);
+}
+
+.cancel-btn:hover {
+  background: #d8d8d8;
+}
+
+.refresh-btn {
+  background: var(--teal);
+  color: #fff;
+}
+
+.refresh-btn:hover {
+  background: var(--teal-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 156, 130, 0.3);
+}

@@ -75,7 +75,7 @@
       id: "application",
       kind: "options",
       bot: function () {
-        return "Hi there! I can help you choose the right Wilo pump for your needs. Select your application from the list below to get started.";
+        return "Hi there! I can help pick right Wilo pump for you. Select your application from the list below to get started.";
       },
       options: [
         {
@@ -175,7 +175,17 @@
           DETAIL_DISPLAY_RULES.forEach(function (rule) {
             var matchedKey = Object.keys(details).find(rule.test);
             if (matchedKey != null && details[matchedKey] != null && details[matchedKey] !== "") {
-              msg += "<br><strong>" + rule.label + ":</strong> " + rule.format(details[matchedKey]);
+              var unit = null;
+              if (/head/i.test(rule.label)) {
+                unit = details.head_unit || state.dynamicAnswers[unitFieldNameFor("head")] || "m";
+              } else if (/flow/i.test(rule.label)) {
+                unit = details.flow_unit || "lpm";
+              } else if (/power|motor/i.test(rule.label)) {
+                unit = details.power_unit || "HP";
+              } else if (/fill.*time/i.test(rule.label)) {
+                unit = details.fill_time_unit || null;
+              }
+              msg += "<br><strong>" + rule.label + ":</strong> " + rule.format(details[matchedKey], unit);
             }
           });
           if (pump.art_no != null) {
@@ -414,10 +424,17 @@
       email: isEmail ? contact : (state.answers["lead-email"] || ""),
     };
 
-    var headUnit = details.head_unit || "";
-    var headUnitLabel = headUnit === "ft" ? "feet" : "meter";
+    var headUnit = details.head_unit || state.dynamicAnswers[unitFieldNameFor("head")] || "m";
+    var headUnitLabel = headUnit === "ft" ? "feet" : (headUnit === "m" ? "meter" : headUnit);
     var powerUnit = details.power_unit || "HP";
     var flowUnit = details.flow_unit || "lpm";
+
+    console.log("[Pump Data API] head_unit debug:", {
+      details_head_unit: details.head_unit,
+      dynamicAnswers_head_unit: state.dynamicAnswers[unitFieldNameFor("head")],
+      final_headUnit: headUnit,
+      headUnitLabel: headUnitLabel
+    });
 
     var payload = {
       data: {
@@ -757,10 +774,10 @@
 
     if (data.needs_clarification || data.edit_not_supported) {
       state.clarificationAttempts[question.key] = (state.clarificationAttempts[question.key] || 0) + 1;
-      if (data.previous_value !== undefined) {
-        state.dynamicAnswers[question.key] = data.previous_value;
-        if (data.previous_unit !== undefined) {
-          state.dynamicAnswers[unitFieldNameFor(question.key)] = data.previous_unit;
+      if (data.value !== undefined && data.value !== null) {
+        state.dynamicAnswers[question.key] = data.value;
+        if (data.unit) {
+          state.dynamicAnswers[unitFieldNameFor(question.key)] = data.unit;
         }
       }
       addBotMessage(data.clarification_question || "Could you clarify that?");
@@ -941,15 +958,10 @@
     var line2 = document.createElement("p");
     line2.textContent = "Let's get started.";
 
-    var time = document.createElement("div");
-    time.className = "time";
-    time.textContent = timestamp();
-
     textWrap.appendChild(greet);
     textWrap.appendChild(brand);
     textWrap.appendChild(line1);
     textWrap.appendChild(line2);
-    textWrap.appendChild(time);
 
     card.appendChild(textWrap);
     card.appendChild(mascotImage());
@@ -1077,7 +1089,7 @@
       var unit = null;
       if (rule) {
         if (/head/i.test(rule.label)) {
-          unit = details.head_unit || state.dynamicAnswers[unitFieldNameFor("head")] || null;
+          unit = details.head_unit || state.dynamicAnswers[unitFieldNameFor("head")] || "m";
         } else if (/flow/i.test(rule.label)) {
           unit = details.flow_unit || "lpm";
         } else if (/power|motor/i.test(rule.label)) {
@@ -1428,7 +1440,7 @@
       var v = document.createElement("span");
       var unit = null;
       if (/head/i.test(rule.label)) {
-        unit = details.head_unit || state.dynamicAnswers[unitFieldNameFor("head")] || null;
+        unit = details.head_unit || state.dynamicAnswers[unitFieldNameFor("head")] || "m";
       } else if (/flow/i.test(rule.label)) {
         unit = details.flow_unit || "lpm";
       } else if (/power|motor/i.test(rule.label)) {
@@ -1665,6 +1677,32 @@
     }
   }
 
+  function showRefreshConfirmation() {
+    el.confirmationModal.hidden = false;
+  }
+
+  function closeRefreshConfirmation() {
+    el.confirmationModal.hidden = true;
+  }
+
+  function refreshChat() {
+    state.messages = [];
+    state.selectedPump = null;
+    state.lastRecommendation = null;
+    state.dynamicAnswers = {};
+    state.clarificationAttempts = {};
+    state.clarificationUserInput = {};
+    state.currentQuestion = null;
+    state.awaitingKind = null;
+    state.inputError = null;
+    state.virtualOptions = null;
+    state.useCaseSlug = null;
+    state.currentStepId = null;
+    initConversation();
+    closeRefreshConfirmation();
+    render();
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     el.thread = document.getElementById("thread");
     el.composerInput = document.getElementById("composer-input");
@@ -1674,9 +1712,9 @@
     el.detailsBody = document.getElementById("details-body");
     el.detailsClose = document.getElementById("details-close");
     el.menuBtn = document.getElementById("menu-btn");
-    el.menuDropdown = document.getElementById("menu-dropdown");
-    el.menuRestart = document.getElementById("menu-restart");
-    el.menuContinue = document.getElementById("menu-continue");
+    el.confirmationModal = document.getElementById("confirmation-modal");
+    el.confirmCancel = document.getElementById("confirm-cancel");
+    el.confirmRefresh = document.getElementById("confirm-refresh");
 
     el.sendBtn.addEventListener("click", handleSend);
     el.composerInput.addEventListener("keydown", function (event) {
@@ -1691,28 +1729,20 @@
       if (event.target === el.detailsBackdrop) closePumpDetailsModal();
     });
 
-    function closeMenu() {
-      el.menuDropdown.hidden = true;
-      el.menuBtn.setAttribute("aria-expanded", "false");
-    }
     el.menuBtn.addEventListener("click", function (event) {
       event.stopPropagation();
-      var wasHidden = el.menuDropdown.hidden;
-      el.menuDropdown.hidden = !wasHidden;
-      el.menuBtn.setAttribute("aria-expanded", wasHidden ? "true" : "false");
+      showRefreshConfirmation();
     });
-    el.menuRestart.addEventListener("click", function () {
-      closeMenu();
-      restartConversation();
-    });
-    el.menuContinue.addEventListener("click", closeMenu);
-    document.addEventListener("click", function (event) {
-      if (!el.menuDropdown.hidden && !el.menuDropdown.contains(event.target)) closeMenu();
+    el.confirmCancel.addEventListener("click", closeRefreshConfirmation);
+    el.confirmRefresh.addEventListener("click", refreshChat);
+    el.confirmationModal.addEventListener("click", function (event) {
+      if (event.target === el.confirmationModal) closeRefreshConfirmation();
     });
 
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape" && !el.detailsBackdrop.hidden) closePumpDetailsModal();
       if (event.key === "Escape" && !el.menuDropdown.hidden) closeMenu();
+      if (event.key === "Escape" && !el.confirmationModal.hidden) closeRefreshConfirmation();
     });
 
     initConversation();
