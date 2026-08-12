@@ -75,7 +75,7 @@
       id: "application",
       kind: "options",
       bot: function () {
-        return "Hi there! I can help you pick right Wilo pump for you Select your application from below list to start..";
+        return "Hi there! I can help you choose the right Wilo pump for your needs. Select your application from the list below to get started.";
       },
       options: [
         {
