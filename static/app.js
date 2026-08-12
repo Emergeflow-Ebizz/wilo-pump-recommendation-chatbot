@@ -774,11 +774,27 @@
 
     if (data.needs_clarification || data.edit_not_supported) {
       state.clarificationAttempts[question.key] = (state.clarificationAttempts[question.key] || 0) + 1;
+      // Carry each piece forward independently: a clarification reply may
+      // resolve only the value (e.g. bare number) or only the unit (e.g.
+      // bare "inches"), and gating one on the other's presence would drop
+      // whichever piece the backend didn't return this turn.
       if (data.value !== undefined && data.value !== null) {
         state.dynamicAnswers[question.key] = data.value;
-        if (data.unit) {
-          state.dynamicAnswers[unitFieldNameFor(question.key)] = data.unit;
+      } else {
+        // The backend's extractor sometimes returns value=null even for a
+        // bare number (e.g. "6") when a unit is required but missing - it
+        // has genuinely enough info to ask "inches or mm?" but doesn't hand
+        // the number back. Fall back to what the user actually typed so a
+        // later bare-unit reply ("inches") still has a number to attach to,
+        // instead of that number being silently lost for the rest of the
+        // clarification loop.
+        var bareNumberMatch = /^\s*[+-]?\d+(?:\.\d+)?\s*$/.exec(trimmed);
+        if (bareNumberMatch) {
+          state.dynamicAnswers[question.key] = parseFloat(trimmed);
         }
+      }
+      if (data.unit) {
+        state.dynamicAnswers[unitFieldNameFor(question.key)] = data.unit;
       }
       addBotMessage(data.clarification_question || "Could you clarify that?");
       state.awaitingKind = "dynamic-input";
