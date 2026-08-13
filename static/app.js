@@ -145,16 +145,6 @@
       placeholder: "6-digit pincode",
       validate: pincodeValidate,
       next: function () {
-        return "dealer-notification";
-      },
-    },
-    {
-      id: "dealer-notification",
-      kind: "text",
-      bot: function () {
-        return "Your requirement and mail ID has been communicated to our dealer, who will contact you for further support.";
-      },
-      next: function () {
         return "explore-more";
       },
     },
@@ -185,7 +175,7 @@
       id: "explore-more",
       kind: "input",
       bot: function () {
-        return "Do you want to explore more pumps for your application? (yes/no)";
+        return "Your requirement and mail ID has been communicated to our dealer, who will contact you for further support.\n\nDo you want to explore more pumps for your application? (yes/no)";
       },
       placeholder: "Type yes or no",
       validate: function (value) {
@@ -342,16 +332,6 @@
     addStepMessages(step, state.answers);
     state.currentStepId = step.id;
     state.awaitingKind = step.kind;
-
-    if (step.kind === "text") {
-      setTimeout(function () {
-        var nextStepId = step.next(state.answers);
-        if (nextStepId) {
-          jumpToStep(nextStepId);
-          render();
-        }
-      }, 1500);
-    }
   }
 
   function showUnreachableBackendError(retryFn) {
