@@ -9,7 +9,6 @@ from app.use_cases.pressure_boosting.sheet_map import SHEET_SEQUENCE
 
 FLOOR_HEIGHT_FT = 12
 HEAD_SAFETY_FACTOR = 1.3
-SYSTEM_LOSSES_M = 25.5  # Fixed system losses: friction, fittings, and discharge pressure
 FLOW_PER_BATHROOM_LPM = 20
 UTILISATION_FACTOR = 0.6
 
@@ -21,9 +20,9 @@ class NoPressureBoostingMatchError(Exception):
 
 
 def calculate_head(num_floors: int) -> float:
-    """Calculate head in meters: (num_floors * 12 ft * 1.3) + 25.5 m system losses."""
+    """Calculate head in feet (building height), then convert to meters for catalog matching."""
     head_ft = (num_floors * FLOOR_HEIGHT_FT) * HEAD_SAFETY_FACTOR
-    return ft_to_m(head_ft) + SYSTEM_LOSSES_M
+    return ft_to_m(head_ft)
 
 
 def calculate_required_flow(num_floors: int, bathrooms_per_floor: int) -> float:
