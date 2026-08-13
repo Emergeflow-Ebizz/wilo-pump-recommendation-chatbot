@@ -12,6 +12,28 @@ from app.use_cases.pressure_boosting.rules import (
 )
 
 
+def test_check_feasibility_pending_before_bathrooms_per_floor():
+    uc = PressureBoostingUseCase()
+    assert uc.check_feasibility({"num_floors": 2}).status == "pending"
+
+
+def test_check_feasibility_pending_before_num_floors():
+    uc = PressureBoostingUseCase()
+    assert uc.check_feasibility({"bathrooms_per_floor": 2}).status == "pending"
+
+
+def test_check_feasibility_ok_for_reachable_head_and_flow():
+    uc = PressureBoostingUseCase()
+    result = uc.check_feasibility({"num_floors": 2, "bathrooms_per_floor": 2})
+    assert result.status == "ok"
+
+
+def test_check_feasibility_rejects_unreachable_head():
+    uc = PressureBoostingUseCase()
+    result = uc.check_feasibility({"num_floors": 100_000, "bathrooms_per_floor": 2})
+    assert result.status == "rejected"
+
+
 def test_calculate_head_one_floor():
     # 1 floor * 12 ft * 1.3 = 15.6 ft -> meters
     assert calculate_head(1) == pytest.approx(15.6 / 3.28084)
