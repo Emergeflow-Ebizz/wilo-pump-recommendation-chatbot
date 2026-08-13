@@ -145,6 +145,17 @@
       placeholder: "6-digit pincode",
       validate: pincodeValidate,
       next: function () {
+        return "dealer-notification";
+      },
+    },
+    {
+      id: "dealer-notification",
+      kind: "options",
+      bot: function () {
+        return "Your requirement and mail ID has been communicated to our dealer, who will contact you for further support.";
+      },
+      options: [],
+      next: function () {
         return "explore-more";
       },
     },
