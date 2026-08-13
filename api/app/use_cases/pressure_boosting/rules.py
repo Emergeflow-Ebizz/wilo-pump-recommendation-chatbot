@@ -1,7 +1,7 @@
 from app.common.catalog_loader import load_sheet
 from app.common.features import get_features
 from app.common.images import get_image_url
-from app.common.schemas import PumpRecommendation
+from app.common.schemas import FeasibilityResult, PumpRecommendation
 from app.common.units import ft_to_m
 from app.use_cases.base import UseCase
 from app.use_cases.pressure_boosting.questions import QUESTIONS
@@ -150,6 +150,24 @@ def select_model(catalog: dict, matched_head: float, required_flow_lpm: float | 
 class PressureBoostingUseCase(UseCase):
     slug = "pressure_boosting"
     questions = QUESTIONS
+
+    def check_feasibility(self, answers: dict) -> FeasibilityResult:
+        """Checks num_floors+bathrooms_per_floor together, as soon as both
+        are answered - this use case has no cosmetic/optional fields, so
+        those two are the entire answer set."""
+        num_floors = answers.get("num_floors")
+        bathrooms_per_floor = answers.get("bathrooms_per_floor")
+        if num_floors is None or bathrooms_per_floor is None:
+            return FeasibilityResult(status="pending")
+
+        target_head = calculate_head(num_floors)
+        required_flow_lpm = calculate_required_flow(num_floors, bathrooms_per_floor)
+        try:
+            resolve_pressure_boosting_catalog(target_head, required_flow_lpm)
+        except NoPressureBoostingMatchError as e:
+            return FeasibilityResult(status="rejected", message=str(e))
+
+        return FeasibilityResult(status="ok")
 
     def select_pump(self, answers: dict) -> PumpRecommendation:
         num_floors = answers["num_floors"]

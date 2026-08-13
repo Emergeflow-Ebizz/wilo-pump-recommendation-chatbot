@@ -1,7 +1,7 @@
 from app.common.catalog_loader import load_sheet
 from app.common.features import get_features
 from app.common.images import get_image_url
-from app.common.schemas import PumpRecommendation
+from app.common.schemas import FeasibilityResult, PumpRecommendation
 from app.common.units import ft_to_m, m_to_ft
 from app.use_cases.base import UseCase
 from app.use_cases.dewatering.questions import QUESTIONS
@@ -117,6 +117,24 @@ def select_model(catalog: dict, matched_head: float, desired_hp: float | None) -
 class DewateringUseCase(UseCase):
     slug = "dewatering"
     questions = QUESTIONS
+
+    def check_feasibility(self, answers: dict) -> FeasibilityResult:
+        """Checks depth_of_pit as soon as it's answered - it's the only
+        field that determines target_head, so motor_power_hp is never
+        needed here."""
+        depth_of_pit = answers.get("depth_of_pit")
+        depth_of_pit_unit = answers.get("depth_of_pit_unit")
+        if depth_of_pit is None or depth_of_pit_unit is None:
+            return FeasibilityResult(status="pending")
+
+        depth_of_pit_ft = normalize_depth_of_pit(depth_of_pit, depth_of_pit_unit)
+        target_head = calculate_head(depth_of_pit_ft)
+        try:
+            resolve_dewatering_catalog(target_head)
+        except NoDewateringMatchError as e:
+            return FeasibilityResult(status="rejected", message=str(e))
+
+        return FeasibilityResult(status="ok")
 
     def select_pump(self, answers: dict) -> PumpRecommendation:
         depth_of_pit_ft = normalize_depth_of_pit(*answers["depth_of_pit"])

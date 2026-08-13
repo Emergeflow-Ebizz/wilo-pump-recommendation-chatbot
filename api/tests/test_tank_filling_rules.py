@@ -3,6 +3,7 @@ import pytest
 
 from app.use_cases.tank_filling.rules import (
     NoTankFillingMatchError,
+    TankFillingUseCase,
     _has_exact_head,
     _match_head,
     calculate_head,
@@ -105,3 +106,31 @@ def test_resolve_monoblock_catalog_never_matches_below_fractional_target():
 def test_resolve_monoblock_catalog_impossible_head_raises():
     with pytest.raises(NoTankFillingMatchError):
         resolve_monoblock_catalog(10_000.0, desired_hp=None)
+
+
+def test_check_feasibility_pending_before_num_floors():
+    uc = TankFillingUseCase()
+    assert uc.check_feasibility({"inside_or_outside": "outside"}).status == "pending"
+
+
+def test_check_feasibility_pending_before_inside_or_outside():
+    uc = TankFillingUseCase()
+    assert uc.check_feasibility({"num_floors": 2}).status == "pending"
+
+
+def test_check_feasibility_ok_for_reachable_outside_head():
+    uc = TankFillingUseCase()
+    result = uc.check_feasibility({"inside_or_outside": "outside", "num_floors": 2})
+    assert result.status == "ok"
+
+
+def test_check_feasibility_rejects_unreachable_outside_head():
+    uc = TankFillingUseCase()
+    result = uc.check_feasibility({"inside_or_outside": "outside", "num_floors": 100_000})
+    assert result.status == "rejected"
+
+
+def test_check_feasibility_ok_for_reachable_inside_head_without_orientation():
+    uc = TankFillingUseCase()
+    result = uc.check_feasibility({"inside_or_outside": "inside", "num_floors": 2})
+    assert result.status == "ok"
