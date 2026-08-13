@@ -145,7 +145,7 @@
       placeholder: "6-digit pincode",
       validate: pincodeValidate,
       next: function () {
-        return "thank-you";
+        return "explore-more";
       },
     },
     {
@@ -172,7 +172,7 @@
         ];
       },
       next: function () {
-        return "explore-more";
+        return "final-goodbye";
       },
     },
     {
@@ -189,7 +189,7 @@
       },
       next: function () {
         var answer = state.answers["explore-more"];
-        return answer && answer.toLowerCase().trim() === "yes" ? "application" : "final-goodbye";
+        return answer && answer.toLowerCase().trim() === "yes" ? "application" : "thank-you";
       },
     },
     {
