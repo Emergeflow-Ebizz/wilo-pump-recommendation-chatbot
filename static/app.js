@@ -348,6 +348,7 @@
         var nextStepId = step.next(state.answers);
         if (nextStepId) {
           jumpToStep(nextStepId);
+          render();
         }
       }, 100);
     }
@@ -859,6 +860,12 @@
       return fetchNextQuestion();
     }
     var nextStep = getStep(nextId);
+
+    // Use jumpToStep for dealer-notification to handle auto-advance to explore-more
+    if (nextStep.id === "dealer-notification") {
+      return jumpToStep(nextId);
+    }
+
     addStepMessages(nextStep, state.answers);
     state.currentStepId = nextStep.id;
     state.awaitingKind = nextStep.kind;
@@ -1669,7 +1676,20 @@
       el.inputError.hidden = true;
     }
 
-    el.thread.scrollTop = el.thread.scrollHeight;
+    // Auto-scroll behavior:
+    // - Regular messages: scroll to bottom
+    // - Pump recommendations: scroll to show first pump card, not past it
+    var lastMessage = state.messages[state.messages.length - 1];
+    if (lastMessage && lastMessage.kind === "recommendation") {
+      // For recommendations, scroll to the first pump card (not all the way down)
+      var firstCard = el.thread.querySelector(".card");
+      if (firstCard) {
+        firstCard.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+    } else {
+      // For regular messages, auto-scroll to bottom
+      el.thread.scrollTop = el.thread.scrollHeight;
+    }
   }
 
   function handleSend() {
