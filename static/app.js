@@ -11,7 +11,7 @@
   // The FastAPI app is mounted at /api via index.py, so all requests need /api prefix.
   // When running locally with uvicorn api.index:app, routes are at /api/...
   // On Vercel, vercel.json routes "/api/(.*)" to api/index.py which also uses /api
-  var API_BASE_URL = "http://127.0.0.1:8000/api";
+  var API_BASE_URL = "/api";
 
   function prettifyKey(key) {
     return key
@@ -81,22 +81,22 @@
         {
           label: "Water Transfer from well to Overhead tank",
           value: "water-transfer",
-          icon: "./images/application-images/Water Transfer from well to Overhead tank.png",
+          icon: "./Water Transfer from well to Overhead tank.png",
         },
         {
           label: "Transfer of water from a ground level reservoir to an elevated tank",
           value: "tank-filling",
-          icon: "./images/application-images/Tank Filling from Ground tank to upper tank.png",
+          icon: "./Tank Filling from Ground tank to upper tank.png",
         },
         {
           label: "Pressure Boosting",
           value: "pressure-boosting",
-          icon: "./images/application-images/Pressure Boosting.png",
+          icon: "./Pressure Boosting.png",
         },
         {
           label: "Dewatering",
           value: "dewatering",
-          icon: "./images/application-images/Dewatering.png",
+          icon: "./Dewatering.png",
         },
         // {
         //   label: "Hot Water Circulation",
@@ -243,22 +243,22 @@
         {
           label: "Water Transfer from well to Overhead tank",
           value: "water-transfer",
-          icon: "./images/application-images/Water Transfer from well to Overhead tank.png",
+          icon: "./Water Transfer from well to Overhead tank.png",
         },
         {
           label: "Transfer of water from a ground level reservoir to an elevated tank",
           value: "tank-filling",
-          icon: "./images/application-images/Tank Filling from Ground tank to upper tank.png",
+          icon: "./Tank Filling from Ground tank to upper tank.png",
         },
         {
           label: "Pressure Boosting",
           value: "pressure-boosting",
-          icon: "./images/application-images/Pressure Boosting.png",
+          icon: "./Pressure Boosting.png",
         },
         {
           label: "Dewatering",
           value: "dewatering",
-          icon: "./images/application-images/Dewatering.png",
+          icon: "./Dewatering.png",
         },
       ],
       next: function (value) {
@@ -948,7 +948,7 @@
   function mascotImage() {
     var img = document.createElement("img");
     img.className = "mascot";
-    img.src = "./images/logo.png";
+    img.src = "./logo.png";
     img.alt = "Wilo Pumps Selection Chatbot logo";
     return img;
   }
@@ -1259,129 +1259,6 @@
 
   var PD_TABS = ["Overview", "Features"];
 
-  function openFullscreenImageZoom(imageUrl, modelName) {
-    var fullscreenBackdrop = document.createElement("div");
-    fullscreenBackdrop.className = "fullscreen-image-backdrop";
-    fullscreenBackdrop.style.position = "fixed";
-    fullscreenBackdrop.style.inset = "0";
-    fullscreenBackdrop.style.background = "rgba(0, 0, 0, 0.95)";
-    fullscreenBackdrop.style.display = "flex";
-    fullscreenBackdrop.style.alignItems = "center";
-    fullscreenBackdrop.style.justifyContent = "center";
-    fullscreenBackdrop.style.zIndex = "1000";
-
-    var imgWrapper = document.createElement("div");
-    imgWrapper.style.position = "relative";
-    imgWrapper.style.width = "90%";
-    imgWrapper.style.height = "90vh";
-    imgWrapper.style.display = "flex";
-    imgWrapper.style.alignItems = "center";
-    imgWrapper.style.justifyContent = "center";
-    imgWrapper.style.overflow = "hidden";
-
-    var img = document.createElement("img");
-    img.src = imageUrl;
-    img.alt = modelName || "Pump image";
-    img.style.maxWidth = "100%";
-    img.style.maxHeight = "100%";
-    img.style.objectFit = "contain";
-    img.style.transition = "transform 0.2s ease";
-    img.style.cursor = "grab";
-
-    var zoomState = { scale: 1, x: 0, y: 0, isDragging: false, startX: 0, startY: 0 };
-
-    function updateZoom() {
-      img.style.transform = "scale(" + zoomState.scale + ") translate(" + zoomState.x + "px, " + zoomState.y + "px)";
-    }
-
-    img.addEventListener("mousedown", function (e) {
-      if (zoomState.scale > 1) {
-        zoomState.isDragging = true;
-        zoomState.startX = e.clientX - zoomState.x;
-        zoomState.startY = e.clientY - zoomState.y;
-        img.style.cursor = "grabbing";
-      }
-    });
-
-    document.addEventListener("mousemove", function (e) {
-      if (zoomState.isDragging && imgWrapper.contains(img)) {
-        zoomState.x = e.clientX - zoomState.startX;
-        zoomState.y = e.clientY - zoomState.startY;
-        updateZoom();
-      }
-    });
-
-    document.addEventListener("mouseup", function () {
-      if (zoomState.isDragging) {
-        zoomState.isDragging = false;
-        img.style.cursor = "grab";
-      }
-    });
-
-    img.addEventListener("wheel", function (e) {
-      e.preventDefault();
-      var delta = e.deltaY > 0 ? -0.1 : 0.1;
-      zoomState.scale = Math.max(1, Math.min(4, zoomState.scale + delta));
-      if (zoomState.scale === 1) {
-        zoomState.x = 0;
-        zoomState.y = 0;
-      }
-      updateZoom();
-    }, { passive: false });
-
-    var closeBtn = document.createElement("button");
-    closeBtn.type = "button";
-    closeBtn.className = "fullscreen-close-btn";
-    closeBtn.innerHTML = "✕";
-    closeBtn.style.position = "absolute";
-    closeBtn.style.top = "20px";
-    closeBtn.style.right = "20px";
-    closeBtn.style.width = "40px";
-    closeBtn.style.height = "40px";
-    closeBtn.style.background = "rgba(255, 255, 255, 0.2)";
-    closeBtn.style.border = "1px solid rgba(255, 255, 255, 0.4)";
-    closeBtn.style.borderRadius = "50%";
-    closeBtn.style.color = "#fff";
-    closeBtn.style.fontSize = "24px";
-    closeBtn.style.cursor = "pointer";
-    closeBtn.style.display = "flex";
-    closeBtn.style.alignItems = "center";
-    closeBtn.style.justifyContent = "center";
-    closeBtn.style.transition = "all 0.2s ease";
-    closeBtn.style.zIndex = "1001";
-
-    closeBtn.addEventListener("mouseover", function () {
-      closeBtn.style.background = "rgba(255, 255, 255, 0.3)";
-    });
-
-    closeBtn.addEventListener("mouseout", function () {
-      closeBtn.style.background = "rgba(255, 255, 255, 0.2)";
-    });
-
-    function closeFullscreen() {
-      fullscreenBackdrop.remove();
-    }
-
-    closeBtn.addEventListener("click", closeFullscreen);
-
-    fullscreenBackdrop.addEventListener("click", function (e) {
-      if (e.target === fullscreenBackdrop) {
-        closeFullscreen();
-      }
-    });
-
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && document.body.contains(fullscreenBackdrop)) {
-        closeFullscreen();
-      }
-    });
-
-    imgWrapper.appendChild(img);
-    imgWrapper.appendChild(closeBtn);
-    fullscreenBackdrop.appendChild(imgWrapper);
-    document.body.appendChild(fullscreenBackdrop);
-  }
-
   function openPumpDetailsModal(recommendation) {
     el.detailsBody.innerHTML = "";
 
@@ -1427,17 +1304,10 @@
     if (imageUrl) {
       var imgContainer = document.createElement("div");
       imgContainer.className = "pd-image-container";
-
       var img = document.createElement("img");
       img.src = imageUrl;
       img.alt = recommendation.model_name || "Pump image";
       img.className = "pd-image";
-      img.style.cursor = "pointer";
-
-      img.addEventListener("click", function () {
-        openFullscreenImageZoom(imageUrl, recommendation.model_name);
-      });
-
       imgContainer.appendChild(img);
       overviewPanel.appendChild(imgContainer);
     }
@@ -1664,6 +1534,10 @@
 
     var alternatives = message.tiedAlternatives || [];
     if (alternatives.length) {
+      var tag = document.createElement("div");
+      tag.className = "section-tag";
+      tag.textContent = "Other similar options";
+      row.appendChild(tag);
       alternatives.forEach(function (alt) {
         if (alt && typeof alt === "object" && alt.model_name) {
           row.appendChild(buildRecommendationCard(alt, "Alternative"));
