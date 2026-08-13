@@ -1675,21 +1675,6 @@
     } else {
       el.inputError.hidden = true;
     }
-
-    // Auto-scroll behavior:
-    // - Regular messages: scroll to bottom
-    // - Pump recommendations: scroll to show first pump card, not past it
-    var lastMessage = state.messages[state.messages.length - 1];
-    if (lastMessage && lastMessage.kind === "recommendation") {
-      // For recommendations, scroll to the first pump card (not all the way down)
-      var firstCard = el.thread.querySelector(".card");
-      if (firstCard) {
-        firstCard.scrollIntoView({ behavior: "auto", block: "start" });
-      }
-    } else {
-      // For regular messages, auto-scroll to bottom
-      el.thread.scrollTop = el.thread.scrollHeight;
-    }
   }
 
   function handleSend() {
