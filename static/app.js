@@ -160,11 +160,7 @@
             kind: "html",
             html:
               "<strong>🙏 Thank you for visiting Wilo!</strong><br><br>" +
-              "We appreciate your interest in our products and services. If you need any further assistance, our support team is ready to help. 😊",
-          },
-          {
-            kind: "html",
-            html:
+              "We appreciate your interest in our products and services. If you need any further assistance, our support team is ready to help. 😊<br><br>" +
               "<strong>Contact Support:</strong><br>" +
               '📧 <a href="mailto:sales@wilo.com">sales@wilo.com</a><br>' +
               '🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank" rel="noopener noreferrer">https://wilo.com/in/en/Dealers/</a>',
