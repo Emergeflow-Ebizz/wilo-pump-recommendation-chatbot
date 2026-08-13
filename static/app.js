@@ -1675,6 +1675,9 @@
     } else {
       el.inputError.hidden = true;
     }
+
+    // Scroll to latest message
+    el.thread.scrollTop = el.thread.scrollHeight;
   }
 
   function handleSend() {
