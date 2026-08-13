@@ -75,19 +75,9 @@
       id: "application",
       kind: "options",
       bot: function () {
-        return "Hi there! I can help pick right Wilo pump for you. Select your application from the list below to get started.";
+        return "";
       },
       options: [
-        {
-          label: "Water Transfer from well to Overhead tank",
-          value: "water-transfer",
-          icon: "./Water Transfer from well to Overhead tank.png",
-        },
-        {
-          label: "Transfer of water from a ground level reservoir to an elevated tank",
-          value: "tank-filling",
-          icon: "./Tank Filling from Ground tank to upper tank.png",
-        },
         {
           label: "Pressure Boosting",
           value: "pressure-boosting",
@@ -97,6 +87,16 @@
           label: "Dewatering",
           value: "dewatering",
           icon: "./Dewatering.png",
+        },
+        {
+          label: "Borewell to Overhead tank",
+          value: "water-transfer",
+          icon: "./Water Transfer from well to Overhead tank.png",
+        },
+        {
+          label: "From Bottom tank to Overhead tank",
+          value: "tank-filling",
+          icon: "./Tank Filling from Ground tank to upper tank.png",
         },
         // {
         //   label: "Hot Water Circulation",
@@ -125,24 +125,10 @@
       },
     },
     {
-      id: "lead-contact",
-      kind: "input",
-      bot: function () {
-        return "Please provide your Email address or Contact number. So we can send detailed pump specifications";
-      },
-      placeholder: "Email or 10-digit phone number",
-      validate: contactValidate,
-      next: function () {
-        var contact = state.answers["lead-contact"] || "";
-        var isEmail = /^\S+@\S+\.\S+$/.test(contact);
-        return isEmail ? "lead-pincode" : "lead-email";
-      },
-    },
-    {
       id: "lead-email",
       kind: "input",
       bot: function () {
-        return "Please provide your Email address so we can send detailed pump specifications.";
+        return "";
       },
       placeholder: "Email address",
       validate: emailValidate,
@@ -154,7 +140,7 @@
       id: "lead-pincode",
       kind: "input",
       bot: function () {
-        return "What is your area pin code so we can locate the nearest dealer to you.";
+        return "In case you want our dealer to reach you, please share your Pin code.";
       },
       placeholder: "6-digit pincode",
       validate: pincodeValidate,
@@ -166,34 +152,7 @@
       id: "thank-you",
       kind: "final",
       bot: function () {
-        var msg = "Thank you! Our dealer will reach out to you shortly, and your details have been shared with dealer.";
-        if (state.selectedPump) {
-          var pump = state.selectedPump.recommendation;
-          var details = pump.details || {};
-          msg += "<br><br><strong style='font-size: 15px; color: #505050;'>Selected Pump:</strong><br>";
-          msg += "<span style='color: #009C82; font-weight: bold;'>" + (pump.model_name || "Unknown model") + "</span>";
-          DETAIL_DISPLAY_RULES.forEach(function (rule) {
-            var matchedKey = Object.keys(details).find(rule.test);
-            if (matchedKey != null && details[matchedKey] != null && details[matchedKey] !== "") {
-              var unit = null;
-              if (/head/i.test(rule.label)) {
-                unit = details.head_unit || state.dynamicAnswers[unitFieldNameFor("head")] || "m";
-              } else if (/flow/i.test(rule.label)) {
-                unit = details.flow_unit || "lpm";
-              } else if (/power|motor/i.test(rule.label)) {
-                unit = details.power_unit || "HP";
-              } else if (/fill.*time/i.test(rule.label)) {
-                unit = details.fill_time_unit || null;
-              }
-              msg += "<br><strong>" + rule.label + ":</strong> " + rule.format(details[matchedKey], unit);
-            }
-          });
-          if (pump.art_no != null) {
-            msg += "<br><strong>Article No.:</strong> " + String(pump.art_no);
-          }
-          return msg;
-        }
-        return msg;
+        return "Your requirement and mail ID has been communicated to our dealer, who will contact you for further support.";
       },
       followUp: function () {
         return [
@@ -246,7 +205,7 @@
           icon: "./Water Transfer from well to Overhead tank.png",
         },
         {
-          label: "Transfer of water from a ground level reservoir to an elevated tank",
+          label: "Transfer of water from a ground level reservoir to an Overhead tank",
           value: "tank-filling",
           icon: "./Tank Filling from Ground tank to upper tank.png",
         },
@@ -317,10 +276,12 @@
    * html) it defines, e.g. the multi-message sign-off on "thank-you". */
   function addStepMessages(step, answers) {
     var botMsg = step.bot(answers);
-    if (step.id === "thank-you" && state.selectedPump) {
-      addBotHtmlMessage(botMsg);
-    } else {
-      addBotMessage(botMsg);
+    if (botMsg.trim()) {
+      if (step.id === "thank-you" && state.selectedPump) {
+        addBotHtmlMessage(botMsg);
+      } else {
+        addBotMessage(botMsg);
+      }
     }
     if (!step.followUp) return;
     step.followUp(answers).forEach(function (msg) {
@@ -410,7 +371,7 @@
     // Map application type based on use case
     var applicationMap = {
       "water_transfer": "Water Extraction From Borewell",
-      "tank_filling": "Transfer of water from a ground level reservoir to an elevated tank",
+      "tank_filling": "Transfer of water from a ground level reservoir to an Overhead tank",
       "pressure_boosting": "Pressure Boosting",
       "dewatering": "Dewatering",
     };
@@ -869,7 +830,7 @@
       // Add confirmation message with selected application
       var appName = "";
       if (state.useCaseSlug === "water_transfer") appName = "Water Transfer from well to Overhead tank";
-      else if (state.useCaseSlug === "tank_filling") appName = "Transfer of water from a ground level reservoir to an elevated tank";
+      else if (state.useCaseSlug === "tank_filling") appName = "Transfer of water from a ground level reservoir to an Overhead tank";
       else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
       else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
 
@@ -962,22 +923,19 @@
 
     var greet = document.createElement("p");
     greet.className = "greet";
-    greet.innerHTML = "<strong style='font-size: 16px;'>👋 Hi I am Boondiram!</strong>";
-
-    var brand = document.createElement("p");
-    brand.className = "brand-name";
-    brand.textContent = "Wilo Pumps Selection Chatbot";
-
-    var line1 = document.createElement("p");
-    line1.textContent = "I'll help you find the right pump for your application.";
+    greet.innerHTML = "<strong style='font-size: 16px;'>👋 Hi I am WiRa!</strong>";
 
     var line2 = document.createElement("p");
     line2.textContent = "Let's get started.";
+    line2.className = "line2-text";
+
+    var message = document.createElement("p");
+    message.textContent = "Let me know your application needs to suggest the best solution.";
+    message.className = "application-message";
 
     textWrap.appendChild(greet);
-    textWrap.appendChild(brand);
-    textWrap.appendChild(line1);
     textWrap.appendChild(line2);
+    textWrap.appendChild(message);
 
     card.appendChild(textWrap);
     card.appendChild(mascotImage());
@@ -1046,28 +1004,12 @@
         return appendUnitIfPlainNumber(value, unit || "HP");
       },
     },
-    {
-      test: function (key) {
-        return /phase/i.test(key);
-      },
-      label: "Phase",
-      format: formatPhaseValue,
-    },
-    {
-      test: function (key) {
-        return /fill/i.test(key) && /time/i.test(key);
-      },
-      label: "Fill Time",
-      format: function (value, unit) {
-        return appendUnitIfPlainNumber(value, unit);
-      },
-    },
   ];
 
   // The "View Pump Details" modal shows more than the summary card: every
   // detail field the backend returns except internal ones (spec sheet name,
   // the raw curve array, which gets its own chart instead of a text row).
-  var TECHNICAL_DETAIL_BLACKLIST = ["sheet", "performance_curve", "head_unit"];
+  var TECHNICAL_DETAIL_BLACKLIST = ["sheet", "performance_curve", "head_unit", "target_head", "phase"];
   var TECHNICAL_DETAIL_RULES = DETAIL_DISPLAY_RULES.concat([
     {
       test: function (key) {
@@ -1092,11 +1034,52 @@
   function buildTechnicalPointsRows(recommendation) {
     var details = recommendation.details || {};
     var rows = [];
-    if (recommendation.art_no != null) {
-      rows.push({ label: "Article No.", value: String(recommendation.art_no) });
-    }
+    var processedKeys = new Set();
+
+    var displayOrder = ["flow", "head", "hp", "art_no"];
+
+    displayOrder.forEach(function (key) {
+      if (key === "art_no") {
+        if (recommendation.art_no != null) {
+          rows.push({ label: "Article No.", value: String(recommendation.art_no) });
+        }
+        processedKeys.add("art_no");
+        return;
+      }
+
+      var matchingKey = Object.keys(details).find(function (detailKey) {
+        return detailKey.toLowerCase().indexOf(key) !== -1;
+      });
+
+      if (matchingKey && TECHNICAL_DETAIL_BLACKLIST.indexOf(matchingKey) === -1) {
+        var value = details[matchingKey];
+        if (value != null && value !== "") {
+          var rule = TECHNICAL_DETAIL_RULES.find(function (r) {
+            return r.test(matchingKey);
+          });
+          var unit = null;
+          if (rule) {
+            if (/head/i.test(rule.label)) {
+              unit = details.head_unit || state.dynamicAnswers[unitFieldNameFor("head")] || "m";
+            } else if (/flow/i.test(rule.label)) {
+              unit = details.flow_unit || "lpm";
+            } else if (/power|motor/i.test(rule.label)) {
+              unit = details.power_unit || "HP";
+            } else if (/fill.*time/i.test(rule.label)) {
+              unit = details.fill_time_unit || null;
+            }
+          }
+          rows.push({
+            label: rule ? rule.label : prettifyKey(matchingKey),
+            value: rule ? rule.format(value, unit) : formatDetailValue(value),
+          });
+          processedKeys.add(matchingKey);
+        }
+      }
+    });
+
     Object.keys(details).forEach(function (key) {
-      if (TECHNICAL_DETAIL_BLACKLIST.indexOf(key) !== -1) return;
+      if (processedKeys.has(key) || TECHNICAL_DETAIL_BLACKLIST.indexOf(key) !== -1) return;
       var value = details[key];
       if (value == null || value === "") return;
       var rule = TECHNICAL_DETAIL_RULES.find(function (r) {
@@ -1503,14 +1486,14 @@
 
       var appName = "";
       if (state.useCaseSlug === "water_transfer") appName = "Water Transfer from well to Overhead tank";
-      else if (state.useCaseSlug === "tank_filling") appName = "Transfer of water from a ground level reservoir to an elevated tank";
+      else if (state.useCaseSlug === "tank_filling") appName = "Transfer of water from a ground level reservoir to an Overhead tank";
       else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
       else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
 
       var pumpModel = recommendation.model_name || "pump";
-      var html = "Great! You've selected <span style='color: #009C82; font-weight: bold;'>" + pumpModel + "</span>. Now, let me collect your details to connect you with a dealer.";
+      var html = "Great! You've selected <span style='color: #009C82; font-weight: bold;'>" + pumpModel + "</span>. To get the selection in your mailbox, please provide your email ID.";
       addBotHtmlMessage(html);
-      jumpToStep("lead-contact");
+      jumpToStep("lead-email");
       render();
     });
 
@@ -1599,12 +1582,7 @@
       bubble.innerHTML = parsedHTML;
     }
 
-    var time = document.createElement("div");
-    time.className = "time";
-    time.textContent = message.timestamp;
-
     row.appendChild(bubble);
-    row.appendChild(time);
     return row;
   }
 
