@@ -150,11 +150,10 @@
     },
     {
       id: "dealer-notification",
-      kind: "options",
+      kind: "text",
       bot: function () {
         return "Your requirement and mail ID has been communicated to our dealer, who will contact you for further support.";
       },
-      options: [],
       next: function () {
         return "explore-more";
       },
@@ -343,6 +342,16 @@
     addStepMessages(step, state.answers);
     state.currentStepId = step.id;
     state.awaitingKind = step.kind;
+
+    if (step.kind === "text") {
+      setTimeout(function () {
+        var nextStepId = step.next(state.answers);
+        if (nextStepId) {
+          jumpToStep(nextStepId);
+          render();
+        }
+      }, 1500);
+    }
   }
 
   function showUnreachableBackendError(retryFn) {
