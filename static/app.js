@@ -484,7 +484,7 @@
     console.log("[runRecommendation] full response:", data);
 
     if (data.status === "ok") {
-      addBotMessage("Based on what you shared, here's a pump that matches your requirement:");
+      addBotMessage("Based on what you shared, here's wilo solution to meet your requirements");
       addRecommendationMessage(data.recommendation, data.recommendation && data.recommendation.tied_alternatives);
       state.lastRecommendation = data.recommendation;
       render();
