@@ -25,22 +25,6 @@ class Question(BaseModel):
     domain_context: str = ""
 
 
-class FeasibilityResult(BaseModel):
-    """Result of checking whether the answers collected so far still allow a
-    pump match, without requiring every question to have been answered yet.
-
-    status is one of:
-    - "pending": not enough of the match-determining answers are in yet.
-    - "ok": every match-determining answer collected so far is still fine.
-    - "rejected": no pump can match, regardless of any remaining answers.
-    - "confirmation_required": a match exists but only via a fallback the
-      user must explicitly confirm (e.g. water_transfer's oversize borewell).
-    """
-
-    status: str
-    message: str | None = None
-
-
 class WaterTransferRequest(BaseModel):
     delivery_type: str
     borewell_size: float = Field(gt=0)

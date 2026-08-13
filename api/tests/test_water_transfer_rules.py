@@ -9,7 +9,6 @@ from app.use_cases.water_transfer.rules import (
     BorewellOversizeConfirmationRequired,
     BorewellTooSmallError,
     NoModelAvailableError,
-    WaterTransferUseCase,
     _match_head,
     normalize_borewell_size,
     normalize_well_depth,
@@ -123,80 +122,3 @@ def test_match_head_never_returns_below_fractional_target():
 def test_match_head_exact_whole_number_target_still_matches_exactly():
     catalog = {"A": _model(1.0, {31: 40, 32: 38})}
     assert _match_head(catalog, 31) == 31
-
-
-def test_check_feasibility_pending_before_delivery_type():
-    uc = WaterTransferUseCase()
-    assert uc.check_feasibility({}).status == "pending"
-
-
-def test_check_feasibility_pending_before_borewell_size():
-    uc = WaterTransferUseCase()
-    result = uc.check_feasibility({"delivery_type": "ground_floor"})
-    assert result.status == "pending"
-
-
-def test_check_feasibility_rejects_undersize_borewell_before_well_depth_known():
-    uc = WaterTransferUseCase()
-    result = uc.check_feasibility({
-        "delivery_type": "ground_floor",
-        "borewell_size": 3,
-        "borewell_unit": "inch",
-    })
-    assert result.status == "rejected"
-
-
-def test_check_feasibility_requires_confirmation_for_oversize_borewell():
-    uc = WaterTransferUseCase()
-    result = uc.check_feasibility({
-        "delivery_type": "ground_floor",
-        "borewell_size": 12,
-        "borewell_unit": "inch",
-    })
-    assert result.status == "confirmation_required"
-
-
-def test_check_feasibility_ok_when_only_borewell_size_known():
-    uc = WaterTransferUseCase()
-    result = uc.check_feasibility({
-        "delivery_type": "ground_floor",
-        "borewell_size": 5,
-        "borewell_unit": "inch",
-    })
-    assert result.status == "ok"
-
-
-def test_check_feasibility_rejects_head_no_sheet_can_reach():
-    uc = WaterTransferUseCase()
-    result = uc.check_feasibility({
-        "delivery_type": "ground_floor",
-        "borewell_size": 5,
-        "borewell_unit": "inch",
-        "well_depth": 100000,
-        "well_depth_unit": "ft",
-    })
-    assert result.status == "rejected"
-
-
-def test_check_feasibility_ground_floor_defaults_num_floors_to_zero():
-    uc = WaterTransferUseCase()
-    result = uc.check_feasibility({
-        "delivery_type": "ground_floor",
-        "borewell_size": 5,
-        "borewell_unit": "inch",
-        "well_depth": 100,
-        "well_depth_unit": "ft",
-    })
-    assert result.status == "ok"
-
-
-def test_check_feasibility_elevated_tank_pending_until_num_floors_known():
-    uc = WaterTransferUseCase()
-    result = uc.check_feasibility({
-        "delivery_type": "elevated_tank",
-        "borewell_size": 5,
-        "borewell_unit": "inch",
-        "well_depth": 100,
-        "well_depth_unit": "ft",
-    })
-    assert result.status == "ok"

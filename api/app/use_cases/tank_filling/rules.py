@@ -1,7 +1,7 @@
 from app.common.catalog_loader import load_sheet
 from app.common.features import get_features
 from app.common.images import get_image_url
-from app.common.schemas import FeasibilityResult, PumpRecommendation
+from app.common.schemas import PumpRecommendation
 from app.common.units import ft_to_m
 from app.use_cases.base import UseCase
 from app.use_cases.tank_filling.questions import QUESTIONS
@@ -151,41 +151,6 @@ def resolve_openwell_catalog(orientation: str) -> dict:
 class TankFillingUseCase(UseCase):
     slug = "tank_filling"
     questions = QUESTIONS
-
-    def check_feasibility(self, answers: dict) -> FeasibilityResult:
-        """Checks inside_or_outside+num_floors together, as soon as both are
-        answered - horizontal_or_vertical, tank_capacity, and motor_power_hp
-        never affect whether a match exists (an unanswered orientation just
-        means both orientations get tried, see select_pump above).
-        """
-        inside_or_outside = answers.get("inside_or_outside")
-        num_floors = answers.get("num_floors")
-        if inside_or_outside is None or num_floors is None:
-            return FeasibilityResult(status="pending")
-
-        target_head = calculate_head(num_floors)
-        horizontal_or_vertical = answers.get("horizontal_or_vertical")
-
-        if inside_or_outside == "inside":
-            orientations = (
-                (horizontal_or_vertical,)
-                if horizontal_or_vertical in ("horizontal", "vertical")
-                else ("horizontal", "vertical")
-            )
-            for orientation in orientations:
-                catalog = resolve_openwell_catalog(orientation)
-                if any(h >= target_head for h in _heads_in_catalog(catalog)):
-                    return FeasibilityResult(status="ok")
-            return FeasibilityResult(status="rejected", message=NO_MODEL_AVAILABLE_MESSAGE)
-
-        if inside_or_outside == "outside":
-            try:
-                resolve_monoblock_catalog(target_head, None)
-            except NoTankFillingMatchError as e:
-                return FeasibilityResult(status="rejected", message=str(e))
-            return FeasibilityResult(status="ok")
-
-        return FeasibilityResult(status="pending")
 
     def select_pump(self, answers: dict) -> PumpRecommendation:
         inside_or_outside = answers["inside_or_outside"]

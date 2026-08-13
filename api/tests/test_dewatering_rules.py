@@ -3,7 +3,6 @@ import pytest
 
 from app.use_cases.dewatering.rules import (
     HEAD_SAFETY_FACTOR,
-    DewateringUseCase,
     NoDewateringMatchError,
     _match_head,
     calculate_head,
@@ -108,21 +107,3 @@ def test_resolve_dewatering_catalog_walks_mnc_challenger_initial_waste_in_order(
 def test_resolve_dewatering_catalog_raises_when_no_sheet_reaches_head():
     with pytest.raises(NoDewateringMatchError):
         resolve_dewatering_catalog(10_000)
-
-
-def test_check_feasibility_pending_before_depth_of_pit():
-    uc = DewateringUseCase()
-    assert uc.check_feasibility({}).status == "pending"
-    assert uc.check_feasibility({"depth_of_pit": 10}).status == "pending"
-
-
-def test_check_feasibility_ok_for_reachable_depth():
-    uc = DewateringUseCase()
-    result = uc.check_feasibility({"depth_of_pit": 10, "depth_of_pit_unit": "ft"})
-    assert result.status == "ok"
-
-
-def test_check_feasibility_rejects_unreachable_depth():
-    uc = DewateringUseCase()
-    result = uc.check_feasibility({"depth_of_pit": 10_000, "depth_of_pit_unit": "ft"})
-    assert result.status == "rejected"

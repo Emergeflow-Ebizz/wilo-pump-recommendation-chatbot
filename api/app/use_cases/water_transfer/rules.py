@@ -1,7 +1,7 @@
 from app.common.catalog_loader import load_sheet
 from app.common.features import get_features
 from app.common.images import get_image_url
-from app.common.schemas import FeasibilityResult, PumpRecommendation
+from app.common.schemas import PumpRecommendation
 from app.common.units import ft_to_m, m_to_ft, mm_to_inch
 from app.use_cases.base import UseCase
 from app.use_cases.water_transfer.questions import QUESTIONS
@@ -154,48 +154,6 @@ def calculate_fill_time_minutes(tank_capacity_litres: float, flow_lpm: float) ->
 class WaterTransferUseCase(UseCase):
     slug = "water_transfer"
     questions = QUESTIONS
-
-    def check_feasibility(self, answers: dict) -> FeasibilityResult:
-        """Checks borewell_size as soon as it's answered (independent of
-        every other field), then well_depth+num_floors together as soon as
-        both of those are answered too - motor_power_hp and
-        roof_tank_capacity never affect whether a match exists, so they're
-        never required here.
-        """
-        delivery_type = answers.get("delivery_type")
-        if delivery_type is None:
-            return FeasibilityResult(status="pending")
-
-        borewell_size = answers.get("borewell_size")
-        borewell_unit = answers.get("borewell_unit")
-        if borewell_size is None or borewell_unit is None:
-            return FeasibilityResult(status="pending")
-
-        borewell_size_inch = normalize_borewell_size(borewell_size, borewell_unit)
-        try:
-            sheet_filenames = resolve_sheet_filename(borewell_size_inch)
-        except BorewellTooSmallError as e:
-            return FeasibilityResult(status="rejected", message=str(e))
-        except BorewellOversizeConfirmationRequired as e:
-            return FeasibilityResult(status="confirmation_required", message=str(e))
-
-        well_depth = answers.get("well_depth")
-        well_depth_unit = answers.get("well_depth_unit")
-        num_floors = answers.get("num_floors") if delivery_type != "ground_floor" else 0
-        if well_depth is None or well_depth_unit is None or num_floors is None:
-            return FeasibilityResult(status="ok")
-
-        well_depth_ft = normalize_well_depth(well_depth, well_depth_unit)
-        target_head = calculate_head(well_depth_ft, num_floors)
-        catalog = {}
-        for filename in sheet_filenames:
-            catalog.update(load_sheet(filename))
-        try:
-            _match_head(catalog, target_head)
-        except NoModelAvailableError as e:
-            return FeasibilityResult(status="rejected", message=str(e))
-
-        return FeasibilityResult(status="ok")
 
     def select_pump(self, answers: dict) -> PumpRecommendation:
         """Returns the best-matched model.

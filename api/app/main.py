@@ -322,35 +322,6 @@ def get_next_question(use_case_slug: str, request: NextQuestionRequest) -> NextQ
     return NextQuestionResponse(question=next_question_fn(request.answers))
 
 
-class CheckAnswerRequest(BaseModel):
-    answers_so_far: dict = {}
-
-
-class CheckAnswerResponse(BaseModel):
-    status: str
-    message: str | None = None
-
-
-@app.post("/{use_case_slug}/check_answer", response_model=CheckAnswerResponse)
-def check_answer(use_case_slug: str, request: CheckAnswerRequest) -> CheckAnswerResponse:
-    """Checks whether the answers collected so far already rule out a pump
-    match, without waiting for the remaining questions to be asked - e.g.
-    water_transfer's borewell_size alone can already be a guaranteed reject,
-    so there's no point asking well_depth/motor_power afterwards. Intended
-    to be called by the frontend right after any answer is recorded, for
-    every use case and every question - see each use case's
-    check_feasibility() in its rules.py for which fields it actually needs
-    before it can say anything conclusive (status "pending" until then).
-    """
-    uc = USE_CASES.get(use_case_slug)
-    if uc is None:
-        raise HTTPException(status_code=404, detail=f"Unknown use case: {use_case_slug}")
-
-    result = uc.check_feasibility(request.answers_so_far)
-    message = _explain(result.message, request.answers_so_far) if result.message else None
-    return CheckAnswerResponse(status=result.status, message=message)
-
-
 class WaterTransferResponse(BaseModel):
     status: str
     message: str | None = None
