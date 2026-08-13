@@ -152,7 +152,7 @@
       id: "thank-you",
       kind: "final",
       bot: function () {
-        return "Your requirement and mail ID has been communicated to our dealer, who will contact you for further support.";
+        return "";
       },
       followUp: function () {
         return [
@@ -172,7 +172,7 @@
         ];
       },
       next: function () {
-        return "final-goodbye";
+        return null;
       },
     },
     {
