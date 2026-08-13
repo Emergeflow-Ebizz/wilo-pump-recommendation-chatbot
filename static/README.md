@@ -11,7 +11,7 @@ parsing, and pump recommendations.
 - `app.js` - conversation flow (application/use-case picker, lead-capture
   steps, thank-you sign-off) and all calls to the backend API
 - `style.css` - chat widget styling
-- `favicon.svg`, `WILO_Logo_2013.svg`, `mascot.jpeg` - static assets
+- `wilo_logo.svg` - static assets
 
 ## Backend
 
