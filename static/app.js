@@ -11,7 +11,7 @@
   // The FastAPI app is mounted at /api via index.py, so all requests need /api prefix.
   // When running locally with uvicorn api.index:app, routes are at /api/...
   // On Vercel, vercel.json routes "/api/(.*)" to api/index.py which also uses /api
-  var API_BASE_URL = "/api";
+  var API_BASE_URL = "http://localhost:8000";
 
   function prettifyKey(key) {
     return key
@@ -1742,7 +1742,10 @@
       }, 100);
     } else {
       // For regular chat, scroll to latest message
-      el.thread.scrollTop = el.thread.scrollHeight;
+      // But not on initial load - let welcome card show first
+      if (state.messages.length > 2) {
+        el.thread.scrollTop = el.thread.scrollHeight;
+      }
     }
   }
 
