@@ -192,7 +192,7 @@ body {
   width: auto;
   height: auto;
   object-fit: contain;
-  padding: 12px;
+  padding: 8px;
   display: block;
 }
 .pd-tabs {
@@ -414,7 +414,7 @@ body {
 }
 
 .thread {
-  padding: 12px 6px 18px;
+  padding: 8px 4px 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -475,10 +475,10 @@ body {
 .option-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
   max-width: 100%;
-  padding: 0 6px;
+  padding: 0 4px;
 }
 .option-card {
   display: flex;
@@ -488,7 +488,7 @@ body {
   background: #fff;
   border: 1px solid rgba(0, 156, 130, 0.1);
   border-radius: 16px;
-  padding: 12px;
+  padding: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   cursor: pointer;
   text-align: center;
@@ -689,7 +689,7 @@ body {
   background: var(--teal-dark);
   color: #fff;
   border: none;
-  padding: 12px;
+  padding: 8px;
   border-radius: 12px;
   font-weight: 700;
   font-size: 13.5px;
