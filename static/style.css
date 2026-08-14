@@ -47,7 +47,7 @@ body {
 
 .phone {
   position: relative;
-  width: 390px;
+  width: 480px;
   max-width: 100%;
   max-width: calc(100vw - 24px);
   height: 780px;
