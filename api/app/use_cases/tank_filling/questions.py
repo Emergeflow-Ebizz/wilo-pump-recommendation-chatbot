@@ -16,7 +16,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="num_floors",
-        prompt="Please specify the number of floors above the reservoir where the water needs to be delivered",
+        prompt="Number of floors to understand location of overhead tank",
         requires_integer=True,
         domain_context=(
             "Used to calculate the total head the pump must overcome - each "
@@ -41,7 +41,7 @@ QUESTIONS: list[Question] = [
 
 INSIDE_OR_OUTSIDE_QUESTION = Question(
     key="inside_or_outside",
-    prompt="Please specify whether the pump is inside the tank or outside the tank",
+    prompt="Please specify whether the pump is inside the tank (Submersible type) or outside/on the tank",
     domain_context=(
         "Determines whether a submersible or a surface (ground-level) pump "
         "model is required - this is a hard selection criterion, not a "

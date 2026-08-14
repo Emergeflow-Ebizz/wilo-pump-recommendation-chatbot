@@ -3,7 +3,7 @@ from app.common.schemas import Question
 QUESTIONS: list[Question] = [
     Question(
         key="borewell_size",
-        prompt="Please provide the borewell diameter (in **mm** or **inches**)",
+        prompt="Let me know the borewell diameter (Mention in inch or mm)",
         unit="inch",
         allowed_units=["inch", "mm"],
         requires_stated_unit=True,
@@ -19,7 +19,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="well_depth",
-        prompt="Please provide the total borewell depth (in **meters** or **feet**)",
+        prompt="And the borewell depth (mention in meters or feet)",
         unit="ft",
         allowed_units=["ft", "m"],
         requires_stated_unit=True,
@@ -46,7 +46,7 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="num_floors",
-        prompt="Please specify the number of floors above ground level where the water needs to be delivered?",
+        prompt="Number of floors to understand location of overhead tank",
         requires_integer=True,
         min_value=1,
         domain_context=(
@@ -74,7 +74,7 @@ QUESTIONS: list[Question] = [
 
 DELIVERY_TYPE_QUESTION = Question(
     key="delivery_type",
-    prompt="Will the pumped water be delivered to the **ground floor** or to an **overhead/terrace water tank**",
+    prompt="Where would you like to transfer the water, **Ground level** or **overhead tank**",
     domain_context=(
         "Determines which follow-up questions are asked. Ground-floor delivery "
         "requires only borewell diameter, depth, and optional motor power. "
