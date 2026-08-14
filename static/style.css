@@ -48,8 +48,6 @@ body {
 .phone {
   position: relative;
   width: 390px;
-  max-width: 100%;
-  max-width: calc(100vw - 24px);
   height: 780px;
   background: var(--bg);
   border-radius: 28px;
@@ -63,17 +61,6 @@ body {
 @media (max-height: 900px) {
   .phone {
     height: calc(100vh - 64px);
-  }
-}
-
-@media (max-width: 480px) {
-  .app-shell {
-    padding: 12px 4px;
-  }
-
-  .phone {
-    width: 100%;
-    border-radius: 16px;
   }
 }
 
