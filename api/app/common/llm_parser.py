@@ -798,12 +798,12 @@ _CATEGORY_KEYWORDS: dict[str, list[str]] = {
 # instead of the internal literal (e.g. "ground_floor") when clarification
 # is needed.
 _CATEGORY_LABELS: dict[str, str] = {
-    "ground_floor": "ground floor",
-    "elevated_tank": "elevated tank",
-    "inside": "inside",
-    "outside": "outside",
-    "horizontal": "horizontal",
-    "vertical": "vertical",
+    "ground_floor": "Ground floor",
+    "elevated_tank": "Overhead tank",
+    "inside": "Inside",
+    "outside": "Outside",
+    "horizontal": "Horizontal",
+    "vertical": "Vertical",
 }
 
 
