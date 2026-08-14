@@ -500,7 +500,7 @@
     console.log("[runRecommendation] full response:", data);
 
     if (data.status === "ok") {
-      addBotMessage("Based on what you shared, here's wilo solution to meet your requirements");
+      addBotMessage("Based on what you shared, here's wilo solution to meet your requirements.");
       addRecommendationMessage(data.recommendation, data.recommendation && data.recommendation.tied_alternatives);
       state.lastRecommendation = data.recommendation;
       render();
@@ -945,7 +945,7 @@
 
     var greet = document.createElement("p");
     greet.className = "greet";
-    greet.innerHTML = "<strong style='font-size: 16px;'>👋 Hi I am WiRa!</strong>";
+    greet.innerHTML = "<strong style='font-size: 16px;'>👋 Hi I am <span style='color: #009C82;'>WiRa</span>!</strong>";
 
     var line2 = document.createElement("p");
     line2.textContent = "Let's get started.";
@@ -1001,7 +1001,7 @@
   var DETAIL_DISPLAY_RULES = [
     {
       test: function (key) {
-        return /flow/i.test(key);
+        return /^flow$/i.test(key);
       },
       label: "Flow",
       format: function (value, unit) {
@@ -1031,7 +1031,7 @@
   // The "View Pump Details" modal shows more than the summary card: every
   // detail field the backend returns except internal ones (spec sheet name,
   // the raw curve array, which gets its own chart instead of a text row).
-  var TECHNICAL_DETAIL_BLACKLIST = ["sheet", "performance_curve", "head_unit", "target_head", "phase"];
+  var TECHNICAL_DETAIL_BLACKLIST = ["sheet", "performance_curve", "head_unit", "target_head", "phase", "required_flow", "flow_unit"];
   var TECHNICAL_DETAIL_RULES = DETAIL_DISPLAY_RULES.concat([
     {
       test: function (key) {
@@ -1069,13 +1069,20 @@
         return;
       }
 
-      var matchingKey = Object.keys(details).find(function (detailKey) {
-        return detailKey.toLowerCase().indexOf(key) !== -1;
-      });
+      var matchingKey;
+      if (key === "flow") {
+        matchingKey = "flow";
+      } else if (key === "head") {
+        matchingKey = "matched_head";
+      } else if (key === "hp") {
+        matchingKey = Object.keys(details).find(function (k) {
+          return /^hp$/i.test(k) || /motor/i.test(k) || /power/i.test(k);
+        });
+      }
 
-      if (matchingKey && TECHNICAL_DETAIL_BLACKLIST.indexOf(matchingKey) === -1) {
+      if (matchingKey && details[matchingKey] != null && TECHNICAL_DETAIL_BLACKLIST.indexOf(matchingKey) === -1) {
         var value = details[matchingKey];
-        if (value != null && value !== "") {
+        if (value !== "") {
           var rule = TECHNICAL_DETAIL_RULES.find(function (r) {
             return r.test(matchingKey);
           });
@@ -1330,6 +1337,7 @@
       overviewPanel.appendChild(panelTitle);
 
       var chartWrap = document.createElement("div");
+      chartWrap.style.padding = "12px 0";
       chartWrap.innerHTML = curveMarkup;
       overviewPanel.appendChild(chartWrap); 
 
@@ -1345,10 +1353,20 @@
     overviewPanel.appendChild(techTitle);
 
     var table = document.createElement("div");
-    table.className = "specs-table";
+    table.className = "specs-table overview-specs";
+    var iconMap = {
+      "Article No.": "🏷️",
+      "Target Head": "📍",
+      "Head": "🏔️",
+      "Flow": "💧",
+      "Motor Power": "⚙️",
+      "Phase": "⚡"
+    };
     buildTechnicalPointsRows(recommendation).forEach(function (row) {
       var line = document.createElement("div");
-      line.className = "spec-line";
+      line.className = "spec-line overview-spec-line";
+      var icon = iconMap[row.label] || "•";
+      line.setAttribute("data-icon", icon);
       var k = document.createElement("span");
       k.textContent = row.label;
       var v = document.createElement("span");
@@ -1386,23 +1404,51 @@
     el.detailsBody.appendChild(panelContainer);
 
     var tabButtons = tabs.querySelectorAll(".pd-tab");
+    var switchTab = function (index) {
+      tabButtons.forEach(function (b) {
+        b.classList.remove("active");
+      });
+      tabButtons[index].classList.add("active");
+
+      var panels = panelContainer.querySelectorAll(".pd-panel");
+      panels.forEach(function (panel) {
+        panel.classList.remove("active");
+      });
+      var targetPanel = panelContainer.querySelector('[data-tab="' + PD_TABS[index] + '"]');
+      if (targetPanel) {
+        targetPanel.classList.add("active");
+      }
+    };
+
     tabButtons.forEach(function (btn, i) {
       btn.addEventListener("click", function () {
-        tabButtons.forEach(function (b) {
-          b.classList.remove("active");
-        });
-        btn.classList.add("active");
-
-        var panels = panelContainer.querySelectorAll(".pd-panel");
-        panels.forEach(function (panel) {
-          panel.classList.remove("active");
-        });
-        var targetPanel = panelContainer.querySelector('[data-tab="' + PD_TABS[i] + '"]');
-        if (targetPanel) {
-          targetPanel.classList.add("active");
-        }
+        switchTab(i);
       });
     });
+
+    // Swipe gesture support for tabs
+    var touchStartX = 0;
+    var touchEndX = 0;
+    var currentTabIndex = 0;
+
+    el.detailsBackdrop.addEventListener("touchstart", function (e) {
+      touchStartX = e.changedTouches[0].screenX;
+    }, false);
+
+    el.detailsBackdrop.addEventListener("touchend", function (e) {
+      touchEndX = e.changedTouches[0].screenX;
+      var swipeThreshold = 50;
+
+      if (touchStartX - touchEndX > swipeThreshold) {
+        // Swiped left - go to next tab (Features)
+        currentTabIndex = Math.min(currentTabIndex + 1, PD_TABS.length - 1);
+        switchTab(currentTabIndex);
+      } else if (touchEndX - touchStartX > swipeThreshold) {
+        // Swiped right - go to previous tab (Overview)
+        currentTabIndex = Math.max(currentTabIndex - 1, 0);
+        switchTab(currentTabIndex);
+      }
+    }, false);
 
     el.detailsBackdrop.hidden = false;
   }
@@ -1539,10 +1585,6 @@
 
     var alternatives = message.tiedAlternatives || [];
     if (alternatives.length) {
-      var tag = document.createElement("div");
-      tag.className = "section-tag";
-      tag.textContent = "Other similar options";
-      row.appendChild(tag);
       alternatives.forEach(function (alt) {
         if (alt && typeof alt === "object" && alt.model_name) {
           row.appendChild(buildRecommendationCard(alt, "Alternative"));
@@ -1676,8 +1718,23 @@
       el.inputError.hidden = true;
     }
 
-    // Scroll to latest message
-    el.thread.scrollTop = el.thread.scrollHeight;
+    // Scroll to latest message - but position to show intro message with pump card
+    var lastMessage = state.messages[state.messages.length - 1];
+    var hasRecommendation = lastMessage && lastMessage.recommendation;
+
+    if (hasRecommendation) {
+      // For pump cards, scroll to show the intro message above the card
+      setTimeout(function () {
+        var rows = el.thread.querySelectorAll('.row');
+        if (rows.length >= 2) {
+          var introRow = rows[rows.length - 2];
+          introRow.scrollIntoView({ behavior: 'auto', block: 'start' });
+        }
+      }, 100);
+    } else {
+      // For regular chat, scroll to latest message
+      el.thread.scrollTop = el.thread.scrollHeight;
+    }
   }
 
   function handleSend() {
