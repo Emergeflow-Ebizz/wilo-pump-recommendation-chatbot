@@ -1320,6 +1320,10 @@
       img.src = imageUrl;
       img.alt = recommendation.model_name || "Pump image";
       img.className = "pd-image";
+      img.style.display = "block";
+      img.onerror = function () {
+        imgContainer.style.display = "none";
+      };
       imgContainer.appendChild(img);
       overviewPanel.appendChild(imgContainer);
     }
