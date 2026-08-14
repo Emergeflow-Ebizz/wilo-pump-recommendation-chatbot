@@ -184,12 +184,16 @@ body {
   border-radius: 8px;
   margin: 16px 0;
   overflow: hidden;
+  flex-shrink: 0;
 }
 .pd-image {
   max-width: 100%;
   max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
   padding: 12px;
+  display: block;
 }
 .pd-tabs {
   display: flex;
@@ -933,4 +937,49 @@ body {
   background: var(--teal-dark);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 156, 130, 0.3);
+}
+
+.image-fullscreen {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.image-fullscreen[hidden] {
+  display: none;
+}
+
+.image-fullscreen img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  width: auto;
+  height: auto;
+}
+
+.image-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 51;
+}
+
+.image-close:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
