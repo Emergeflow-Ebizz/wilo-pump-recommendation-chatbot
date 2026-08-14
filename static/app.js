@@ -850,7 +850,7 @@
       else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
       else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
 
-      addBotHtmlMessage("<strong style='color: #009C82;'>" + appName + "</strong>");
+      addBotHtmlMessage("Hi There, you have selected application as<br><strong style='color: #009C82;'>" + appName + "</strong>");
 
       // Remove greeting message after application selection
       if (state.messages.length > 1) {
