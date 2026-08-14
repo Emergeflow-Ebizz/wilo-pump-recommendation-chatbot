@@ -11,7 +11,10 @@
   // The FastAPI app is mounted at /api via index.py, so all requests need /api prefix.
   // When running locally with uvicorn api.index:app, routes are at /api/...
   // On Vercel, vercel.json routes "/api/(.*)" to api/index.py which also uses /api
-  var API_BASE_URL = "http://localhost:8000";
+  // Dynamically determine API URL based on environment
+  var API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8000'
+    : '/api';
 
   function prettifyKey(key) {
     return key
