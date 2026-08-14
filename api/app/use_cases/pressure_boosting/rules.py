@@ -72,29 +72,48 @@ def _best_flow_at_head(catalog: dict, head: float) -> float:
 def resolve_pressure_boosting_catalog(
     target_head: float, required_flow_lpm: float | None = None
 ) -> tuple[dict, str, float, str]:
-    """Walk SHEET_SEQUENCE in order to find a sheet meeting the requirement.
+    """Walk SHEET_SEQUENCE at the matched head, then (if needed) exactly one
+    head level higher, to find a sheet/head that can deliver
+    required_flow_lpm - never returns a match whose best flow at the
+    matched head is below required_flow_lpm.
 
-    Pass 1 (only when required_flow_lpm is given): the first sheet whose
-    matched head ALSO has a model reaching required_flow_lpm at that head
-    wins - a sheet that can reach the head but not the flow is skipped in
-    favor of a later sheet that can do both, rather than locking in a
-    pump that can't actually deliver enough water.
+    When required_flow_lpm is given: build the ascending list of distinct
+    head values (across every sheet) that are >= target_head, and take only
+    the first two - the matched head and the single next-higher head. At
+    each of those (in that order), check every sheet in SHEET_SEQUENCE
+    order; the first sheet whose best flow at that head reaches
+    required_flow_lpm wins. Climbing is capped at one level so a
+    requirement that can't be met nearby doesn't push the recommendation to
+    an unnecessarily high head, and so the search stays cheap.
 
-    Pass 2 (always, and the only pass when required_flow_lpm is None): the
-    first sheet with any head >= target wins regardless of flow - this is
-    the fallback used when no sheet anywhere satisfies both, so the caller
-    still gets the best available answer instead of a hard rejection.
+    When required_flow_lpm is None: unchanged - the first sheet with any
+    head >= target wins regardless of flow.
 
     Returns (catalog, sheet_name, matched_head, sheet_file). Raises
-    NoPressureBoostingMatchError if no sheet in the sequence has a head high
-    enough.
+    NoPressureBoostingMatchError if no sheet/head combination satisfies the
+    requirement - for required_flow_lpm given, this means neither the
+    matched head nor the next head level up reaches it in any sheet; we
+    never fall back to a head that can't deliver enough flow.
     """
     if required_flow_lpm is not None:
-        for sheet_name, sheet_file, decimal_mode in SHEET_SEQUENCE:
+        catalogs = {}
+        heads_by_sheet = {}
+        for _, sheet_file, _decimal_mode in SHEET_SEQUENCE:
             catalog = load_sheet(sheet_file)
-            matched_head = _match_head(catalog, target_head, decimal_mode)
-            if matched_head is not None and _best_flow_at_head(catalog, matched_head) >= required_flow_lpm:
-                return catalog, sheet_name, matched_head, sheet_file
+            catalogs[sheet_file] = catalog
+            heads_by_sheet[sheet_file] = _heads_in_catalog(catalog)
+
+        candidate_heads = sorted({
+            head for heads in heads_by_sheet.values() for head in heads if head >= target_head
+        })[:2]
+
+        for head in candidate_heads:
+            for sheet_name, sheet_file, _decimal_mode in SHEET_SEQUENCE:
+                catalog = catalogs[sheet_file]
+                if head in heads_by_sheet[sheet_file] and _best_flow_at_head(catalog, head) >= required_flow_lpm:
+                    return catalog, sheet_name, head, sheet_file
+
+        raise NoPressureBoostingMatchError(NO_MODEL_AVAILABLE_MESSAGE)
 
     for sheet_name, sheet_file, decimal_mode in SHEET_SEQUENCE:
         catalog = load_sheet(sheet_file)
@@ -111,10 +130,17 @@ def select_model(catalog: dict, matched_head: float, required_flow_lpm: float | 
     No HP filtering (pressure_boosting has no motor-power question). If
     required_flow_lpm is given and a model's flow at the matched head equals
     it exactly, that wins. Otherwise pick the smallest flow that still meets
-    or exceeds required_flow_lpm ("next higher flow"). If nothing at this
-    head reaches required_flow_lpm (or no requirement was given), fall back
-    to the highest flow actually available at that head. All within this one
-    sheet/catalog - never looks at other sheets.
+    or exceeds required_flow_lpm ("next higher flow"). If no requirement was
+    given, fall back to the highest flow actually available at that head.
+    All within this one sheet/catalog - never looks at other sheets.
+
+    resolve_pressure_boosting_catalog only ever hands this a (catalog,
+    matched_head) pair where required_flow_lpm is already known to be
+    reachable there, so the "nothing reaches it" branch below should be
+    unreachable in practice; it raises rather than silently returning a
+    below-required flow, since a caller invoking this directly with a head
+    that can't meet the requirement should get the same "no model" outcome
+    resolve_pressure_boosting_catalog would have given.
     """
     candidates = [
         (name, model)
@@ -138,8 +164,7 @@ def select_model(catalog: dict, matched_head: float, required_flow_lpm: float | 
                 next_higher_flow = min(_flow_at_head(model, matched_head) for _, model in above)
                 candidates = [(name, model) for name, model in above if _flow_at_head(model, matched_head) == next_higher_flow]
             else:
-                highest_flow = max(_flow_at_head(model, matched_head) for _, model in candidates)
-                candidates = [(name, model) for name, model in candidates if _flow_at_head(model, matched_head) == highest_flow]
+                raise NoPressureBoostingMatchError(NO_MODEL_AVAILABLE_MESSAGE)
     else:
         highest_flow = max(_flow_at_head(model, matched_head) for _, model in candidates)
         candidates = [(name, model) for name, model in candidates if _flow_at_head(model, matched_head) == highest_flow]

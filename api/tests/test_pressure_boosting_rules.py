@@ -101,13 +101,13 @@ def test_select_model_no_exact_match_picks_next_higher_flow():
     assert [name for name, _ in result] == ["B"]
 
 
-def test_select_model_nothing_meets_requirement_falls_back_to_highest_available():
+def test_select_model_nothing_meets_requirement_raises():
     catalog = {
         "A": _model({10: 30}),
         "B": _model({10: 50}),
     }
-    result = select_model(catalog, 10, required_flow_lpm=1000)
-    assert [name for name, _ in result] == ["B"]
+    with pytest.raises(NoPressureBoostingMatchError):
+        select_model(catalog, 10, required_flow_lpm=1000)
 
 
 def test_select_model_no_required_flow_uses_highest_available():
@@ -159,14 +159,26 @@ def test_resolve_catalog_skips_sheet_that_reaches_head_but_not_flow():
     assert matched_head == 12
 
 
-def test_resolve_catalog_falls_back_to_head_only_when_no_sheet_meets_flow_anywhere():
-    """When no sheet in the whole sequence can meet required_flow_lpm at its
-    matched head, fall back to the first sheet satisfying head alone (old
-    behavior) rather than raising - the caller still gets the best available
-    answer, with select_model then picking the highest flow within it."""
-    catalog, sheet_name, matched_head, sheet_file = resolve_pressure_boosting_catalog(12, required_flow_lpm=1_000_000)
+def test_resolve_catalog_climbs_one_head_level_when_matched_head_flow_insufficient():
+    """PB.json's head 12.5 (PB-200) is the only sheet with that exact head,
+    and its best flow there is only 15 LPM. A requirement of 30 LPM can't
+    be met by any sheet at 12.5, but the next distinct head value across
+    every sheet (13, also in PB via PB-400) offers 35 LPM - enough. The
+    resolver should climb exactly one level, from 12.5 to 13, and land back
+    on PB (checked first in SHEET_SEQUENCE) rather than stopping at 12.5 or
+    needing to check any other sheet."""
+    catalog, sheet_name, matched_head, sheet_file = resolve_pressure_boosting_catalog(12.5, required_flow_lpm=30)
     assert sheet_name == "PB"
-    assert matched_head == 12
+    assert matched_head == 13
+
+
+def test_resolve_catalog_raises_when_flow_unreachable_even_one_head_higher():
+    """When neither the matched head (12.5) nor the single next-higher head
+    (13) can meet an impossible required_flow_lpm in any sheet, raise
+    rather than climbing further or falling back to an insufficient head -
+    no model is recommended in that case."""
+    with pytest.raises(NoPressureBoostingMatchError):
+        resolve_pressure_boosting_catalog(12.5, required_flow_lpm=1_000_000)
 
 
 def test_select_pump_end_to_end_falls_through_for_flow_when_head_alone_is_insufficient():
