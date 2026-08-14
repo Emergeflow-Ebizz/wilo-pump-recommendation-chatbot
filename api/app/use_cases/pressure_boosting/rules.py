@@ -69,49 +69,65 @@ def _best_flow_at_head(catalog: dict, head: float) -> float:
     return max((f for f in flows if f is not None), default=0.0)
 
 
+def _next_head_above(catalog: dict, head: float) -> float | None:
+    higher = sorted(h for h in _heads_in_catalog(catalog) if h > head)
+    return higher[0] if higher else None
+
+
 def resolve_pressure_boosting_catalog(
     target_head: float, required_flow_lpm: float | None = None
 ) -> tuple[dict, str, float, str]:
-    """Walk SHEET_SEQUENCE at the matched head, then (if needed) exactly one
-    head level higher, to find a sheet/head that can deliver
-    required_flow_lpm - never returns a match whose best flow at the
-    matched head is below required_flow_lpm.
+    """Walk SHEET_SEQUENCE at each sheet's own matched head, then (if
+    needed) exactly one head level higher in that same sheet, to find a
+    sheet/head that can deliver required_flow_lpm - never returns a match
+    whose best flow at the matched head is below required_flow_lpm.
 
-    When required_flow_lpm is given: build the ascending list of distinct
-    head values (across every sheet) that are >= target_head, and take only
-    the first two - the matched head and the single next-higher head. At
-    each of those (in that order), check every sheet in SHEET_SEQUENCE
-    order; the first sheet whose best flow at that head reaches
-    required_flow_lpm wins. Climbing is capped at one level so a
-    requirement that can't be met nearby doesn't push the recommendation to
-    an unnecessarily high head, and so the search stays cheap.
+    When required_flow_lpm is given, two passes over SHEET_SEQUENCE:
+
+    Pass 1: for each sheet, its own matched head (the smallest head in
+    that sheet's own catalog that is >= target_head, via _match_head). The
+    first sheet whose best flow there reaches required_flow_lpm wins.
+
+    Pass 2 (only if pass 1 found nothing): for each sheet, exactly one head
+    level above its own matched head - still that sheet's own next
+    available head, not some other sheet's. The first sheet whose best flow
+    there reaches required_flow_lpm wins.
+
+    Each sheet's climb is anchored to its own head grid rather than a
+    shared list of head values across all sheets - the sheets have
+    different, unevenly spaced head points, so comparing across a shared
+    list would skip a sheet's genuinely-nearby head just because another
+    sheet happened to have a closer point at that exact value.
 
     When required_flow_lpm is None: unchanged - the first sheet with any
     head >= target wins regardless of flow.
 
     Returns (catalog, sheet_name, matched_head, sheet_file). Raises
     NoPressureBoostingMatchError if no sheet/head combination satisfies the
-    requirement - for required_flow_lpm given, this means neither the
-    matched head nor the next head level up reaches it in any sheet; we
-    never fall back to a head that can't deliver enough flow.
+    requirement - for required_flow_lpm given, this means neither a
+    sheet's matched head nor its next head level up reaches it in any
+    sheet; we never fall back to a head that can't deliver enough flow.
     """
     if required_flow_lpm is not None:
         catalogs = {}
-        heads_by_sheet = {}
-        for _, sheet_file, _decimal_mode in SHEET_SEQUENCE:
+        matched_heads = {}
+        for sheet_name, sheet_file, decimal_mode in SHEET_SEQUENCE:
             catalog = load_sheet(sheet_file)
             catalogs[sheet_file] = catalog
-            heads_by_sheet[sheet_file] = _heads_in_catalog(catalog)
+            matched_heads[sheet_file] = _match_head(catalog, target_head, decimal_mode)
 
-        candidate_heads = sorted({
-            head for heads in heads_by_sheet.values() for head in heads if head >= target_head
-        })[:2]
+        for sheet_name, sheet_file, _decimal_mode in SHEET_SEQUENCE:
+            matched_head = matched_heads[sheet_file]
+            if matched_head is not None and _best_flow_at_head(catalogs[sheet_file], matched_head) >= required_flow_lpm:
+                return catalogs[sheet_file], sheet_name, matched_head, sheet_file
 
-        for head in candidate_heads:
-            for sheet_name, sheet_file, _decimal_mode in SHEET_SEQUENCE:
-                catalog = catalogs[sheet_file]
-                if head in heads_by_sheet[sheet_file] and _best_flow_at_head(catalog, head) >= required_flow_lpm:
-                    return catalog, sheet_name, head, sheet_file
+        for sheet_name, sheet_file, _decimal_mode in SHEET_SEQUENCE:
+            matched_head = matched_heads[sheet_file]
+            if matched_head is None:
+                continue
+            next_head = _next_head_above(catalogs[sheet_file], matched_head)
+            if next_head is not None and _best_flow_at_head(catalogs[sheet_file], next_head) >= required_flow_lpm:
+                return catalogs[sheet_file], sheet_name, next_head, sheet_file
 
         raise NoPressureBoostingMatchError(NO_MODEL_AVAILABLE_MESSAGE)
 
