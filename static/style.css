@@ -17,6 +17,9 @@
 body {
   margin: 0;
   font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
 }
 
 /* Scrollbar styling */
@@ -38,11 +41,13 @@ body {
 }
 
 .app-shell {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   background: #d7dbdb;
   padding: 32px 12px;
   display: flex;
   justify-content: center;
+  overflow: hidden;
 }
 
 .phone {
