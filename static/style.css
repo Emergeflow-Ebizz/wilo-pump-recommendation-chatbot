@@ -403,6 +403,7 @@ body {
   gap: 10px;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 .row {
   display: flex;
