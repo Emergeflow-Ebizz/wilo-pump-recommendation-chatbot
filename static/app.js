@@ -188,7 +188,7 @@
       id: "international-dealer",
       kind: "text",
       bot: function () {
-        return 'As you are out of India, please visit our website to locate the nearest Wilo office Worldwide | <a href="https://wilo.com" target="_blank">Wilo</a>';
+        return 'As you are out of India, please visit our website to locate the nearest Wilo office <a href="https://wilo.com/en/Company/International/" target="_blank">Worldwide | Wilo</a>';
       },
       next: function () {
         return "explore-more";
