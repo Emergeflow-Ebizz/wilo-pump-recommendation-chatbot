@@ -170,7 +170,7 @@
       id: "dealer-locator",
       kind: "text",
       bot: function () {
-        return "You can find nearest dealer through our website :- Dealer Locator | Wilo";
+        return 'You can find nearest dealer through our website :- <a href="https://wilo.com/in/en/About-Us/Contact-Us/Dealer-Locator/" target="_blank">Dealer Locator | Wilo</a>';
       },
       next: function () {
         return "explore-more";
@@ -301,7 +301,7 @@
   function addStepMessages(step, answers) {
     var botMsg = step.bot(answers);
     if (botMsg.trim()) {
-      if (step.id === "thank-you" && state.selectedPump) {
+      if ((step.id === "thank-you" && state.selectedPump) || step.id === "dealer-locator") {
         addBotHtmlMessage(botMsg);
       } else {
         addBotMessage(botMsg);
