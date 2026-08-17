@@ -922,6 +922,17 @@
     if (step.kind !== "input") return;
     var trimmed = rawValue.trim();
     if (!trimmed) return;
+
+    // Check if user wants to skip an optional field
+    var isSkipKeyword = /^(skip|no|nope|don't|dont|decline|pass)$/i.test(trimmed);
+    if (step.optional && isSkipKeyword) {
+      state.answers[step.id] = null;
+      addUserMessage(trimmed);
+      advance(step, null);
+      render();
+      return;
+    }
+
     var error = step.validate ? step.validate(trimmed) : null;
     if (error) {
       addUserMessage(trimmed);
