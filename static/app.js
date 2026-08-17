@@ -379,7 +379,7 @@
     state.currentStepId = step.id;
     state.awaitingKind = step.kind;
 
-    if (step.kind === "text" && step.id === "dealer-notification") {
+    if (step.kind === "text" && (step.id === "dealer-notification" || step.id === "dealer-locator" || step.id === "international-dealer")) {
       setTimeout(function () {
         var nextStepId = step.next(state.answers);
         if (nextStepId) {
@@ -897,8 +897,8 @@
     }
     var nextStep = getStep(nextId);
 
-    // Use jumpToStep for dealer-notification to handle auto-advance to explore-more
-    if (nextStep.id === "dealer-notification") {
+    // Use jumpToStep for dealer steps to handle auto-advance to explore-more
+    if (nextStep.id === "dealer-notification" || nextStep.id === "dealer-locator" || nextStep.id === "international-dealer") {
       return jumpToStep(nextId);
     }
 
