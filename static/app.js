@@ -62,7 +62,9 @@
     return "Please enter a valid email address or 10-digit phone number.";
   };
   var pincodeValidate = function (value) {
-    return /^\d{6}$/.test(value.trim()) ? null : "Please enter a valid 6-digit pincode.";
+    var trimmed = value.trim();
+    if (/^\d{4,10}$/.test(trimmed)) return null;
+    return "Please enter a valid pin code (6 digits) or zip code (4-10 digits).";
   };
   var nameValidate = function (value) {
     var trimmed = value.trim();
@@ -143,14 +145,20 @@
       id: "lead-pincode",
       kind: "input",
       bot: function () {
-        return "In case you want our dealer to reach you, please share your Pin code.";
+        return "In case you want our dealer to reach you, please share your Pin code or Zip code.";
       },
-      placeholder: "6-digit pincode",
+      placeholder: "Pin code or Zip code",
       validate: pincodeValidate,
       optional: true,
       next: function () {
-        if (state.answers["lead-pincode"]) {
-          return "dealer-notification";
+        var pincode = state.answers["lead-pincode"];
+        if (pincode) {
+          var trimmed = pincode.trim();
+          if (/^\d{6}$/.test(trimmed)) {
+            return "dealer-notification";
+          } else {
+            return "international-dealer";
+          }
         } else {
           return "dealer-locator";
         }
@@ -171,6 +179,16 @@
       kind: "text",
       bot: function () {
         return 'You can find nearest dealer through our website :- <a href="https://wilo.com/in/en/About-Us/Contact-Us/Dealer-Locator/" target="_blank">Dealer Locator | Wilo</a>';
+      },
+      next: function () {
+        return "explore-more";
+      },
+    },
+    {
+      id: "international-dealer",
+      kind: "text",
+      bot: function () {
+        return 'As you are out of India, please visit our website to locate the nearest Wilo office Worldwide | <a href="https://wilo.com" target="_blank">Wilo</a>';
       },
       next: function () {
         return "explore-more";
