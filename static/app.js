@@ -1760,22 +1760,22 @@
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
 
-    if (hasRecommendation) {
-      // For pump cards, scroll to show the intro message above the card
-      setTimeout(function () {
+    setTimeout(function () {
+      if (hasRecommendation) {
+        // For pump cards, scroll to show the intro message above the card
         var rows = el.thread.querySelectorAll('.row');
         if (rows.length >= 2) {
           var introRow = rows[rows.length - 2];
           introRow.scrollIntoView({ behavior: 'auto', block: 'start' });
         }
-      }, 100);
-    } else {
-      // For regular chat, scroll to latest message
-      // But not on initial load - let welcome card show first
-      if (state.messages.length > 2) {
-        el.thread.scrollTop = el.thread.scrollHeight;
+      } else {
+        // For regular chat, scroll to latest message
+        // But not on initial load - let welcome card show first
+        if (state.messages.length > 2) {
+          el.thread.scrollTop = el.thread.scrollHeight;
+        }
       }
-    }
+    }, 100);
   }
 
   function handleSend() {
