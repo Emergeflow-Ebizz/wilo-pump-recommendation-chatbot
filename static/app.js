@@ -147,8 +147,13 @@
       },
       placeholder: "6-digit pincode",
       validate: pincodeValidate,
+      optional: true,
       next: function () {
-        return "dealer-notification";
+        if (state.answers["lead-pincode"]) {
+          return "dealer-notification";
+        } else {
+          return "dealer-locator";
+        }
       },
     },
     {
@@ -156,6 +161,16 @@
       kind: "text",
       bot: function () {
         return "Your requirement and mail ID has been communicated to our dealer, who will contact you for further support.";
+      },
+      next: function () {
+        return "explore-more";
+      },
+    },
+    {
+      id: "dealer-locator",
+      kind: "text",
+      bot: function () {
+        return "You can find nearest dealer through our website :- Dealer Locator | Wilo";
       },
       next: function () {
         return "explore-more";
