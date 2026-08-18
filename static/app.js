@@ -231,8 +231,10 @@
       },
       next: function () {
         if (state.isRejectionFlow) {
+          var nextStep = state.nextStepAfterEmail || "explore-more";
           state.isRejectionFlow = false;
-          return "explore-more";
+          state.nextStepAfterEmail = "explore-more";
+          return nextStep;
         }
         return "lead-pincode";
       },
@@ -402,7 +404,8 @@
     currentQuestion: null, // last { key, prompt, unit, optional } from next_question
     lastRecommendation: null, // the ok recommendation, kept around for /explain_model follow-ups
     selectedPump: null, // { recommendation, tierLabel } when user selects a pump
-    isRejectionFlow: false, // true when pump not found, skip pincode and go to explore-more
+    isRejectionFlow: false, // true when pump not found or question fails, skip pincode
+    nextStepAfterEmail: "explore-more", // where to go after email in rejection flow (explore-more or final-goodbye)
   };
 
   function addBotMessage(text) {
@@ -727,6 +730,7 @@
     var rejectionMsg = 'For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 <a href="mailto:sales@wilo.com" target="_blank">sales@wilo.com</a> 🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank">https://wilo.com/in/en/Dealers/</a>';
     addBotHtmlMessage(rejectionMsg);
     state.isRejectionFlow = true;
+    state.nextStepAfterEmail = "explore-more";
     jumpToStep("lead-email");
     render();
   }
@@ -785,14 +789,18 @@
    * the user; an optional one is recorded as null and the loop moves on. */
   async function handleUnansweredQuestion(question) {
     if (!question.optional) {
-      addBotMessage("I'm sorry, I can't recommend a pump based on the information provided so far.");
+      var rejectionMsg = 'For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 <a href="mailto:sales@wilo.com" target="_blank">sales@wilo.com</a> 🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank">https://wilo.com/in/en/Dealers/</a>';
+      addBotHtmlMessage(rejectionMsg);
 
       state.useCaseSlug = null;
       state.dynamicAnswers = {};
       state.clarificationAttempts = {};
       state.clarificationUserInput = {};
       state.currentQuestion = null;
-      jumpToStep("final-goodbye");
+      state.isRejectionFlow = true;
+      state.nextStepAfterEmail = "final-goodbye";
+
+      jumpToStep("lead-email");
       render();
       return;
     }
