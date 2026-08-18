@@ -7,8 +7,7 @@ a Google Sheet in a background task attached to the response - the client
 never waits on the Sheets API.
 
 Optional: stays fully inactive if GOOGLE_SERVICE_ACCOUNT_JSON /
-GOOGLE_SHEET_LOG_SHEET_ID aren't set, mirroring the DATABASE_URL fallback
-pattern already used elsewhere in this app.
+GOOGLE_SHEET_LOG_SHEET_ID aren't set.
 """
 import json
 import logging

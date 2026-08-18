@@ -1,5 +1,5 @@
-"""Always-on safety net (no DATABASE_URL required, never skipped): every
-json_new/*.json file actually referenced by a use case's sheet_map.py must
+"""Always-on safety net: every json_new/*.json file actually referenced by
+a use case's sheet_map.py must
 load and validate cleanly, so a bad manual edit is caught by `pytest` -
 locally or in CI - before it ever reaches production, instead of silently
 producing a wrong pump recommendation.
@@ -7,8 +7,8 @@ producing a wrong pump recommendation.
 Scoped to files actually wired into a use case (rather than "every file in
 json_new/ minus known-bad ones"), because json_new/ also holds several
 orphaned files nobody currently reads: MHIL.json and Star.json have known
-structurally different shapes (see scripts/migrate_adapters.py), and
-WPO-3_Horizontal.json has a model with an empty performance_curves list -
+structurally different shapes, and WPO-3_Horizontal.json has a model with
+an empty performance_curves list -
 none of the three are used by any rules.py today, so they're a pre-existing
 data-quality issue to fix later, not a live production bug. PUN.json,
 Rexa.json, and WPO-1_Horizontal.json are also currently unused but do
@@ -49,7 +49,7 @@ HEALTHY_FILES = sorted(
 
 @pytest.mark.parametrize("filename", HEALTHY_FILES)
 def test_sheet_validates(filename):
-    # _load_sheet_from_json() itself raises CatalogValidationError on any
+    # load_sheet() itself raises CatalogValidationError on any
     # malformed model - a clean call here is the pass condition.
-    catalog = catalog_loader._load_sheet_from_json(filename)
+    catalog = catalog_loader.load_sheet(filename)
     assert catalog, f"{filename} loaded zero models"

@@ -1,6 +1,4 @@
-"""Validation for the pump catalog data in json_new/, independent of the
-Postgres migration (scripts/migrate_adapters.py) - this stays even if that
-gets removed.
+"""Validation for the pump catalog data in json_new/.
 
 Used by catalog_loader (fails loudly the moment a malformed file is loaded)
 and by tests/test_catalog_validation.py (catches a bad manual edit before
@@ -46,7 +44,7 @@ class _CatalogModel(BaseModel):
 
 def validate_sheet(filename: str, flattened: dict) -> None:
     """Validate every model in an already-flattened {model_name: {...}} dict
-    (as returned by catalog_loader._load_sheet_from_json). Raises
+    (as returned by catalog_loader.load_sheet). Raises
     CatalogValidationError naming the offending model on the first problem
     found.
     """
