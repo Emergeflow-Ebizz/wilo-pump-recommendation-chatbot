@@ -182,19 +182,13 @@ def health() -> JSONResponse:
     instead of it only surfacing as silently degraded chatbot responses.
 
     Only "llm" affects `status`: it degrades every conversation (see the
-    startup check above). "database" missing is a valid, fully-supported
-    mode (catalog reads fall back to json_new/*.json - see
-    app/common/catalog_loader.py) so it's reported but never degrades status.
+    startup check above).
     """
     llm_configured = bool(os.environ.get("LLM_API_KEY"))
     checks = {
         "llm": {
             "configured": llm_configured,
             "provider": os.environ.get("LLM_PROVIDER", "anthropic"),
-        },
-        "database": {
-            "configured": bool(os.environ.get("DATABASE_URL")),
-            "catalog_source": "postgres" if os.environ.get("DATABASE_URL") else "json_new",
         },
         "send_pump_data": {
             "configured": bool(os.environ.get("SEND_PUMP_DATA_API_KEY")),

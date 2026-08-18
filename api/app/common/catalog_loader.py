@@ -12,7 +12,7 @@ _PHASE_KEY_RE = re.compile(r"^phase_\d+$")
 
 
 @lru_cache(maxsize=None)
-def _load_sheet_from_json(filename: str) -> dict:
+def load_sheet(filename: str) -> dict:
     """Load one model-family file from json_new/, flattened to {model_name: {...}}.
 
     Some sheets wrap models under one or more top-level phase_1/phase_3 keys
@@ -41,16 +41,3 @@ def _load_sheet_from_json(filename: str) -> dict:
     flattened = {name: {**model, "phase": None} for name, model in data.items()}
     validate_sheet(filename, flattened)
     return flattened
-
-
-def load_sheet(filename: str) -> dict:
-    """Load one model-family sheet, from Postgres if DATABASE_URL is
-    configured (production), otherwise directly from json_new/*.json (local
-    dev/tests). Same {model_name: {...}} shape either way, so callers never
-    need to know which source is active.
-    """
-    if os.environ.get("DATABASE_URL"):
-        from app.common.db import load_sheet_from_db
-
-        return load_sheet_from_db(filename)
-    return _load_sheet_from_json(filename)
