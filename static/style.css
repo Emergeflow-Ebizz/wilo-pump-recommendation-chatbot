@@ -868,6 +868,21 @@ body {
   z-index: 30;
 }
 
+/* Mobile responsiveness - only for screens < 1025px */
+@media (max-width: 1024px) {
+  .app-shell {
+    padding: 0;
+  }
+
+  .phone {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
 .confirmation-modal[hidden] {
   display: none;
 }
