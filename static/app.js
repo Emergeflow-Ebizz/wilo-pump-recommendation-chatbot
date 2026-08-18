@@ -1410,10 +1410,6 @@
       img.onerror = function () {
         imgContainer.style.display = "none";
       };
-      img.addEventListener("click", function () {
-        el.imageFullscreen.hidden = false;
-        el.fullscreenImage.src = imageUrl;
-      });
       imgContainer.appendChild(img);
       overviewPanel.appendChild(imgContainer);
     }
@@ -1884,9 +1880,6 @@
     el.detailsBackdrop = document.getElementById("details-backdrop");
     el.detailsBody = document.getElementById("details-body");
     el.detailsClose = document.getElementById("details-close");
-    el.imageFullscreen = document.getElementById("image-fullscreen");
-    el.fullscreenImage = document.getElementById("fullscreen-image");
-    el.imageClose = document.getElementById("image-close");
     el.menuBtn = document.getElementById("menu-btn");
     el.confirmationModal = document.getElementById("confirmation-modal");
     el.confirmCancel = document.getElementById("confirm-cancel");
@@ -1905,14 +1898,6 @@
       if (event.target === el.detailsBackdrop) closePumpDetailsModal();
     });
 
-    el.imageClose.addEventListener("click", function () {
-      el.imageFullscreen.hidden = true;
-    });
-    el.imageFullscreen.addEventListener("click", function (event) {
-      if (event.target === el.imageFullscreen) {
-        el.imageFullscreen.hidden = true;
-      }
-    });
 
     el.menuBtn.addEventListener("click", function (event) {
       event.stopPropagation();
