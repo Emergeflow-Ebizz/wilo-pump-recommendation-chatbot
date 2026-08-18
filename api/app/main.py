@@ -21,15 +21,17 @@ logger = logging.getLogger("wilo_pump_chatbot")
 
 from app.common import llm_client, llm_explainer, llm_parser, sheets_logger
 
-# Optional: persists every log line (INFO and up - request summaries,
-# warnings, errors, plus per-LLM-call cost rows, see llm_client.py) to a
-# Google Sheet, since Vercel's free tier only retains function logs for
-# ~1hr. Rows are buffered in memory per-request and written in a background
-# task after the response is sent, so this never blocks a request - see
-# sheets_logger.py. Stays off if the two env vars below aren't set.
+# Optional: persists WARNING+ logs (warnings, errors, plus every per-LLM-call
+# cost row, see llm_client.py - those are logged at WARNING specifically so
+# they always get through this filter) to a Google Sheet, since Vercel's
+# free tier only retains function logs for ~1hr. Routine INFO-level request
+# summaries stay console-only. Rows are buffered in memory per-request and
+# written in a background task after the response is sent, so this never
+# blocks a request - see sheets_logger.py. Stays off if the two env vars
+# below aren't set.
 _sheets_handler = sheets_logger.build_handler()
 if _sheets_handler is not None:
-    _sheets_handler.setLevel(logging.INFO)
+    _sheets_handler.setLevel(logging.WARNING)
     logging.getLogger().addHandler(_sheets_handler)
 from app.common.schemas import (
     DewateringRequest,
