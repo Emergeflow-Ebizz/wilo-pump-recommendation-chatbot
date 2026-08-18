@@ -259,7 +259,7 @@
       id: "explore-more",
       kind: "input",
       bot: function () {
-        return "Do you want to explore more pumps for your application? (yes/no)";
+        return "Do you want to explore more pump that we have? (yes/no)";
       },
       placeholder: "Type yes or no",
       validate: function (value) {
@@ -665,8 +665,8 @@
     }
 
     // status === "rejected" (or anything unrecognized)
-    addBotMessage(data.message || "Sorry, we couldn't find a suitable pump for these inputs.");
-    jumpToStep("explore-more");
+    addBotMessage("For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 sales@wilo.com 🌐 https://wilo.com/in/en/Dealers/");
+    jumpToStep("lead-email");
     render();
   }
 
