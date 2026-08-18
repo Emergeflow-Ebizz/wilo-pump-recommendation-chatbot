@@ -11,7 +11,10 @@
   // The FastAPI app is mounted at /api via index.py, so all requests need /api prefix.
   // When running locally with uvicorn api.index:app, routes are at /api/...
   // On Vercel, vercel.json routes "/api/(.*)" to api/index.py which also uses /api
-  var API_BASE_URL = "/api";
+  // Dynamically determine API URL based on environment
+  var API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8000'
+    : '/api';
 
   function prettifyKey(key) {
     return key
@@ -59,7 +62,9 @@
     return "Please enter a valid email address or 10-digit phone number.";
   };
   var pincodeValidate = function (value) {
-    return /^\d{6}$/.test(value.trim()) ? null : "Please enter a valid 6-digit pincode.";
+    var trimmed = value.trim();
+    if (/^\d{4,10}$/.test(trimmed)) return null;
+    return "Please enter a valid pin code (6 digits) or zip code (4-10 digits).";
   };
   var nameValidate = function (value) {
     var trimmed = value.trim();
@@ -140,12 +145,23 @@
       id: "lead-pincode",
       kind: "input",
       bot: function () {
-        return "In case you want our dealer to reach you, please share your Pin code.";
+        return "In case you want our dealer to reach you, please share your Pin code or Zip code.";
       },
-      placeholder: "6-digit pincode",
+      placeholder: "Pin code or Zip code",
       validate: pincodeValidate,
+      optional: true,
       next: function () {
-        return "dealer-notification";
+        var pincode = state.answers["lead-pincode"];
+        if (pincode) {
+          var trimmed = pincode.trim();
+          if (/^\d{6}$/.test(trimmed)) {
+            return "dealer-notification";
+          } else {
+            return "international-dealer";
+          }
+        } else {
+          return "dealer-locator";
+        }
       },
     },
     {
@@ -153,6 +169,26 @@
       kind: "text",
       bot: function () {
         return "Your requirement and mail ID has been communicated to our dealer, who will contact you for further support.";
+      },
+      next: function () {
+        return "explore-more";
+      },
+    },
+    {
+      id: "dealer-locator",
+      kind: "text",
+      bot: function () {
+        return 'You can find nearest dealer through our website :- <a href="https://wilo.com/in/en/About-Us/Contact-Us/Dealer-Locator/" target="_blank">Dealer Locator | Wilo</a>';
+      },
+      next: function () {
+        return "explore-more";
+      },
+    },
+    {
+      id: "international-dealer",
+      kind: "text",
+      bot: function () {
+        return 'As you are out of India, please visit our website to locate the nearest Wilo office <a href="https://wilo.com/en/Company/International/" target="_blank">Worldwide | Wilo</a>';
       },
       next: function () {
         return "explore-more";
@@ -283,7 +319,7 @@
   function addStepMessages(step, answers) {
     var botMsg = step.bot(answers);
     if (botMsg.trim()) {
-      if (step.id === "thank-you" && state.selectedPump) {
+      if ((step.id === "thank-you" && state.selectedPump) || step.id === "dealer-locator") {
         addBotHtmlMessage(botMsg);
       } else {
         addBotMessage(botMsg);
@@ -343,7 +379,7 @@
     state.currentStepId = step.id;
     state.awaitingKind = step.kind;
 
-    if (step.kind === "text" && step.id === "dealer-notification") {
+    if (step.kind === "text" && (step.id === "dealer-notification" || step.id === "dealer-locator" || step.id === "international-dealer")) {
       setTimeout(function () {
         var nextStepId = step.next(state.answers);
         if (nextStepId) {
@@ -845,8 +881,8 @@
       state.currentQuestion = null;
       // Add confirmation message with selected application
       var appName = "";
-      if (state.useCaseSlug === "water_transfer") appName = "Water Transfer from well to Overhead tank";
-      else if (state.useCaseSlug === "tank_filling") appName = "Transfer of water from a ground level reservoir to an Overhead tank";
+      if (state.useCaseSlug === "water_transfer") appName = "Borewell to Overhead tank";
+      else if (state.useCaseSlug === "tank_filling") appName = "From Bottom tank to Overhead tank";
       else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
       else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
 
@@ -861,8 +897,8 @@
     }
     var nextStep = getStep(nextId);
 
-    // Use jumpToStep for dealer-notification to handle auto-advance to explore-more
-    if (nextStep.id === "dealer-notification") {
+    // Use jumpToStep for dealer steps to handle auto-advance to explore-more
+    if (nextStep.id === "dealer-notification" || nextStep.id === "dealer-locator" || nextStep.id === "international-dealer") {
       return jumpToStep(nextId);
     }
 
@@ -904,6 +940,17 @@
     if (step.kind !== "input") return;
     var trimmed = rawValue.trim();
     if (!trimmed) return;
+
+    // Check if user wants to skip an optional field
+    var isSkipKeyword = /^(skip|no|nope|don't|dont|decline|pass)$/i.test(trimmed);
+    if (step.optional && isSkipKeyword) {
+      state.answers[step.id] = null;
+      addUserMessage(trimmed);
+      advance(step, null);
+      render();
+      return;
+    }
+
     var error = step.validate ? step.validate(trimmed) : null;
     if (error) {
       addUserMessage(trimmed);
@@ -945,7 +992,7 @@
 
     var greet = document.createElement("p");
     greet.className = "greet";
-    greet.innerHTML = "<strong style='font-size: 16px;'>👋 Hi I am <span style='color: #009C82;'>WiRa</span>!</strong>";
+    greet.innerHTML = "<strong style='font-size: 16px;'>👋 Hi I am <span style='color: #009C82;'>WiWo</span>!</strong>";
 
     var line2 = document.createElement("p");
     line2.textContent = "Let's get started.";
@@ -1562,8 +1609,8 @@
       state.selectedPump = { recommendation: recommendation, tierLabel: tierLabel };
 
       var appName = "";
-      if (state.useCaseSlug === "water_transfer") appName = "Water Transfer from well to Overhead tank";
-      else if (state.useCaseSlug === "tank_filling") appName = "Transfer of water from a ground level reservoir to an Overhead tank";
+      if (state.useCaseSlug === "water_transfer") appName = "Borewell to Overhead tank";
+      else if (state.useCaseSlug === "tank_filling") appName = "From Bottom tank to Overhead tank";
       else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
       else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
 
@@ -1731,19 +1778,22 @@
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
 
-    if (hasRecommendation) {
-      // For pump cards, scroll to show the intro message above the card
-      setTimeout(function () {
+    setTimeout(function () {
+      if (hasRecommendation) {
+        // For pump cards, scroll to show the intro message above the card
         var rows = el.thread.querySelectorAll('.row');
         if (rows.length >= 2) {
           var introRow = rows[rows.length - 2];
           introRow.scrollIntoView({ behavior: 'auto', block: 'start' });
         }
-      }, 100);
-    } else {
-      // For regular chat, scroll to latest message
-      el.thread.scrollTop = el.thread.scrollHeight;
-    }
+      } else {
+        // For regular chat, scroll to latest message
+        // But not on initial load - let welcome card show first
+        if (state.messages.length > 2) {
+          el.thread.scrollTop = el.thread.scrollHeight;
+        }
+      }
+    }, 100);
   }
 
   function handleSend() {
