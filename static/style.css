@@ -870,8 +870,23 @@ body {
 
 /* Mobile responsiveness - only for screens < 1025px */
 @media (max-width: 1024px) {
+  html {
+    height: 100%;
+  }
+
+  body {
+    height: 100%;
+    height: 100dvh;
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+  }
+
   .app-shell {
     padding: 0;
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
   }
 
   .phone {
