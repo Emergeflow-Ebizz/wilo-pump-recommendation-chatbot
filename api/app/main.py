@@ -13,12 +13,21 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.background import BackgroundTask
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("wilo_pump_chatbot")
 
-from app.common import llm_explainer, llm_parser
+from app.common import llm_client, llm_explainer, llm_parser, sheets_logger
+
+# Optional: persists WARNING+ logs (and per-LLM-call cost rows, see
+# llm_client.py) to a Google Sheet, since Vercel's free tier only retains
+# function logs for ~1hr. Stays off if the two env vars below aren't set.
+_sheets_handler = sheets_logger.build_handler()
+if _sheets_handler is not None:
+    _sheets_handler.setLevel(logging.WARNING)
+    logging.getLogger().addHandler(_sheets_handler)
 from app.common.schemas import (
     DewateringRequest,
     ParsedAnswer,
@@ -108,6 +117,22 @@ _request_log: dict[str, deque] = defaultdict(deque)
 @app.middleware("http")
 async def rate_limit_and_log(request: Request, call_next):
     client_ip = request.client.host if request.client else "unknown"
+
+    # Reset per-request state used by sheets_logger (buffered rows) and
+    # llm_client (which endpoint triggered each LLM call) before anything
+    # in this request can log, so nothing leaks across requests sharing a
+    # warm instance and rate-limit warnings get buffered too.
+    sheets_rows_token = sheets_logger._pending_rows.set({})
+    endpoint_token = llm_client.current_endpoint.set(f"{request.method} {request.url.path}")
+
+    def _finish(response):
+        buffered_rows = sheets_logger._pending_rows.get()
+        sheets_logger._pending_rows.reset(sheets_rows_token)
+        llm_client.current_endpoint.reset(endpoint_token)
+        if buffered_rows:
+            response.background = BackgroundTask(sheets_logger.flush_buffered_rows, buffered_rows)
+        return response
+
     now = time.monotonic()
     window = _request_log[client_ip]
     while window and now - window[0] > RATE_LIMIT_WINDOW_SECONDS:
@@ -115,7 +140,7 @@ async def rate_limit_and_log(request: Request, call_next):
 
     if len(window) >= RATE_LIMIT_MAX_REQUESTS:
         logger.warning("rate limit exceeded: client=%s path=%s", client_ip, request.url.path)
-        return JSONResponse(status_code=429, content={"detail": "Too many requests, please slow down."})
+        return _finish(JSONResponse(status_code=429, content={"detail": "Too many requests, please slow down."}))
 
     window.append(now)
 
@@ -124,13 +149,21 @@ async def rate_limit_and_log(request: Request, call_next):
         response = await call_next(request)
     except Exception:
         logger.exception("unhandled error: client=%s method=%s path=%s", client_ip, request.method, request.url.path)
+        buffered_rows = sheets_logger._pending_rows.get()
+        sheets_logger._pending_rows.reset(sheets_rows_token)
+        llm_client.current_endpoint.reset(endpoint_token)
+        # No response object exists on this path to attach a background
+        # task to, and the request has already failed, so flushing inline
+        # here doesn't cost a successful response any latency.
+        if buffered_rows:
+            sheets_logger.flush_buffered_rows(buffered_rows)
         raise
     duration_ms = (time.monotonic() - start) * 1000
     logger.info(
         "client=%s method=%s path=%s status=%s duration_ms=%.1f",
         client_ip, request.method, request.url.path, response.status_code, duration_ms,
     )
-    return response
+    return _finish(response)
 
 
 @app.exception_handler(ValueError)
@@ -165,6 +198,9 @@ def health() -> JSONResponse:
         },
         "send_pump_data": {
             "configured": bool(os.environ.get("SEND_PUMP_DATA_API_KEY")),
+        },
+        "sheets_logging": {
+            "configured": _sheets_handler is not None,
         },
     }
     status = "ok" if llm_configured else "degraded"

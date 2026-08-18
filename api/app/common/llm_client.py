@@ -5,7 +5,46 @@ llm_explainer) never imports a provider SDK directly. Swapping providers only
 means changing this file's internals, not any caller.
 """
 import json
+import logging
 import os
+from contextvars import ContextVar
+
+# Set by main.py's rate_limit_and_log middleware to the endpoint that
+# triggered the current LLM call(s), so per-call cost log rows (below) can
+# be traced back to the request that caused them.
+current_endpoint: ContextVar[str] = ContextVar("current_endpoint", default="unknown")
+
+_llm_cost_logger = logging.getLogger("wilo_pump_chatbot.llm_cost")
+
+# Approximate list pricing, USD per million tokens - used only to estimate
+# cost in the per-call log rows below, not for billing. claude-sonnet-5 is
+# at introductory pricing through 2026-08-31; update to $3.00/$15.00 after
+# that, and re-check all three whenever Anthropic changes pricing.
+_COST_PER_MTOK = {
+    "claude-sonnet-5": {"input": 2.00, "output": 10.00},
+    "claude-opus-5": {"input": 5.00, "output": 25.00},
+    "claude-haiku-4-5": {"input": 1.00, "output": 5.00},
+}
+
+
+def _estimate_cost_usd(model: str, input_tokens: int | None, output_tokens: int | None) -> float | None:
+    prices = _COST_PER_MTOK.get(model)
+    if prices is None or input_tokens is None or output_tokens is None:
+        return None
+    return (input_tokens * prices["input"] + output_tokens * prices["output"]) / 1_000_000
+
+
+def _log_llm_call(
+    model: str, attempt: int, input_tokens: int | None, output_tokens: int | None,
+    duration_ms: float, stop_reason: str | None,
+) -> None:
+    cost_usd = _estimate_cost_usd(model, input_tokens, output_tokens)
+    _llm_cost_logger.warning(
+        "endpoint=%s attempt=%d model=%s input_tokens=%s output_tokens=%s cost_usd=%s duration_ms=%.1f stop_reason=%s max_tokens_hit=%s",
+        current_endpoint.get(), attempt, model, input_tokens, output_tokens,
+        f"{cost_usd:.6f}" if cost_usd is not None else "n/a",
+        duration_ms, stop_reason, stop_reason == "max_tokens",
+    )
 
 
 class LLMUnavailableError(Exception):
@@ -87,6 +126,7 @@ def _complete_anthropic(
 
     max_retries = 1
     for attempt in range(max_retries + 1):
+        attempt_start = time.monotonic()
         try:
             response = httpx.post(
                 "https://api.anthropic.com/v1/messages",
@@ -100,15 +140,22 @@ def _complete_anthropic(
             )
             response.raise_for_status()
             data = response.json()
+            usage = data.get("usage", {})
+            _log_llm_call(
+                model, attempt + 1, usage.get("input_tokens"), usage.get("output_tokens"),
+                (time.monotonic() - attempt_start) * 1000, data.get("stop_reason"),
+            )
             break
         except httpx.HTTPStatusError as e:
+            _log_llm_call(model, attempt + 1, None, None, (time.monotonic() - attempt_start) * 1000, f"error:{e.response.status_code}")
             # A response did come back, just with a bad status - retry once
             # on transient 5xx or 429 (rate limit).
             if attempt < max_retries and e.response.status_code in (429, 500, 502, 503, 504):
                 time.sleep(0.5)
                 continue
             raise
-        except httpx.RequestError:
+        except httpx.RequestError as e:
+            _log_llm_call(model, attempt + 1, None, None, (time.monotonic() - attempt_start) * 1000, f"error:{type(e).__name__}")
             # The request itself never completed (timeout, connection reset,
             # DNS failure, etc.) - there's no response object to inspect here,
             # unlike HTTPStatusError above. Retry once, since these are
