@@ -665,7 +665,8 @@
     }
 
     // status === "rejected" (or anything unrecognized)
-    addBotMessage("For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 sales@wilo.com 🌐 https://wilo.com/in/en/Dealers/");
+    var rejectionMsg = 'For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 <a href="mailto:sales@wilo.com" target="_blank">sales@wilo.com</a> 🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank">https://wilo.com/in/en/Dealers/</a>';
+    addBotHtmlMessage(rejectionMsg);
     jumpToStep("lead-email");
     render();
   }

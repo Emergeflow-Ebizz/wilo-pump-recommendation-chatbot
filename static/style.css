@@ -438,6 +438,10 @@ body {
   user-select: text;
   -webkit-user-select: text;
 }
+.bubble strong {
+  user-select: text;
+  -webkit-user-select: text;
+}
 .bot .bubble {
   background: #fff;
   color: var(--text);
@@ -453,6 +457,10 @@ body {
   color: var(--teal-dark);
   font-weight: 600;
   text-decoration: underline;
+  cursor: pointer;
+}
+.user .bubble a {
+  color: #fff;
 }
 .bubble:empty {
   display: none;
