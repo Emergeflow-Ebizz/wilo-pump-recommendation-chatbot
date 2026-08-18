@@ -221,6 +221,10 @@
       placeholder: "Email address",
       validate: emailValidate,
       next: function () {
+        if (state.isRejectionFlow) {
+          state.isRejectionFlow = false;
+          return "explore-more";
+        }
         return "lead-pincode";
       },
     },
@@ -389,6 +393,7 @@
     currentQuestion: null, // last { key, prompt, unit, optional } from next_question
     lastRecommendation: null, // the ok recommendation, kept around for /explain_model follow-ups
     selectedPump: null, // { recommendation, tierLabel } when user selects a pump
+    isRejectionFlow: false, // true when pump not found, skip pincode and go to explore-more
   };
 
   function addBotMessage(text) {
@@ -712,6 +717,7 @@
     // status === "rejected" (or anything unrecognized)
     var rejectionMsg = 'For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 <a href="mailto:sales@wilo.com" target="_blank">sales@wilo.com</a> 🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank">https://wilo.com/in/en/Dealers/</a>';
     addBotHtmlMessage(rejectionMsg);
+    state.isRejectionFlow = true;
     jumpToStep("lead-email");
     render();
   }
