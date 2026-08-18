@@ -88,6 +88,29 @@
   // instead of /answer (ParsedAnswer).
   var CATEGORY_QUESTION_KEYS = ["delivery_type", "inside_or_outside", "horizontal_or_vertical"];
 
+  function getPumpImagePath(modelName) {
+    if (!modelName) return null;
+    var imageFolderPath = "./Wilo Pump Images/";
+    var modelUpper = modelName.toUpperCase();
+    var pumpImages = {
+      "WBWP3": imageFolderPath + "WBWP3-WBWP4.jpg",
+      "WBWP4": imageFolderPath + "WBWP3-WBWP4.jpg",
+      "WBW3": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
+      "WBW6": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
+      "WBW7": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
+      "WBW8": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
+      "WPO": imageFolderPath + "WPO Raptor.jpg",
+      "WPOV": imageFolderPath + "WPO Raptor.jpg",
+      "WPO RAPTOR": imageFolderPath + "WPO Raptor.jpg",
+    };
+    for (var key in pumpImages) {
+      if (modelUpper.indexOf(key) !== -1) {
+        return pumpImages[key];
+      }
+    }
+    return null;
+  }
+
 
   // ---------------------------------------------------------------------
   // Conversation flow. The application question and lead-capture are fixed;
@@ -665,7 +688,8 @@
     }
 
     // status === "rejected" (or anything unrecognized)
-    addBotMessage("For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 sales@wilo.com 🌐 https://wilo.com/in/en/Dealers/");
+    var rejectionMsg = 'For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 <a href="mailto:sales@wilo.com" target="_blank">sales@wilo.com</a> 🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank">https://wilo.com/in/en/Dealers/</a>';
+    addBotHtmlMessage(rejectionMsg);
     jumpToStep("lead-email");
     render();
   }
@@ -1574,7 +1598,7 @@
     var icon = document.createElement("div");
     icon.className = "pump-icon";
 
-    var imageUrl = recommendation.image_url || details.image_url;
+    var imageUrl = getPumpImagePath(recommendation.model_name);
     if (imageUrl) {
       var img = document.createElement("img");
       img.src = imageUrl;
