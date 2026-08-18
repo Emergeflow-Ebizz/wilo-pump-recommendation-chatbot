@@ -881,8 +881,8 @@
       state.currentQuestion = null;
       // Add confirmation message with selected application
       var appName = "";
-      if (state.useCaseSlug === "water_transfer") appName = "Water Transfer from well to Overhead tank";
-      else if (state.useCaseSlug === "tank_filling") appName = "Transfer of water from a ground level reservoir to an Overhead tank";
+      if (state.useCaseSlug === "water_transfer") appName = "Borewell to Overhead tank";
+      else if (state.useCaseSlug === "tank_filling") appName = "From Bottom tank to Overhead tank";
       else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
       else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
 
@@ -1609,8 +1609,8 @@
       state.selectedPump = { recommendation: recommendation, tierLabel: tierLabel };
 
       var appName = "";
-      if (state.useCaseSlug === "water_transfer") appName = "Water Transfer from well to Overhead tank";
-      else if (state.useCaseSlug === "tank_filling") appName = "Transfer of water from a ground level reservoir to an Overhead tank";
+      if (state.useCaseSlug === "water_transfer") appName = "Borewell to Overhead tank";
+      else if (state.useCaseSlug === "tank_filling") appName = "From Bottom tank to Overhead tank";
       else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
       else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
 
