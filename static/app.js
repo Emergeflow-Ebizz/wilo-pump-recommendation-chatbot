@@ -88,29 +88,6 @@
   // instead of /answer (ParsedAnswer).
   var CATEGORY_QUESTION_KEYS = ["delivery_type", "inside_or_outside", "horizontal_or_vertical"];
 
-  function getPumpImagePath(modelName) {
-    if (!modelName) return null;
-    var imageFolderPath = "./Wilo Pump Images/";
-    var modelUpper = modelName.toUpperCase();
-    var pumpImages = {
-      "WBWP3": imageFolderPath + "WBWP3-WBWP4.jpg",
-      "WBWP4": imageFolderPath + "WBWP3-WBWP4.jpg",
-      "WBW3": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
-      "WBW6": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
-      "WBW7": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
-      "WBW8": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
-      "WPO": imageFolderPath + "WPO Raptor.jpg",
-      "WPOV": imageFolderPath + "WPO Raptor.jpg",
-      "WPO RAPTOR": imageFolderPath + "WPO Raptor.jpg",
-    };
-    for (var key in pumpImages) {
-      if (modelUpper.indexOf(key) !== -1) {
-        return pumpImages[key];
-      }
-    }
-    return null;
-  }
-
 
   // ---------------------------------------------------------------------
   // Conversation flow. The application question and lead-capture are fixed;
@@ -1598,7 +1575,7 @@
     var icon = document.createElement("div");
     icon.className = "pump-icon";
 
-    var imageUrl = recommendation.image_url || details.image_url || getPumpImagePath(recommendation.model_name);
+    var imageUrl = recommendation.image_url || details.image_url;
     if (imageUrl) {
       var img = document.createElement("img");
       img.src = imageUrl;
