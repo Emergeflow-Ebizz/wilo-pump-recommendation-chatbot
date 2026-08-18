@@ -90,7 +90,7 @@
 
   function getPumpImagePath(modelName) {
     if (!modelName) return null;
-    var imageFolderPath = "./Wilo Pump Images/";
+    var imageFolderPath = "./Wilo%20Pump%20Images/";
     var modelUpper = modelName.toUpperCase();
     var pumpImages = {
       "WBWP3": imageFolderPath + "WBWP3-WBWP4.jpg",
@@ -99,9 +99,9 @@
       "WBW6": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
       "WBW7": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
       "WBW8": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
-      "WPO": imageFolderPath + "WPO Raptor.jpg",
-      "WPOV": imageFolderPath + "WPO Raptor.jpg",
-      "WPO RAPTOR": imageFolderPath + "WPO Raptor.jpg",
+      "WPO": imageFolderPath + "WPO%20Raptor.jpg",
+      "WPOV": imageFolderPath + "WPO%20Raptor.jpg",
+      "WPO RAPTOR": imageFolderPath + "WPO%20Raptor.jpg",
     };
     for (var key in pumpImages) {
       if (modelUpper.indexOf(key) !== -1) {
