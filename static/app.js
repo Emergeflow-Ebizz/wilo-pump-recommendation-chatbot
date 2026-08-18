@@ -1766,9 +1766,15 @@
     if (!isInputStep) el.composerInput.value = "";
     el.sendBtn.disabled = !isInputStep || !el.composerInput.value.trim();
     if (isInputStep) {
-      // On mobile, prevent scroll when focusing input
       var isMobile = window.innerWidth <= 1024;
-      el.composerInput.focus({ preventScroll: isMobile });
+      el.composerInput.focus({ preventScroll: true });
+
+      // On mobile, scroll input into view after keyboard opens
+      if (isMobile) {
+        setTimeout(function() {
+          el.composerInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 300);
+      }
     }
 
     if (state.inputError) {

@@ -870,21 +870,15 @@ body {
 
 /* Mobile responsiveness - only for screens < 1025px */
 @media (max-width: 1024px) {
-  html {
+  html, body {
     height: 100%;
-    overflow: hidden;
+    margin: 0;
+    padding: 0;
   }
 
   body {
-    height: 100%;
     height: 100dvh;
-    margin: 0;
-    padding: 0;
-    position: fixed;
-    width: 100%;
     overflow: hidden;
-    top: 0;
-    left: 0;
   }
 
   .app-shell {
@@ -893,9 +887,8 @@ body {
     height: 100dvh;
     width: 100%;
     overflow: hidden;
-    position: fixed;
-    top: 0;
-    left: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .phone {
@@ -904,11 +897,9 @@ body {
     max-width: none;
     border-radius: 0;
     box-shadow: none;
-    position: fixed;
-    top: 0;
-    left: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   .header {
@@ -924,6 +915,7 @@ body {
 
   .composer {
     flex-shrink: 0;
+    background: #fff;
   }
 
   .composer input {
