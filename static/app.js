@@ -1421,7 +1421,7 @@
     overviewPanel.className = "pd-panel active";
     overviewPanel.setAttribute("data-tab", "Overview");
 
-    var imageUrl = recommendation.image_url || details.image_url;
+    var imageUrl = getPumpImagePath(recommendation.model_name);
     if (imageUrl) {
       var imgContainer = document.createElement("div");
       imgContainer.className = "pd-image-container";
