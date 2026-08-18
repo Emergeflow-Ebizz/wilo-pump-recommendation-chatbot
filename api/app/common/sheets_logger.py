@@ -20,6 +20,11 @@ _pending_rows: ContextVar[dict[str, list] | None] = ContextVar("_pending_rows", 
 _LOGS_TAB = "Logs"
 _LLM_CALLS_TAB = "LLM_Calls"
 
+# logging.Handler has no formatTime of its own (only logging.Formatter does),
+# so timestamps are rendered through a plain Formatter instance instead of
+# self.formatTime().
+_TIME_FORMATTER = logging.Formatter()
+
 _sheets_service = None
 _spreadsheet_id: str | None = None
 
@@ -60,7 +65,7 @@ class GoogleSheetsLogHandler(logging.Handler):
             # column per field, matching the LLM_Calls sheet's header row.
             tab = _LLM_CALLS_TAB
             row = [
-                self.formatTime(record),
+                _TIME_FORMATTER.formatTime(record),
                 getattr(record, "llm_endpoint", ""),
                 getattr(record, "llm_attempt", ""),
                 getattr(record, "llm_model", ""),
@@ -75,7 +80,7 @@ class GoogleSheetsLogHandler(logging.Handler):
         else:
             tab = _LOGS_TAB
             row = [
-                self.formatTime(record),
+                _TIME_FORMATTER.formatTime(record),
                 record.levelname,
                 record.name,
                 record.getMessage(),
