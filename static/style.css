@@ -44,11 +44,11 @@ body {
   height: 100vh;
   height: 100dvh;
   background: #d7dbdb;
-  padding: 32px 12px;
+  padding: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .phone {
@@ -925,103 +925,3 @@ body {
   box-shadow: 0 2px 8px rgba(0, 156, 130, 0.3);
 }
 
-/* Extra small devices (mobile phones < 360px) */
-@media (max-width: 359px) {
-  .app-shell {
-    padding: 8px 4px;
-  }
-
-  .phone {
-    width: 100%;
-    max-width: 320px;
-    height: auto;
-    aspect-ratio: 390 / 780;
-    min-height: 640px;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  }
-}
-
-/* Small mobile devices (360px - 480px) */
-@media (min-width: 360px) and (max-width: 480px) {
-  .app-shell {
-    padding: 12px 8px;
-  }
-
-  .phone {
-    width: 100%;
-    max-width: 360px;
-    height: auto;
-    aspect-ratio: 390 / 780;
-    min-height: 720px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  }
-}
-
-/* Tablets and medium devices (481px - 768px) */
-@media (min-width: 481px) and (max-width: 768px) {
-  .app-shell {
-    padding: 20px 16px;
-  }
-
-  .phone {
-    width: 100%;
-    max-width: 420px;
-    height: auto;
-    aspect-ratio: 390 / 780;
-    min-height: 840px;
-    border-radius: 24px;
-  }
-}
-
-/* Large tablets and laptops (769px - 1024px) */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .app-shell {
-    padding: 24px 16px;
-    background: linear-gradient(135deg, #e8eceb 0%, #f0f3f2 100%);
-  }
-
-  .phone {
-    width: 100%;
-    max-width: 500px;
-    height: auto;
-    aspect-ratio: 390 / 780;
-    border-radius: 28px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-  }
-}
-
-/* Desktop screens (1025px - 1440px) */
-@media (min-width: 1025px) and (max-width: 1440px) {
-  .app-shell {
-    padding: 24px 16px;
-    background: linear-gradient(135deg, #e8eceb 0%, #f0f3f2 100%);
-  }
-
-  .phone {
-    width: 100%;
-    max-width: 700px;
-    height: auto;
-    aspect-ratio: 390 / 780;
-    border-radius: 32px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
-  }
-}
-
-/* Large desktop screens (1441px+) */
-@media (min-width: 1441px) {
-  .app-shell {
-    padding: 24px 16px;
-    background: linear-gradient(135deg, #e8eceb 0%, #f0f3f2 100%);
-  }
-
-  .phone {
-    width: 100%;
-    max-width: 750px;
-    height: auto;
-    aspect-ratio: 390 / 780;
-    border-radius: 32px;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
-  }
-}
