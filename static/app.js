@@ -219,7 +219,16 @@
         return "";
       },
       placeholder: "Email address",
-      validate: emailValidate,
+      validate: function (value) {
+        var trimmed = value.trim();
+        if (state.isRejectionFlow) {
+          return null;
+        }
+        return emailValidate(value);
+      },
+      optional: function () {
+        return state.isRejectionFlow;
+      },
       next: function () {
         if (state.isRejectionFlow) {
           state.isRejectionFlow = false;
