@@ -516,6 +516,13 @@ def parse_answer(
         data = json.loads(raw)
         data["unit"] = _normalize_unit(data.get("unit"), allowed_units)
 
+        # Defensive: "skipped" is only a valid outcome for optional questions
+        # (see the SKIP rule in the system prompt) - don't trust the model to
+        # honor that on its own. A non-optional question can never be marked
+        # skipped, no matter what the model returned.
+        if not question.optional:
+            data["skipped"] = False
+
         if data.get("edit_not_supported"):
             try:
                 message = llm_client.complete(
@@ -630,11 +637,14 @@ def parse_answer(
                 if question.allowed_units
                 else "We cannot recommend you a model because of missing information."
             )
-    elif not_redirect_or_skip and missing_required_info and data.get("needs_clarification"):
+    elif not_redirect_or_skip and missing_required_info:
         # Clarification question: generate it with high temperature so the
         # wording varies and it's grounded in this question's domain
         # context, rather than reusing whatever (possibly generic) wording
-        # the main extraction call produced.
+        # the main extraction call produced. Fires regardless of whether the
+        # model itself set needs_clarification - required info being missing
+        # is what matters, not whether the model noticed.
+        data["needs_clarification"] = True
         reason = "missing_unit" if data.get("value") is not None else "missing_value"
         data["clarification_question"] = _generate_clarification_question(
             question,
