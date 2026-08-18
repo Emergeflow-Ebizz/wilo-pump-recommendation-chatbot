@@ -1599,13 +1599,6 @@
     icon.className = "pump-icon";
 
     var imageUrl = getPumpImagePath(recommendation.model_name);
-    var backendImageUrl = recommendation.image_url || recommendation.details?.image_url;
-
-    console.log("[Pump Image] Model:", recommendation.model_name);
-    console.log("[Pump Image] Local image:", imageUrl);
-    console.log("[Pump Image] Backend image:", backendImageUrl);
-    console.log("[Pump Image] Using:", imageUrl ? "LOCAL" : "FALLBACK SVG");
-
     if (imageUrl) {
       var img = document.createElement("img");
       img.src = imageUrl;
