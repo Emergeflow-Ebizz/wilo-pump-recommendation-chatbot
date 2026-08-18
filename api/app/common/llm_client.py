@@ -9,10 +9,12 @@ import logging
 import os
 from contextvars import ContextVar
 
-# Set by main.py's rate_limit_and_log middleware to the endpoint that
-# triggered the current LLM call(s), so per-call cost log rows (below) can
-# be traced back to the request that caused them.
+# Set by main.py's rate_limit_and_log middleware to the endpoint and client
+# IP that triggered the current LLM call(s), so per-call cost log rows
+# (below) can be traced back to the request - and the caller - that caused
+# them, not just which endpoint was hit.
 current_endpoint: ContextVar[str] = ContextVar("current_endpoint", default="unknown")
+current_client_ip: ContextVar[str] = ContextVar("current_client_ip", default="unknown")
 
 _llm_cost_logger = logging.getLogger("wilo_pump_chatbot.llm_cost")
 
@@ -39,11 +41,27 @@ def _log_llm_call(
     duration_ms: float, stop_reason: str | None,
 ) -> None:
     cost_usd = _estimate_cost_usd(model, input_tokens, output_tokens)
+    endpoint = current_endpoint.get()
+    client_ip = current_client_ip.get()
+    max_tokens_hit = stop_reason == "max_tokens"
+    # `extra` fields land as attributes on the LogRecord - sheets_logger.py
+    # reads them directly to build one column per field in the LLM_Calls
+    # sheet, rather than cramming everything into a single message string.
     _llm_cost_logger.warning(
-        "endpoint=%s attempt=%d model=%s input_tokens=%s output_tokens=%s cost_usd=%s duration_ms=%.1f stop_reason=%s max_tokens_hit=%s",
-        current_endpoint.get(), attempt, model, input_tokens, output_tokens,
-        f"{cost_usd:.6f}" if cost_usd is not None else "n/a",
-        duration_ms, stop_reason, stop_reason == "max_tokens",
+        "endpoint=%s attempt=%d model=%s cost_usd=%s stop_reason=%s",
+        endpoint, attempt, model, f"{cost_usd:.6f}" if cost_usd is not None else "n/a", stop_reason,
+        extra={
+            "llm_endpoint": endpoint,
+            "llm_attempt": attempt,
+            "llm_model": model,
+            "llm_input_tokens": input_tokens,
+            "llm_output_tokens": output_tokens,
+            "llm_cost_usd": cost_usd,
+            "llm_duration_ms": duration_ms,
+            "llm_stop_reason": stop_reason,
+            "llm_max_tokens_hit": max_tokens_hit,
+            "llm_client_ip": client_ip,
+        },
     )
 
 

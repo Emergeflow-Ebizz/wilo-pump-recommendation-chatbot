@@ -21,12 +21,15 @@ logger = logging.getLogger("wilo_pump_chatbot")
 
 from app.common import llm_client, llm_explainer, llm_parser, sheets_logger
 
-# Optional: persists WARNING+ logs (and per-LLM-call cost rows, see
-# llm_client.py) to a Google Sheet, since Vercel's free tier only retains
-# function logs for ~1hr. Stays off if the two env vars below aren't set.
+# Optional: persists every log line (INFO and up - request summaries,
+# warnings, errors, plus per-LLM-call cost rows, see llm_client.py) to a
+# Google Sheet, since Vercel's free tier only retains function logs for
+# ~1hr. Rows are buffered in memory per-request and written in a background
+# task after the response is sent, so this never blocks a request - see
+# sheets_logger.py. Stays off if the two env vars below aren't set.
 _sheets_handler = sheets_logger.build_handler()
 if _sheets_handler is not None:
-    _sheets_handler.setLevel(logging.WARNING)
+    _sheets_handler.setLevel(logging.INFO)
     logging.getLogger().addHandler(_sheets_handler)
 from app.common.schemas import (
     DewateringRequest,
@@ -124,11 +127,13 @@ async def rate_limit_and_log(request: Request, call_next):
     # warm instance and rate-limit warnings get buffered too.
     sheets_rows_token = sheets_logger._pending_rows.set({})
     endpoint_token = llm_client.current_endpoint.set(f"{request.method} {request.url.path}")
+    client_ip_token = llm_client.current_client_ip.set(client_ip)
 
     def _finish(response):
         buffered_rows = sheets_logger._pending_rows.get()
         sheets_logger._pending_rows.reset(sheets_rows_token)
         llm_client.current_endpoint.reset(endpoint_token)
+        llm_client.current_client_ip.reset(client_ip_token)
         if buffered_rows:
             response.background = BackgroundTask(sheets_logger.flush_buffered_rows, buffered_rows)
         return response
@@ -152,6 +157,7 @@ async def rate_limit_and_log(request: Request, call_next):
         buffered_rows = sheets_logger._pending_rows.get()
         sheets_logger._pending_rows.reset(sheets_rows_token)
         llm_client.current_endpoint.reset(endpoint_token)
+        llm_client.current_client_ip.reset(client_ip_token)
         # No response object exists on this path to attach a background
         # task to, and the request has already failed, so flushing inline
         # here doesn't cost a successful response any latency.

@@ -1,10 +1,11 @@
 """Buffered Google Sheets persistence for logs and LLM-call cost tracking.
 
 Vercel's free tier only retains function logs for about an hour, so anything
-not caught in that window is lost. This module buffers WARNING+ log records
-(and per-LLM-call cost rows) in memory during a request, then flushes them to
-a Google Sheet in a background task attached to the response - the client
-never waits on the Sheets API.
+not caught in that window is lost. This module buffers log records (and
+per-LLM-call cost rows, with one column per field) in memory during a
+request, then flushes them to a Google Sheet in a background task attached
+to the response - the client never waits on the Sheets API. The minimum
+level actually buffered is set by main.py (currently INFO, i.e. everything).
 
 Optional: stays fully inactive if GOOGLE_SERVICE_ACCOUNT_JSON /
 GOOGLE_SHEET_LOG_SHEET_ID aren't set.
@@ -52,19 +53,41 @@ def build_handler() -> logging.Handler | None:
 
 class GoogleSheetsLogHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
+        is_llm_call = record.name.endswith(".llm_cost")
+        if is_llm_call:
+            # llm_client.py's _log_llm_call() passes these via `extra=`,
+            # which logging attaches as plain attributes on the record - one
+            # column per field, matching the LLM_Calls sheet's header row.
+            tab = _LLM_CALLS_TAB
+            row = [
+                self.formatTime(record),
+                getattr(record, "llm_endpoint", ""),
+                getattr(record, "llm_attempt", ""),
+                getattr(record, "llm_model", ""),
+                getattr(record, "llm_input_tokens", ""),
+                getattr(record, "llm_output_tokens", ""),
+                getattr(record, "llm_cost_usd", ""),
+                getattr(record, "llm_duration_ms", ""),
+                getattr(record, "llm_stop_reason", ""),
+                getattr(record, "llm_max_tokens_hit", ""),
+                getattr(record, "llm_client_ip", ""),
+            ]
+        else:
+            tab = _LOGS_TAB
+            row = [
+                self.formatTime(record),
+                record.levelname,
+                record.name,
+                record.getMessage(),
+            ]
         buffer = _pending_rows.get()
         if buffer is None:
-            # No request in flight to flush this (e.g. cold-start startup
-            # logging) - nothing to buffer into, so drop rather than leak
-            # across unrelated future requests.
+            # No request in flight (e.g. a cold-start startup check, logged
+            # once at import time rather than per user request) - flush
+            # immediately instead of dropping. Blocking here costs nothing
+            # user-facing since it isn't part of any request's response path.
+            flush_buffered_rows({tab: [row]})
             return
-        tab = _LLM_CALLS_TAB if record.name.endswith(".llm_cost") else _LOGS_TAB
-        row = [
-            self.formatTime(record),
-            record.levelname,
-            record.name,
-            record.getMessage(),
-        ]
         buffer.setdefault(tab, []).append(row)
 
 
