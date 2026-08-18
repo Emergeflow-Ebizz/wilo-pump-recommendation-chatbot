@@ -1765,7 +1765,11 @@
     el.composerInput.placeholder = composerPlaceholder();
     if (!isInputStep) el.composerInput.value = "";
     el.sendBtn.disabled = !isInputStep || !el.composerInput.value.trim();
-    if (isInputStep) el.composerInput.focus();
+    if (isInputStep) {
+      // On mobile, prevent scroll when focusing input
+      var isMobile = window.innerWidth <= 1024;
+      el.composerInput.focus({ preventScroll: isMobile });
+    }
 
     if (state.inputError) {
       el.inputError.textContent = state.inputError;
@@ -1777,23 +1781,27 @@
     // Scroll to latest message - but position to show intro message with pump card
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
+    var isMobile = window.innerWidth <= 1024;
 
-    setTimeout(function () {
-      if (hasRecommendation) {
-        // For pump cards, scroll to show the intro message above the card
-        var rows = el.thread.querySelectorAll('.row');
-        if (rows.length >= 2) {
-          var introRow = rows[rows.length - 2];
-          introRow.scrollIntoView({ behavior: 'auto', block: 'start' });
+    // Don't scroll on mobile to prevent keyboard from pushing content
+    if (!isMobile) {
+      setTimeout(function () {
+        if (hasRecommendation) {
+          // For pump cards, scroll to show the intro message above the card
+          var rows = el.thread.querySelectorAll('.row');
+          if (rows.length >= 2) {
+            var introRow = rows[rows.length - 2];
+            introRow.scrollIntoView({ behavior: 'auto', block: 'start' });
+          }
+        } else {
+          // For regular chat, scroll to latest message
+          // But not on initial load - let welcome card show first
+          if (state.messages.length > 2) {
+            el.thread.scrollTop = el.thread.scrollHeight;
+          }
         }
-      } else {
-        // For regular chat, scroll to latest message
-        // But not on initial load - let welcome card show first
-        if (state.messages.length > 2) {
-          el.thread.scrollTop = el.thread.scrollHeight;
-        }
-      }
-    }, 100);
+      }, 100);
+    }
   }
 
   function handleSend() {
