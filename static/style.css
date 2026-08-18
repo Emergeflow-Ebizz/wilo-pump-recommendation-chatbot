@@ -978,13 +978,13 @@ body {
 /* Large tablets and laptops (769px - 1024px) */
 @media (min-width: 769px) and (max-width: 1024px) {
   .app-shell {
-    padding: 24px 16px;
+    padding: 20px 12px;
     background: linear-gradient(135deg, #e8eceb 0%, #f0f3f2 100%);
   }
 
   .phone {
     width: 100%;
-    max-width: 480px;
+    max-width: 90%;
     height: auto;
     aspect-ratio: 390 / 780;
     border-radius: 28px;
@@ -995,13 +995,13 @@ body {
 /* Desktop screens (1025px - 1440px) */
 @media (min-width: 1025px) and (max-width: 1440px) {
   .app-shell {
-    padding: 32px 24px;
+    padding: 20px 12px;
     background: linear-gradient(135deg, #e8eceb 0%, #f0f3f2 100%);
   }
 
   .phone {
     width: 100%;
-    max-width: 500px;
+    max-width: 85%;
     height: auto;
     aspect-ratio: 390 / 780;
     border-radius: 32px;
@@ -1012,13 +1012,13 @@ body {
 /* Large desktop screens (1441px+) */
 @media (min-width: 1441px) {
   .app-shell {
-    padding: 32px 24px;
+    padding: 20px 12px;
     background: linear-gradient(135deg, #e8eceb 0%, #f0f3f2 100%);
   }
 
   .phone {
     width: 100%;
-    max-width: 550px;
+    max-width: 80%;
     height: auto;
     aspect-ratio: 390 / 780;
     border-radius: 32px;
