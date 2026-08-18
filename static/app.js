@@ -90,7 +90,7 @@
 
   function getPumpImagePath(modelName) {
     if (!modelName) return null;
-    var imageFolderPath = "./Wilo%20Pump%20Images/";
+    var imageFolderPath = "/Wilo%20Pump%20Images/";
     var modelUpper = modelName.toUpperCase();
     var pumpImages = {
       "WBWP3": imageFolderPath + "WBWP3-WBWP4.jpg",
