@@ -5,3 +5,5 @@ pytest
 httpx
 python-dotenv
 psycopg[binary]
+google-api-python-client
+google-auth
