@@ -1,6 +1,27 @@
 (function () {
   "use strict";
 
+  // Prevent scroll on mobile - lock viewport
+  if (window.innerWidth <= 1024) {
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+
+    // Prevent scroll with touch
+    document.addEventListener('touchmove', function(e) {
+      if (e.target.closest('.thread')) return; // Allow scrolling in thread
+      e.preventDefault();
+    }, { passive: false });
+
+    // Prevent scroll with wheel
+    document.addEventListener('wheel', function(e) {
+      if (e.target.closest('.thread')) return; // Allow scrolling in thread
+      e.preventDefault();
+    }, { passive: false });
+  }
+
   // ---------------------------------------------------------------------
   // Backend config
   // ---------------------------------------------------------------------
@@ -1779,27 +1800,23 @@
     // Scroll to latest message - but position to show intro message with pump card
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
-    var isMobile = window.innerWidth <= 1024;
 
-    // Don't scroll on mobile to prevent keyboard from pushing content
-    if (!isMobile) {
-      setTimeout(function () {
-        if (hasRecommendation) {
-          // For pump cards, scroll to show the intro message above the card
-          var rows = el.thread.querySelectorAll('.row');
-          if (rows.length >= 2) {
-            var introRow = rows[rows.length - 2];
-            introRow.scrollIntoView({ behavior: 'auto', block: 'start' });
-          }
-        } else {
-          // For regular chat, scroll to latest message
-          // But not on initial load - let welcome card show first
-          if (state.messages.length > 2) {
-            el.thread.scrollTop = el.thread.scrollHeight;
-          }
+    setTimeout(function () {
+      if (hasRecommendation) {
+        // For pump cards, scroll to show the intro message above the card
+        var rows = el.thread.querySelectorAll('.row');
+        if (rows.length >= 2) {
+          var introRow = rows[rows.length - 2];
+          introRow.scrollIntoView({ behavior: 'auto', block: 'start' });
         }
-      }, 100);
-    }
+      } else {
+        // For regular chat, scroll to latest message
+        // But not on initial load - let welcome card show first
+        if (state.messages.length > 2) {
+          el.thread.scrollTop = el.thread.scrollHeight;
+        }
+      }
+    }, 100);
   }
 
   function handleSend() {
