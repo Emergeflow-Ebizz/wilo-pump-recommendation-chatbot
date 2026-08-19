@@ -406,6 +406,7 @@
     selectedPump: null, // { recommendation, tierLabel } when user selects a pump
     isRejectionFlow: false, // true when pump not found or question fails, skip pincode
     nextStepAfterEmail: "explore-more", // where to go after email in rejection flow (explore-more or final-goodbye)
+    pumpSelectionPending: null, // { recommendation, tierLabel } - holds pump data awaiting confirmation
   };
 
   function addBotMessage(text) {
@@ -1714,19 +1715,43 @@
     selectBtn.textContent = isSelected ? "✓ Selected" : "Select";
     if (isSelected) selectBtn.classList.add("selected");
     selectBtn.addEventListener("click", function () {
-      state.selectedPump = { recommendation: recommendation, tierLabel: tierLabel };
+      var newPumpModel = recommendation.model_name || "pump";
+      var currentPumpModel = state.selectedPump ? state.selectedPump.recommendation.model_name : null;
 
-      var appName = "";
-      if (state.useCaseSlug === "water_transfer") appName = "Borewell to Overhead tank";
-      else if (state.useCaseSlug === "tank_filling") appName = "From Bottom tank to Overhead tank";
-      else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
-      else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
+      if (state.selectedPump && currentPumpModel === newPumpModel) {
+        showPumpSelectionModal(
+          newPumpModel,
+          newPumpModel,
+          function () {
+            closePumpSelectionModal();
+          },
+          function () {
+            closePumpSelectionModal();
+          }
+        );
+        var messageEl = document.querySelector(".pump-modal-message");
+        if (messageEl) {
+          messageEl.textContent = "You've already selected " + newPumpModel + ". Please proceed with email verification or select a different pump.";
+        }
+        return;
+      }
 
-      var pumpModel = recommendation.model_name || "pump";
-      var html = "Great! You've selected <span style='color: #009C82; font-weight: bold;'>" + pumpModel + "</span>. To get the selection in your mailbox, please provide your email ID.";
-      addBotHtmlMessage(html);
-      jumpToStep("lead-email");
-      render();
+      var confirmSelection = function () {
+        state.selectedPump = { recommendation: recommendation, tierLabel: tierLabel };
+        var pumpModel = recommendation.model_name || "pump";
+        var html = "Great! You've selected <span style='color: #009C82; font-weight: bold;'>" + pumpModel + "</span>. To get the selection in your mailbox, please provide your email ID.";
+        addBotHtmlMessage(html);
+        jumpToStep("lead-email");
+        render();
+      };
+
+      if (state.selectedPump && currentPumpModel && currentPumpModel !== newPumpModel) {
+        showPumpSelectionModal(currentPumpModel, newPumpModel, confirmSelection, function () {
+          closePumpSelectionModal();
+        });
+      } else {
+        confirmSelection();
+      }
     });
 
     body.appendChild(catLabel);
@@ -1928,6 +1953,44 @@
     el.confirmationModal.hidden = true;
   }
 
+  function showPumpSelectionModal(currentPump, newPump, onConfirm, onCancel) {
+    if (!el.pumpSelectionModal) {
+      el.pumpSelectionModal = document.getElementById("pump-selection-modal");
+    }
+    if (!el.pumpSelectionModal) {
+      console.error("Pump selection modal element not found");
+      return;
+    }
+
+    var messageEl = el.pumpSelectionModal.querySelector(".pump-modal-message");
+    var confirmBtn = el.pumpSelectionModal.querySelector(".pump-modal-confirm");
+    var cancelBtn = el.pumpSelectionModal.querySelector(".pump-modal-cancel");
+
+    if (currentPump) {
+      messageEl.textContent = "Do you want to switch from " + currentPump + " to " + newPump + "?";
+    } else {
+      messageEl.textContent = "Confirm selection: " + newPump;
+    }
+
+    confirmBtn.onclick = function () {
+      el.pumpSelectionModal.hidden = true;
+      if (onConfirm) onConfirm();
+    };
+
+    cancelBtn.onclick = function () {
+      el.pumpSelectionModal.hidden = true;
+      if (onCancel) onCancel();
+    };
+
+    el.pumpSelectionModal.hidden = false;
+  }
+
+  function closePumpSelectionModal() {
+    if (el.pumpSelectionModal) {
+      el.pumpSelectionModal.hidden = true;
+    }
+  }
+
   function refreshChat() {
     state.messages = [];
     state.selectedPump = null;
@@ -1958,6 +2021,7 @@
     el.confirmationModal = document.getElementById("confirmation-modal");
     el.confirmCancel = document.getElementById("confirm-cancel");
     el.confirmRefresh = document.getElementById("confirm-refresh");
+    el.pumpSelectionModal = document.getElementById("pump-selection-modal");
 
     el.sendBtn.addEventListener("click", handleSend);
     el.composerInput.addEventListener("keydown", function (event) {
@@ -1972,6 +2036,11 @@
       if (event.target === el.detailsBackdrop) closePumpDetailsModal();
     });
 
+    if (el.pumpSelectionModal) {
+      el.pumpSelectionModal.addEventListener("click", function (event) {
+        if (event.target === el.pumpSelectionModal) closePumpSelectionModal();
+      });
+    }
 
     el.menuBtn.addEventListener("click", function (event) {
       event.stopPropagation();
@@ -1987,6 +2056,7 @@
       if (event.key === "Escape" && !el.detailsBackdrop.hidden) closePumpDetailsModal();
       if (event.key === "Escape" && !el.menuDropdown.hidden) closeMenu();
       if (event.key === "Escape" && !el.confirmationModal.hidden) closeRefreshConfirmation();
+      if (event.key === "Escape" && el.pumpSelectionModal && !el.pumpSelectionModal.hidden) closePumpSelectionModal();
     });
 
     initConversation();
