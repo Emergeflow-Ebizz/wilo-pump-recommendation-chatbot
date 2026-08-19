@@ -429,6 +429,7 @@
     dynamicAnswers: {}, // accumulated answers fed to next_question, then to recommend as-is
     clarificationAttempts: {}, // question_key -> retry count, sent back to /answer as clarification_attempts
     clarificationUserInput: {}, // question_key -> original user input that triggered clarification
+    clarificationSuggestedValues: {}, // question_key -> suggested_value from needs_clarification, sent back as pending_suggestion
     currentQuestion: null, // last { key, prompt, unit, optional } from next_question
     lastRecommendation: null, // the ok recommendation, kept around for /explain_model follow-ups
     selectedPump: null, // { recommendation, tierLabel } when user selects a pump
@@ -495,6 +496,7 @@
     state.dynamicAnswers = {};
     state.clarificationAttempts = {};
     state.clarificationUserInput = {};
+    state.clarificationSuggestedValues = {};
     state.currentQuestion = null;
     state.lastRecommendation = null;
     state.selectedPump = null;
@@ -771,6 +773,7 @@
                 state.dynamicAnswers = {};
                 state.clarificationAttempts = {};
                 state.clarificationUserInput = {};
+                state.clarificationSuggestedValues = {};
                 state.currentQuestion = null;
                 fetchNextQuestion().then(render);
               },
@@ -785,6 +788,7 @@
                 state.dynamicAnswers = {};
                 state.clarificationAttempts = {};
                 state.clarificationUserInput = {};
+                state.clarificationSuggestedValues = {};
                 state.currentQuestion = null;
                 fetchNextQuestion().then(render);
               },
@@ -799,6 +803,7 @@
                 state.dynamicAnswers = {};
                 state.clarificationAttempts = {};
                 state.clarificationUserInput = {};
+                state.clarificationSuggestedValues = {};
                 state.currentQuestion = null;
                 fetchNextQuestion().then(render);
               },
@@ -813,6 +818,7 @@
                 state.dynamicAnswers = {};
                 state.clarificationAttempts = {};
                 state.clarificationUserInput = {};
+                state.clarificationSuggestedValues = {};
                 state.currentQuestion = null;
                 fetchNextQuestion().then(render);
               },
@@ -923,6 +929,7 @@
       state.dynamicAnswers = {};
       state.clarificationAttempts = {};
       state.clarificationUserInput = {};
+      state.clarificationSuggestedValues = {};
       state.currentQuestion = null;
       state.isRejectionFlow = true;
       state.nextStepAfterEmail = "lead-pincode";
@@ -1015,11 +1022,17 @@
 
     var userText = trimmed;
     var payload = { question_key: question.key, user_text: userText, answers_so_far: state.dynamicAnswers };
-    var previousValue = state.dynamicAnswers[question.key];
-    if (previousValue !== undefined && previousValue !== null) {
-      payload.previous_value = previousValue;
-      var previousUnit = state.dynamicAnswers[unitFieldNameFor(question.key)];
-      if (previousUnit !== undefined) payload.previous_unit = previousUnit;
+
+    var pendingSuggestion = state.clarificationSuggestedValues[question.key];
+    if (pendingSuggestion !== undefined && pendingSuggestion !== null) {
+      payload.pending_suggestion = pendingSuggestion;
+    } else {
+      var previousValue = state.dynamicAnswers[question.key];
+      if (previousValue !== undefined && previousValue !== null) {
+        payload.previous_value = previousValue;
+        var previousUnit = state.dynamicAnswers[unitFieldNameFor(question.key)];
+        if (previousUnit !== undefined) payload.previous_unit = previousUnit;
+      }
     }
     if (state.clarificationAttempts[question.key]) {
       payload.clarification_attempts = state.clarificationAttempts[question.key];
@@ -1048,6 +1061,10 @@
     if (data.needs_clarification || data.edit_not_supported) {
       console.log("[submitFreeTextAnswer] NEEDS_CLARIFICATION - Asking user for more details");
       state.clarificationAttempts[question.key] = (state.clarificationAttempts[question.key] || 0) + 1;
+      if (data.suggested_value !== undefined && data.suggested_value !== null) {
+        state.clarificationSuggestedValues[question.key] = data.suggested_value;
+        console.log("[submitFreeTextAnswer] Stored pending_suggestion:", question.key, "=", data.suggested_value);
+      }
       if (data.value !== undefined && data.value !== null) {
         state.dynamicAnswers[question.key] = data.value;
       } else if (data.suggested_value !== undefined && data.suggested_value !== null) {
@@ -1099,6 +1116,7 @@
 
     delete state.clarificationUserInput[question.key];
     delete state.clarificationAttempts[question.key];
+    delete state.clarificationSuggestedValues[question.key];
 
     state.currentQuestion = null;
     await fetchNextQuestion(data.confirmation_message);
@@ -1134,6 +1152,7 @@
       state.dynamicAnswers = {};
       state.clarificationAttempts = {};
       state.clarificationUserInput = {};
+      state.clarificationSuggestedValues = {};
       state.currentQuestion = null;
       // Add confirmation message with selected application
       var appName = "";
@@ -1896,6 +1915,12 @@
 
       var confirmSelection = function () {
         state.selectedPump = { recommendation: recommendation, tierLabel: tierLabel };
+
+        // Remove any previous pump selection messages
+        state.messages = state.messages.filter(function(msg) {
+          return !(msg.kind === "html" && msg.html && msg.html.indexOf("Great! You've selected") !== -1);
+        });
+
         var pumpModel = recommendation.model_name || "pump";
         var html = "Great! You've selected <span style='color: #009C82; font-weight: bold;'>" + pumpModel + "</span>. To get the selection in your mailbox, please provide your email ID.";
         addBotHtmlMessage(html);
