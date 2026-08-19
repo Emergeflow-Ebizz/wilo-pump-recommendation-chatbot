@@ -249,6 +249,12 @@
       validate: pincodeValidate,
       optional: true,
       next: function () {
+        if (state.skipDealerSteps) {
+          state.skipDealerSteps = false;
+          var nextStep = state.nextStepAfterPincode || "explore-more";
+          state.nextStepAfterPincode = "explore-more";
+          return nextStep;
+        }
         var pincode = state.answers["lead-pincode"];
         if (pincode) {
           var trimmed = pincode.trim();
@@ -404,8 +410,10 @@
     currentQuestion: null, // last { key, prompt, unit, optional } from next_question
     lastRecommendation: null, // the ok recommendation, kept around for /explain_model follow-ups
     selectedPump: null, // { recommendation, tierLabel } when user selects a pump
-    isRejectionFlow: false, // true when pump not found or question fails, skip pincode
-    nextStepAfterEmail: "explore-more", // where to go after email in rejection flow (explore-more or final-goodbye)
+    isRejectionFlow: false, // true when pump not found or question fails
+    nextStepAfterEmail: "explore-more", // where to go after email in rejection flow
+    nextStepAfterPincode: "explore-more", // where to go after pincode in rejection flow (explore-more or final-goodbye)
+    skipDealerSteps: false, // true in rejection flow to skip dealer-notification/international-dealer steps
     pumpSelectionPending: null, // { recommendation, tierLabel } - holds pump data awaiting confirmation
   };
 
@@ -468,6 +476,9 @@
     state.currentQuestion = null;
     state.lastRecommendation = null;
     state.selectedPump = null;
+    state.isRejectionFlow = false;
+    state.nextStepAfterPincode = "explore-more";
+    state.skipDealerSteps = false;
     initConversation();
     render();
   }
@@ -731,7 +742,8 @@
     var rejectionMsg = 'For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 <a href="mailto:sales@wilo.com" target="_blank">sales@wilo.com</a> 🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank">https://wilo.com/in/en/Dealers/</a>';
     addBotHtmlMessage(rejectionMsg);
     state.isRejectionFlow = true;
-    state.nextStepAfterEmail = "explore-more";
+    state.nextStepAfterEmail = "lead-pincode";
+    state.skipDealerSteps = true;
     jumpToStep("lead-email");
     render();
   }
@@ -799,7 +811,9 @@
       state.clarificationUserInput = {};
       state.currentQuestion = null;
       state.isRejectionFlow = true;
-      state.nextStepAfterEmail = "final-goodbye";
+      state.nextStepAfterEmail = "lead-pincode";
+      state.skipDealerSteps = true;
+      state.nextStepAfterPincode = "final-goodbye";
 
       jumpToStep("lead-email");
       render();
