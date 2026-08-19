@@ -145,7 +145,7 @@
     return "Please enter a valid email address or 10-digit phone number.";
   };
   var pincodeValidate = function (value) {
-    var trimmed = value.trim();
+    var trimmed = value.trim().replace(/\s/g, "");
     if (/^\d{4,10}$/.test(trimmed)) return null;
     return "Please enter a valid pin code (6 digits) or zip code (4-10 digits).";
   };
@@ -1071,7 +1071,12 @@
       render();
       return;
     }
-    state.answers[step.id] = trimmed;
+
+    var cleanValue = trimmed;
+    if (step.id === "lead-pincode") {
+      cleanValue = trimmed.replace(/\s/g, "");
+    }
+    state.answers[step.id] = cleanValue;
     addUserMessage(trimmed);
 
     // Send pump data to API when pincode is submitted
@@ -1079,7 +1084,7 @@
       sendPumpDataToAPI();
     }
 
-    advance(step, trimmed);
+    advance(step, cleanValue);
     render();
   }
 
