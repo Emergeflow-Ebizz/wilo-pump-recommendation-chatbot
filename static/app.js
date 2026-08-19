@@ -257,10 +257,7 @@
       id: "lead-pincode",
       kind: "input",
       bot: function () {
-        if (state.isRejectionFlow) {
-          return "In case you want our dealer to reach you, please share your Pin code or Zip code.";
-        }
-        return "Please share your Pin code or Zip code so our dealer can reach you.";
+        return "In case you want our dealer to reach you, please share your Pin code or Zip code.";
       },
       placeholder: "Pin code or Zip code",
       validate: pincodeValidate,
@@ -352,7 +349,7 @@
       id: "explore-more",
       kind: "input",
       bot: function () {
-        return "Do you want to explore more pumps for your application? (yes/no)";
+        return "Do you want to explore more pump that we have? (yes/no)";
       },
       placeholder: "Type yes or no",
       validate: function (value) {
