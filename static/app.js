@@ -231,9 +231,23 @@
       },
       next: function () {
         if (state.isRejectionFlow) {
-          var nextStep = state.nextStepAfterEmail || "explore-more";
+          // In rejection flow, check if email was actually provided
+          var email = state.answers["lead-email"];
+          console.log("[lead-email next] isRejectionFlow:", state.isRejectionFlow, "email provided:", email);
+
+          // If user skipped email (null), go to explore-more
+          if (!email) {
+            console.log("[lead-email next] Email was skipped, going to explore-more");
+            state.isRejectionFlow = false;
+            state.nextStepAfterEmail = "explore-more";
+            return "explore-more";
+          }
+
+          // If email was provided, go to pincode
+          var nextStep = state.nextStepAfterEmail || "lead-pincode";
           state.isRejectionFlow = false;
           state.nextStepAfterEmail = "explore-more";
+          console.log("[lead-email next] Email was provided, going to:", nextStep);
           return nextStep;
         }
         return "lead-pincode";
@@ -249,21 +263,29 @@
       validate: pincodeValidate,
       optional: true,
       next: function () {
+        var pincode = state.answers["lead-pincode"];
+        console.log("[lead-pincode next] skipDealerSteps:", state.skipDealerSteps, "pincode:", pincode);
+
         if (state.skipDealerSteps) {
           state.skipDealerSteps = false;
           var nextStep = state.nextStepAfterPincode || "explore-more";
           state.nextStepAfterPincode = "explore-more";
+          console.log("[lead-pincode next] skipDealerSteps=true, going to:", nextStep);
           return nextStep;
         }
-        var pincode = state.answers["lead-pincode"];
+
+        // Normal flow (when pump was found)
         if (pincode) {
           var trimmed = pincode.trim();
           if (/^\d{6}$/.test(trimmed)) {
+            console.log("[lead-pincode next] Indian pincode, showing dealer-notification");
             return "dealer-notification";
           } else {
+            console.log("[lead-pincode next] International pincode, showing international-dealer");
             return "international-dealer";
           }
         } else {
+          console.log("[lead-pincode next] No pincode, showing dealer-locator");
           return "dealer-locator";
         }
       },
@@ -522,6 +544,70 @@
     render();
   }
 
+  async function sendRejectionLeadToAPI() {
+    console.log("[Rejection Lead API] ===== SENDING REJECTION LEAD START =====");
+    console.log("[Rejection Lead API] isRejectionFlow:", state.isRejectionFlow);
+    console.log("[Rejection Lead API] useCaseSlug:", state.useCaseSlug);
+
+    var email = state.answers["lead-email"] || "";
+    var pincode = state.answers["lead-pincode"] || "";
+
+    if (!email && !pincode) {
+      console.log("[Rejection Lead API] No email or pincode provided, skipping API call");
+      return;
+    }
+
+    var applicationMap = {
+      "water_transfer": "Water Extraction From Borewell",
+      "tank_filling": "Transfer of water from a ground level reservoir to an Overhead tank",
+      "pressure_boosting": "Pressure Boosting",
+      "dewatering": "Dewatering",
+    };
+
+    var payload = {
+      data: {
+        userDetails: {
+          email: email,
+          pincode: pincode,
+          name: state.answers["lead-name"] || "",
+        },
+        rejectionDetails: {
+          application: applicationMap[state.useCaseSlug] || "Unknown",
+          noSuitablePumpFound: true,
+          answeredQuestions: state.dynamicAnswers,
+        },
+      },
+    };
+
+    try {
+      console.log("[Rejection Lead API] Sending rejection lead to backend...");
+      console.log("[Rejection Lead API] Payload:", JSON.stringify(payload, null, 2));
+
+      var res = await fetch(API_BASE_URL + "/send-rejection-lead", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      var data = await res.json();
+      console.log("[Rejection Lead API] Response Status:", res.status);
+      console.log("[Rejection Lead API] Response Data:", JSON.stringify(data, null, 2));
+
+      if (res.ok) {
+        console.log("[Rejection Lead API] Success! Rejection lead has been captured.");
+      } else {
+        console.error("[Rejection Lead API] Error - Status:", res.status, "Details:", data);
+      }
+
+      return data;
+    } catch (err) {
+      console.error("[Rejection Lead API] Error sending rejection lead:", err);
+      console.error("[Rejection Lead API] Error details:", err.message);
+    }
+  }
+
   async function sendPumpDataToAPI() {
     if (!state.selectedPump) {
       console.log("[Pump Data API] No pump selected, skipping API call");
@@ -627,7 +713,7 @@
     }
 
     var data;
-    
+
     try {
       var res = await fetch(API_BASE_URL + "/" + state.useCaseSlug + "/recommend", {
         method: "POST",
@@ -644,10 +730,14 @@
       return;
     }
 
-    console.log("[runRecommendation] payload:", payload, "slug:", state.useCaseSlug);
-    console.log("[runRecommendation] full response:", data);
+    console.log("[runRecommendation] ===== RECOMMENDATION REQUEST START =====");
+    console.log("[runRecommendation] use case slug:", state.useCaseSlug);
+    console.log("[runRecommendation] payload sent to /recommend:", JSON.stringify(payload, null, 2));
+    console.log("[runRecommendation] full response received:", JSON.stringify(data, null, 2));
+    console.log("[runRecommendation] response status:", data.status);
 
     if (data.status === "ok") {
+      console.log("[runRecommendation] STATUS: OK - Showing recommendation");
       addBotMessage("Based on what you shared, here's wilo solution to meet your requirements.");
       addRecommendationMessage(data.recommendation, data.recommendation && data.recommendation.tied_alternatives);
       state.lastRecommendation = data.recommendation;
@@ -656,6 +746,7 @@
     }
 
     if (data.status === "confirmation_required") {
+      console.log("[runRecommendation] STATUS: CONFIRMATION_REQUIRED - Pump may be oversized");
       addBotMessage(data.message || "This selection looks oversized for your setup. Do you want to proceed anyway?");
       state.awaitingKind = "text";
       state.confirmationHandler = function (userInput) {
@@ -739,18 +830,27 @@
     }
 
     // status === "rejected" (or anything unrecognized)
+    console.log("[runRecommendation] STATUS: REJECTED or UNRECOGNIZED");
+    console.log("[runRecommendation] Reason: The backend rejected this requirement");
+    console.log("[runRecommendation] Backend response details:", JSON.stringify(data, null, 2));
+    console.warn("[runRecommendation] Showing rejection message and asking for email contact");
     var rejectionMsg = 'For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 <a href="mailto:sales@wilo.com" target="_blank">sales@wilo.com</a> 🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank">https://wilo.com/in/en/Dealers/</a>';
     addBotHtmlMessage(rejectionMsg);
     state.isRejectionFlow = true;
     state.nextStepAfterEmail = "lead-pincode";
     state.skipDealerSteps = true;
     jumpToStep("lead-email");
+    console.log("[runRecommendation] ===== REJECTION FLOW INITIATED =====");
     render();
   }
 
   /** Asks the backend what to ask next for the active use case; once it
    * returns question: null, moves on to /recommend. */
   async function fetchNextQuestion(confirmationMessage) {
+    console.log("[fetchNextQuestion] ===== FETCH NEXT QUESTION START =====");
+    console.log("[fetchNextQuestion] use case slug:", state.useCaseSlug);
+    console.log("[fetchNextQuestion] current answers:", JSON.stringify(state.dynamicAnswers, null, 2));
+
     state.awaitingKind = "loading";
     state.virtualOptions = null;
 
@@ -763,15 +863,20 @@
       });
       data = await res.json();
     } catch (err) {
+      console.error("[fetchNextQuestion] fetch error:", err);
       render();
       showUnreachableBackendError(function () { return fetchNextQuestion(confirmationMessage); });
       return;
     }
 
-    console.log("[fetchNextQuestion] response:", data, "confirmationMessage:", confirmationMessage);
+    console.log("[fetchNextQuestion] response from backend:", JSON.stringify(data, null, 2));
 
     if (data.question) {
-      console.log("[fetchNextQuestion] advancing to question:", data.question.key);
+      console.log("[fetchNextQuestion] NEXT QUESTION AVAILABLE");
+      console.log("[fetchNextQuestion] question key:", data.question.key);
+      console.log("[fetchNextQuestion] question prompt:", data.question.prompt);
+      console.log("[fetchNextQuestion] question optional:", data.question.optional);
+      console.log("[fetchNextQuestion] question unit:", data.question.unit);
       state.currentQuestion = data.question;
       state.awaitingKind = "dynamic-input";
       var messageText = data.question.prompt;
@@ -784,12 +889,14 @@
     }
 
     if (data.detail) {
+      console.log("[fetchNextQuestion] ERROR DETAIL FOUND:", data.detail);
       addBotMessage("Sorry, something went wrong with the recommendation engine. Please try again.");
       jumpToStep("application");
       render();
       return;
     }
 
+    console.log("[fetchNextQuestion] NO MORE QUESTIONS - Moving to /recommend");
     if (confirmationMessage) {
       addBotMessage(confirmationMessage);
     }
@@ -801,7 +908,14 @@
   /** A required question that comes back "skipped" (or given-up-on) re-prompts
    * the user; an optional one is recorded as null and the loop moves on. */
   async function handleUnansweredQuestion(question) {
+    console.log("[handleUnansweredQuestion] ===== UNANSWERED QUESTION START =====");
+    console.log("[handleUnansweredQuestion] question key:", question.key);
+    console.log("[handleUnansweredQuestion] question prompt:", question.prompt);
+    console.log("[handleUnansweredQuestion] question.optional:", question.optional);
+
     if (!question.optional) {
+      console.log("[handleUnansweredQuestion] REQUIRED QUESTION UNANSWERED - Triggering rejection flow");
+      console.log("[handleUnansweredQuestion] Reason: User could not answer a required question (backend returned skipped or gave_up)");
       var rejectionMsg = 'For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 <a href="mailto:sales@wilo.com" target="_blank">sales@wilo.com</a> 🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank">https://wilo.com/in/en/Dealers/</a>';
       addBotHtmlMessage(rejectionMsg);
 
@@ -816,9 +930,12 @@
       state.nextStepAfterPincode = "final-goodbye";
 
       jumpToStep("lead-email");
+      console.log("[handleUnansweredQuestion] ===== REJECTION FLOW INITIATED (FROM UNANSWERED QUESTION) =====");
       render();
       return;
     }
+
+    console.log("[handleUnansweredQuestion] OPTIONAL QUESTION SKIPPED - Continuing to next question");
     state.dynamicAnswers[question.key] = null;
     state.currentQuestion = null;
     await fetchNextQuestion();
@@ -827,10 +944,16 @@
   /** Sends the user's free-text reply to the backend's fixed-choice parser
    * (ParsedCategory) for questions like inside_or_outside / horizontal_or_vertical. */
   async function submitCategoryAnswer(question, trimmed) {
+    console.log("[submitCategoryAnswer] ===== SUBMIT CATEGORY ANSWER START =====");
+    console.log("[submitCategoryAnswer] question key:", question.key);
+    console.log("[submitCategoryAnswer] user input:", trimmed);
+
     var payload = { question_key: question.key, user_text: trimmed, answers_so_far: state.dynamicAnswers };
     if (state.clarificationAttempts[question.key]) {
       payload.clarification_attempts = state.clarificationAttempts[question.key];
     }
+
+    console.log("[submitCategoryAnswer] payload to /answer_category:", JSON.stringify(payload, null, 2));
 
     var data;
     try {
@@ -841,13 +964,17 @@
       });
       data = await res.json();
     } catch (err) {
+      console.error("[submitCategoryAnswer] fetch error:", err);
       showUnreachableBackendError(function () {
         return submitCategoryAnswer(question, trimmed);
       });
       return;
     }
 
+    console.log("[submitCategoryAnswer] response from /answer_category:", JSON.stringify(data, null, 2));
+
     if (data.needs_clarification || data.edit_not_supported) {
+      console.log("[submitCategoryAnswer] NEEDS_CLARIFICATION - Asking for more details");
       state.clarificationAttempts[question.key] = (state.clarificationAttempts[question.key] || 0) + 1;
       addBotMessage(data.clarification_question || "Could you clarify that?");
       state.awaitingKind = "dynamic-input";
@@ -856,17 +983,21 @@
     }
 
     if (data.skipped) {
+      console.log("[submitCategoryAnswer] SKIPPED - User skipped this category question");
       handleUnansweredQuestion(question);
       return;
     }
 
     if (data.gave_up) {
+      console.log("[submitCategoryAnswer] GAVE_UP - Backend gave up on this category question");
       handleUnansweredQuestion(question);
       return;
     }
 
+    console.log("[submitCategoryAnswer] ACCEPTED - Category accepted:", data.category);
     delete state.clarificationAttempts[question.key];
     state.dynamicAnswers[question.key] = data.category;
+    console.log("[submitCategoryAnswer] cumulative answers so far:", JSON.stringify(state.dynamicAnswers, null, 2));
     state.currentQuestion = null;
     await fetchNextQuestion(data.confirmation_message);
   }
@@ -878,6 +1009,10 @@
    * an unanswered/optional-skip, otherwise records the parsed value (+ unit)
    * and moves to the next question. */
   async function submitFreeTextAnswer(question, trimmed) {
+    console.log("[submitFreeTextAnswer] ===== SUBMIT FREE TEXT ANSWER START =====");
+    console.log("[submitFreeTextAnswer] question key:", question.key);
+    console.log("[submitFreeTextAnswer] user input:", trimmed);
+
     var userText = trimmed;
     var payload = { question_key: question.key, user_text: userText, answers_so_far: state.dynamicAnswers };
     var previousValue = state.dynamicAnswers[question.key];
@@ -890,6 +1025,8 @@
       payload.clarification_attempts = state.clarificationAttempts[question.key];
     }
 
+    console.log("[submitFreeTextAnswer] payload to /answer endpoint:", JSON.stringify(payload, null, 2));
+
     var data;
     try {
       var res = await fetch(API_BASE_URL + "/" + state.useCaseSlug + "/answer", {
@@ -899,35 +1036,23 @@
       });
       data = await res.json();
     } catch (err) {
+      console.error("[submitFreeTextAnswer] fetch error:", err);
       showUnreachableBackendError(function () {
         return submitFreeTextAnswer(question, trimmed);
       });
       return;
     }
 
-    console.log("[submitFreeTextAnswer] response for", question.key, ":", data);
+    console.log("[submitFreeTextAnswer] response from /answer:", JSON.stringify(data, null, 2));
 
     if (data.needs_clarification || data.edit_not_supported) {
+      console.log("[submitFreeTextAnswer] NEEDS_CLARIFICATION - Asking user for more details");
       state.clarificationAttempts[question.key] = (state.clarificationAttempts[question.key] || 0) + 1;
-      // Carry each piece forward independently: a clarification reply may
-      // resolve only the value (e.g. bare number) or only the unit (e.g.
-      // bare "inches"), and gating one on the other's presence would drop
-      // whichever piece the backend didn't return this turn.
       if (data.value !== undefined && data.value !== null) {
         state.dynamicAnswers[question.key] = data.value;
       } else if (data.suggested_value !== undefined && data.suggested_value !== null) {
-        // Fallback to suggested value when actual value is null - this flows back
-        // as previous_value on the next /answer call, allowing "Yes" replies to
-        // resolve to the LLM's own suggestion via the existing PREVIOUS VALUE rule.
         state.dynamicAnswers[question.key] = data.suggested_value;
       } else {
-        // The backend's extractor sometimes returns value=null even for a
-        // bare number (e.g. "6") when a unit is required but missing - it
-        // has genuinely enough info to ask "inches or mm?" but doesn't hand
-        // the number back. Fall back to what the user actually typed so a
-        // later bare-unit reply ("inches") still has a number to attach to,
-        // instead of that number being silently lost for the rest of the
-        // clarification loop.
         var bareNumberMatch = /^\s*[+-]?\d+(?:\.\d+)?\s*$/.exec(trimmed);
         if (bareNumberMatch) {
           state.dynamicAnswers[question.key] = parseFloat(trimmed);
@@ -944,11 +1069,13 @@
     delete state.clarificationAttempts[question.key];
 
     if (data.gave_up) {
+      console.log("[submitFreeTextAnswer] GAVE_UP - Backend gave up on this question");
       handleUnansweredQuestion(question);
       return;
     }
 
     if (data.redirect_key) {
+      console.log("[submitFreeTextAnswer] REDIRECT_KEY - User answered a different question:", data.redirect_key);
       state.dynamicAnswers[data.redirect_key] = data.value;
       if (data.unit) state.dynamicAnswers[unitFieldNameFor(data.redirect_key)] = data.unit;
       state.currentQuestion = null;
@@ -957,16 +1084,18 @@
     }
 
     if (data.skipped) {
+      console.log("[submitFreeTextAnswer] SKIPPED - User skipped this question");
       handleUnansweredQuestion(question);
       return;
     }
 
+    console.log("[submitFreeTextAnswer] ACCEPTED - Answer accepted by backend");
     state.dynamicAnswers[question.key] = data.value;
     var unit = data.unit || question.unit;
     if (unit) state.dynamicAnswers[unitFieldNameFor(question.key)] = unit;
 
-    console.log("[submitFreeTextAnswer] accepted:", question.key, "=", data.value, unit ? "(unit: " + unit + ")" : "");
-    console.log("[submitFreeTextAnswer] state.dynamicAnswers:", state.dynamicAnswers);
+    console.log("[submitFreeTextAnswer] stored value:", question.key, "=", data.value, unit ? "(unit: " + unit + ")" : "");
+    console.log("[submitFreeTextAnswer] cumulative answers so far:", JSON.stringify(state.dynamicAnswers, null, 2));
 
     delete state.clarificationUserInput[question.key];
     delete state.clarificationAttempts[question.key];
@@ -1070,7 +1199,9 @@
 
     // Check if user wants to skip an optional field
     var isSkipKeyword = /^(skip|no|nope|don't|dont|decline|pass)$/i.test(trimmed);
-    if (step.optional && isSkipKeyword) {
+    var isOptional = typeof step.optional === "function" ? step.optional() : step.optional;
+    if (isOptional && isSkipKeyword) {
+      console.log("[submitText] User skipped optional field:", step.id);
       state.answers[step.id] = null;
       addUserMessage(trimmed);
       advance(step, null);
@@ -1093,9 +1224,17 @@
     state.answers[step.id] = cleanValue;
     addUserMessage(trimmed);
 
-    // Send pump data to API when pincode is submitted
-    if (step.id === "lead-pincode" && state.selectedPump) {
-      sendPumpDataToAPI();
+    // Send data to API when pincode is submitted
+    if (step.id === "lead-pincode") {
+      if (state.selectedPump) {
+        // Normal flow: pump was found and selected
+        console.log("[submitText] Sending pump data to API");
+        sendPumpDataToAPI();
+      } else if (state.isRejectionFlow) {
+        // Rejection flow: no pump found
+        console.log("[submitText] Sending rejection lead data to API");
+        sendRejectionLeadToAPI();
+      }
     }
 
     advance(step, cleanValue);
