@@ -72,6 +72,35 @@ body {
   flex-shrink: 0;
 }
 
+@media (min-width: 1025px) {
+  .app-shell {
+    padding: 20px;
+    align-items: stretch;
+  }
+
+  .phone {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    min-height: 90vh;
+    border-radius: 20px;
+    margin: auto;
+  }
+
+  .header {
+    flex-shrink: 0;
+  }
+
+  .thread {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .composer {
+    flex-shrink: 0;
+  }
+}
+
 
 .modal-backdrop {
   position: absolute;
