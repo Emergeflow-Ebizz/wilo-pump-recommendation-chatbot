@@ -63,6 +63,11 @@ def _parse_answer_schema(
             "skipped": {"type": "boolean"},
             "redirect_key": redirect_schema,
             "gave_up": {"type": "boolean"},
+            # Only meaningful alongside needs_clarification=true for a
+            # genuinely ambiguous reply (see AMBIGUOUS below) - the single
+            # most-likely reading, kept separate from `value` (which stays
+            # null until the user confirms it).
+            "suggested_value": {"type": ["number", "null"]},
             "additional_answers": {
                 "type": "array",
                 "items": {
@@ -79,8 +84,8 @@ def _parse_answer_schema(
         },
         "required": [
             "value", "unit", "needs_clarification", "clarification_question",
-            "skipped", "redirect_key", "gave_up", "additional_answers",
-            "edit_not_supported",
+            "skipped", "redirect_key", "gave_up", "suggested_value",
+            "additional_answers", "edit_not_supported",
         ],
     }
 
@@ -302,7 +307,11 @@ PARSE_ANSWER_SYSTEM_PROMPT = (
     "ambiguous - if only one number or unit is a plausible reading of it, "
     "extract that reading with confidence. Reserve needs_clarification=true "
     "(value/unit null, short clarification_question) for replies where more "
-    "than one reading is genuinely plausible. "
+    "than one reading is genuinely plausible. When needs_clarification=true "
+    "and exactly one reading is nonetheless the most likely of the "
+    "plausible ones, put that reading in suggested_value (value itself "
+    "still stays null - suggested_value is not a confirmed answer). Leave "
+    "suggested_value null too if no reading stands out from the others. "
     "EDIT NOT SUPPORTED: If the user's reply clearly tries to change or correct an "
     "answer to a question that is NEITHER the current question NOR listed in the "
     "other questions given to you - most often one of the already-answered "

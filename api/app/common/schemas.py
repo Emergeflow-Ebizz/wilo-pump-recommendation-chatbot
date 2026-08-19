@@ -136,6 +136,13 @@ class ParsedAnswer(BaseModel):
     redirect_key: str | None = None
     gave_up: bool = False
     confirmation_message: str | None = None
+    # Set only alongside needs_clarification=True for a genuinely ambiguous
+    # reply (see AMBIGUOUS in PARSE_ANSWER_SYSTEM_PROMPT) where exactly one
+    # reading looked most likely - e.g. "fourss" -> suggested_value=4. `value`
+    # itself stays None until the user actually confirms it; the caller
+    # carries suggested_value forward as previous_value so a plain "yes"
+    # reply on the next turn can resolve straight to it without re-parsing.
+    suggested_value: float | None = None
     additional_answers: list[AdditionalAnswer] = []
     edit_not_supported: bool = False
 
