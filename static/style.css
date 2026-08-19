@@ -967,55 +967,70 @@ body {
 }
 
 .confirmation-content {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  max-width: 300px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #ffffff 0%, #f8faf9 100%);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 320px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
   text-align: center;
+  border: 1px solid rgba(0, 156, 130, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .confirmation-message {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--text);
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+  line-height: 1.5;
+  letter-spacing: -0.2px;
 }
 
 .confirmation-buttons {
   display: flex;
   gap: 12px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .confirm-btn {
-  padding: 10px 20px;
+  padding: 12px 28px;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+  min-width: 120px;
+  letter-spacing: 0.3px;
+}
+
+.confirm-btn:active {
+  transform: scale(0.98);
 }
 
 .cancel-btn {
-  background: #e8e8e8;
+  background: linear-gradient(135deg, #f0f2f1 0%, #e8eae9 100%);
   color: var(--text);
+  border: 1.5px solid #d4d4d4;
 }
 
 .cancel-btn:hover {
-  background: #d8d8d8;
+  background: linear-gradient(135deg, #e8eae9 0%, #dfe1e0 100%);
+  border-color: #b7cfc9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .refresh-btn {
-  background: var(--teal);
+  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
   color: #fff;
+  border: none;
 }
 
 .refresh-btn:hover {
-  background: var(--teal-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 156, 130, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 156, 130, 0.25);
 }
 
