@@ -900,6 +900,11 @@
       // whichever piece the backend didn't return this turn.
       if (data.value !== undefined && data.value !== null) {
         state.dynamicAnswers[question.key] = data.value;
+      } else if (data.suggested_value !== undefined && data.suggested_value !== null) {
+        // Fallback to suggested value when actual value is null - this flows back
+        // as previous_value on the next /answer call, allowing "Yes" replies to
+        // resolve to the LLM's own suggestion via the existing PREVIOUS VALUE rule.
+        state.dynamicAnswers[question.key] = data.suggested_value;
       } else {
         // The backend's extractor sometimes returns value=null even for a
         // bare number (e.g. "6") when a unit is required but missing - it
