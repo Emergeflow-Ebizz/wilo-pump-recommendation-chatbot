@@ -257,11 +257,16 @@
       id: "lead-pincode",
       kind: "input",
       bot: function () {
-        return "In case you want our dealer to reach you, please share your Pin code or Zip code.";
+        if (state.isRejectionFlow) {
+          return "In case you want our dealer to reach you, please share your Pin code or Zip code.";
+        }
+        return "Please share your Pin code or Zip code so our dealer can reach you.";
       },
       placeholder: "Pin code or Zip code",
       validate: pincodeValidate,
-      optional: true,
+      optional: function () {
+        return state.isRejectionFlow;
+      },
       next: function () {
         var pincode = state.answers["lead-pincode"];
         console.log("[lead-pincode next] skipDealerSteps:", state.skipDealerSteps, "pincode:", pincode);
@@ -347,7 +352,7 @@
       id: "explore-more",
       kind: "input",
       bot: function () {
-        return "Do you want to explore more pump that we have? (yes/no)";
+        return "Do you want to explore more pumps for your application? (yes/no)";
       },
       placeholder: "Type yes or no",
       validate: function (value) {
