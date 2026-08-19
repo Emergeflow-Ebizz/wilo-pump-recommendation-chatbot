@@ -51,11 +51,11 @@ body {
   height: 100vh;
   height: 100dvh;
   background: #d7dbdb;
-  padding: 0;
+  padding: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .phone {
@@ -70,6 +70,8 @@ body {
   flex-direction: column;
   touch-action: manipulation;
   flex-shrink: 0;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
 }
 
 
