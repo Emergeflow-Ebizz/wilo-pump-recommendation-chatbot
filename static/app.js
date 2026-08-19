@@ -261,9 +261,7 @@
       },
       placeholder: "Pin code or Zip code",
       validate: pincodeValidate,
-      optional: function () {
-        return state.isRejectionFlow;
-      },
+      optional: true,
       next: function () {
         var pincode = state.answers["lead-pincode"];
         console.log("[lead-pincode next] skipDealerSteps:", state.skipDealerSteps, "pincode:", pincode);
