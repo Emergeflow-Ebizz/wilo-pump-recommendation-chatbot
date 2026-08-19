@@ -260,6 +260,12 @@ class AnswerRequest(BaseModel):
     user_text: str
     previous_value: float | None = None
     previous_unit: str | None = None
+    # The prior turn's suggested_value (see ParsedAnswer) for this same
+    # question, when the prior reply was genuinely ambiguous - kept separate
+    # from previous_value since it's unconfirmed and must not be silently
+    # carried forward as if the user had already answered (see
+    # pending_suggestion in llm_parser.parse_answer).
+    pending_suggestion: float | None = None
     clarification_attempts: int = 0
     # TODO(frontend): drop once static/app.js sends clarification_attempts
     # instead of the old unit_ask_attempts name. Until then this silently
@@ -301,6 +307,7 @@ def parse_free_text_answer(use_case_slug: str, request: AnswerRequest) -> Parsed
         request.user_text,
         previous_value=request.previous_value,
         previous_unit=request.previous_unit,
+        pending_suggestion=request.pending_suggestion,
         other_questions=other_questions,
         clarification_attempts=clarification_attempts,
         locked_in_answers=locked_in_answers or None,

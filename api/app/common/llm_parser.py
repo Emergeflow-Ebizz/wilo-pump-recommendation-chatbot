@@ -106,6 +106,7 @@ def _generate_clarification_question(
     extracted_value: float | None = None,
     extracted_unit: str | None = None,
     user_text: str | None = None,
+    suggested_value: float | None = None,
 ) -> str:
     """Generate a natural clarification question for pump selection.
 
@@ -124,6 +125,17 @@ def _generate_clarification_question(
     paperwork or measuring directly - using its own general judgment for
     HOW to phrase that help.
 
+    suggested_value, when given, is the single most-likely reading the
+    primary extraction call already settled on for this ambiguous reply
+    (see suggested_value in _parse_answer_schema). Passing it here grounds
+    the wording in that one structured guess instead of leaving this
+    separate, higher-temperature call to re-derive (or fail to re-derive) a
+    number from user_text on its own each time - which is what previously
+    made the phrasing inconsistent between equally-clear typos ("fourss"
+    got "did you mean four floors" one run, "siks" got no guess at all
+    another) purely from this call's own sampling variance, not from
+    anything about how clear either spelling actually was.
+
     What it may NOT do is state any specific number, range, or threshold
     that isn't explicitly written in question.domain_context - domain_context
     is the single source of truth for facts about this system (what pump
@@ -136,6 +148,14 @@ def _generate_clarification_question(
     subject = question.key.replace("_", " ")
     units_str = ", ".join(question.allowed_units) if question.allowed_units else "the available units"
     user_reply_line = f"The user's actual reply just now: {user_text!r}. " if user_text else ""
+    suggested_value_line = (
+        f"The system already identified {suggested_value!r} as the single most "
+        f"likely reading of that reply, still unconfirmed. Ask the user directly "
+        f"whether that's correct (a 'did you mean {suggested_value!r}?' style "
+        f"question) rather than a generic re-ask. "
+        if suggested_value is not None
+        else ""
+    )
 
     prompt = (
         f"User is being asked about: {subject}. Question as shown to the user: "
@@ -146,6 +166,7 @@ def _generate_clarification_question(
         f"Reason clarification is needed: {reason}. "
         f"What was extracted so far: value={extracted_value!r}, unit={extracted_unit!r}. "
         f"{user_reply_line}"
+        f"{suggested_value_line}"
         f"They've been asked {attempts + 1} time(s) about this question. "
         f"If the user's reply shows they don't know HOW to find or determine this "
         f"value, rather than just being noncommittal, fold in ONE short practical "
@@ -406,6 +427,7 @@ def parse_answer(
     *,
     previous_value: float | None = None,
     previous_unit: str | None = None,
+    pending_suggestion: float | None = None,
     other_questions: list[Question] = (),
     clarification_attempts: int = 0,
     locked_in_answers: dict[str, str] | None = None,
@@ -417,11 +439,24 @@ def parse_answer(
     (value, unit) still flows through this use case's own
     normalize_*/rules.py logic unchanged.
 
-    previous_value/previous_unit, when given, are the value/unit this
-    function previously parsed for this same question - they let a bare
-    unit correction from the user (e.g. "no it's meters") reuse the
+    previous_value/previous_unit, when given, are a CONFIRMED value/unit
+    this function previously parsed for this same question - they let a
+    bare unit correction from the user (e.g. "no it's meters") reuse the
     previously stated number instead of being treated as a fresh,
-    number-less reply.
+    number-less reply. Because it's treated as settled, the model is told
+    to keep carrying it forward turn after turn unless the user states a
+    new, different number - do not pass an unconfirmed guess through this
+    parameter, or a bare repeat of the same unclear reply gets silently
+    accepted as if the user had confirmed it (see pending_suggestion).
+
+    pending_suggestion, when given, is this function's own best-guess
+    suggested_value from the PRIOR turn's genuinely ambiguous reply for
+    this same question (see AMBIGUOUS/suggested_value below) - explicitly
+    UNCONFIRMED, unlike previous_value. It only becomes the answer if the
+    user's current reply is a real affirmative response to it; a bare
+    repeat of the same unclear word is not confirmation and must still
+    produce needs_clarification=true (with suggested_value carried
+    forward again if it still seems like the best reading).
 
     clarification_attempts tracks how far along this question's
     clarification sequence the caller already is: 0 = never asked, 1 = a
@@ -475,8 +510,20 @@ def parse_answer(
         else ""
     )
     previous_guess = (
-        f"Your previous guess for this question: {previous_value!r} {previous_unit!r}\n"
+        f"A previously CONFIRMED value/unit for this question: {previous_value!r} {previous_unit!r}. "
+        "Keep carrying this forward unless the current reply states a new, different number.\n"
         if previous_value is not None
+        else ""
+    )
+    pending_suggestion_line = (
+        f"A pending, UNCONFIRMED suggestion from last turn for this question: {pending_suggestion!r}. "
+        "This is not a settled answer - only set value to it (and needs_clarification=false) if the "
+        "user's CURRENT reply is a clear affirmative response to it (e.g. 'yes', 'yeah', 'correct', "
+        "'that's right'). Simply repeating the same unclear word/spelling again is NOT confirmation - "
+        "if the current reply isn't a clear yes, keep needs_clarification=true, value null, and if this "
+        "reading still seems like the single most likely one, put it in suggested_value again. If the "
+        "current reply clearly states a different number instead, that new number wins outright.\n"
+        if pending_suggestion is not None
         else ""
     )
     other_questions_line = (
@@ -508,6 +555,7 @@ def parse_answer(
         f"{min_value_line}"
         f"{domain_context_line}"
         f"{previous_guess}"
+        f"{pending_suggestion_line}"
         f"{other_questions_line}"
         f"{locked_in_answers_line}"
         f"User's reply: {user_text!r}\n"
@@ -662,6 +710,7 @@ def parse_answer(
             data.get("value"),
             data.get("unit"),
             user_text=user_text,
+            suggested_value=data.get("suggested_value"),
         )
 
     # Defensive: a question requiring a whole number (e.g. num_floors) must
