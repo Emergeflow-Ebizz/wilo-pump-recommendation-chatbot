@@ -508,7 +508,7 @@ body {
 }
 .option-icon {
   width: 100%;
-  height: 110px;
+  aspect-ratio: 16 / 12;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -520,8 +520,11 @@ body {
 .option-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   border-radius: 2px;
+  padding: 8px;
+  background: #f9faf9;
 }
 .option-text {
   display: flex;
@@ -897,6 +900,12 @@ body {
 }
 
 /* Mobile responsiveness - only for screens < 1025px */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .option-icon {
+    aspect-ratio: 16 / 11;
+  }
+}
+
 @media (max-width: 1024px) {
   html {
     height: 100%;
@@ -967,6 +976,34 @@ body {
   .input-error {
     position: relative;
     z-index: 20;
+  }
+
+  .option-list {
+    gap: 10px;
+    padding: 0 8px;
+  }
+
+  .option-card {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .option-icon {
+    aspect-ratio: 16 / 10;
+    border-radius: 10px;
+  }
+
+  .option-image {
+    padding: 6px;
+  }
+
+  .option-title {
+    font-size: 12.5px;
+    line-height: 1.2;
+  }
+
+  .option-subtitle {
+    font-size: 11.5px;
   }
 }
 
