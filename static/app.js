@@ -1533,10 +1533,10 @@
     // Display specs from the new nested format
     if (Object.keys(specs).length > 0) {
       var specLabels = {
-        "flow": "💧 Flow Rate",
-        "head": "📍 Head",
-        "fluid_temp": "🌡️ Fluid Temperature",
-        "connection": "🔌 Connection"
+        "flow": "Flow Rate",
+        "head": "Head",
+        "fluid_temp": "Fluid Temperature",
+        "connection": "Connection"
       };
       Object.keys(specs).forEach(function (key) {
         if (specs[key]) {
@@ -1554,7 +1554,7 @@
     displayOrder.forEach(function (key) {
       if (key === "art_no") {
         if (recommendation.art_no != null) {
-          rows.push({ label: "🏷️ Article No.", value: String(recommendation.art_no) });
+          rows.push({ label: "Article No.", value: String(recommendation.art_no) });
         }
         processedKeys.add("art_no");
         return;
@@ -1855,8 +1855,11 @@
       "Target Head": "📍",
       "Head": "🏔️",
       "Flow": "💧",
+      "Flow Rate": "💧",
       "Motor Power": "⚙️",
-      "Phase": "⚡"
+      "Phase": "⚡",
+      "Fluid Temperature": "🌡️",
+      "Connection": "🔌"
     };
     buildTechnicalPointsRows(recommendation).forEach(function (row) {
       var line = document.createElement("div");
