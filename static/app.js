@@ -438,6 +438,7 @@
     nextStepAfterPincode: "explore-more", // where to go after pincode in rejection flow (explore-more or final-goodbye)
     skipDealerSteps: false, // true in rejection flow to skip dealer-notification/international-dealer steps
     pumpSelectionPending: null, // { recommendation, tierLabel } - holds pump data awaiting confirmation
+    pincodeSubmitted: false, // true after pincode is submitted - prevents pump changes
   };
 
   function addBotMessage(text) {
@@ -503,6 +504,7 @@
     state.isRejectionFlow = false;
     state.nextStepAfterPincode = "explore-more";
     state.skipDealerSteps = false;
+    state.pincodeSubmitted = false;
     initConversation();
     render();
   }
@@ -1245,6 +1247,7 @@
 
     // Send data to API when pincode is submitted
     if (step.id === "lead-pincode") {
+      state.pincodeSubmitted = true;
       if (state.selectedPump) {
         // Normal flow: pump was found and selected
         console.log("[submitText] Sending pump data to API");
@@ -1891,9 +1894,30 @@
     var isSelected = state.selectedPump && state.selectedPump.recommendation.model_name === recommendation.model_name;
     selectBtn.textContent = isSelected ? "✓ Selected" : "Select";
     if (isSelected) selectBtn.classList.add("selected");
+    if (state.pincodeSubmitted && !isSelected) {
+      selectBtn.disabled = true;
+    }
     selectBtn.addEventListener("click", function () {
       var newPumpModel = recommendation.model_name || "pump";
       var currentPumpModel = state.selectedPump ? state.selectedPump.recommendation.model_name : null;
+
+      if (state.pincodeSubmitted) {
+        showPumpSelectionModal(
+          newPumpModel,
+          newPumpModel,
+          function () {
+            closePumpSelectionModal();
+          },
+          function () {
+            closePumpSelectionModal();
+          }
+        );
+        var messageEl = document.querySelector(".pump-modal-message");
+        if (messageEl) {
+          messageEl.textContent = "You've already selected " + currentPumpModel + ". Please proceed with email verification or select a different pump.";
+        }
+        return;
+      }
 
       if (state.selectedPump && currentPumpModel === newPumpModel) {
         showPumpSelectionModal(
@@ -2187,6 +2211,7 @@
     state.virtualOptions = null;
     state.useCaseSlug = null;
     state.currentStepId = null;
+    state.pincodeSubmitted = false;
     initConversation();
     closeRefreshConfirmation();
     render();

@@ -727,6 +727,13 @@ body {
   border-color: #FFB400;
   font-weight: 800;
 }
+
+.select-btn:disabled {
+  background: #b7cfc9;
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
 .section-tag {
   text-align: center;
   color: var(--muted);
@@ -881,11 +888,12 @@ body {
 .confirmation-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(28, 42, 40, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 30;
+  backdrop-filter: blur(2px);
 }
 
 /* Mobile responsiveness - only for screens < 1025px */
@@ -967,36 +975,36 @@ body {
 }
 
 .confirmation-content {
-  background: linear-gradient(135deg, #ffffff 0%, #f8faf9 100%);
-  border-radius: 20px;
-  padding: 32px;
-  max-width: 320px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 40px 32px;
+  max-width: 340px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.14), 0 8px 16px rgba(0, 0, 0, 0.08);
   text-align: center;
-  border: 1px solid rgba(0, 156, 130, 0.1);
+  border: none;
   backdrop-filter: blur(10px);
 }
 
 .confirmation-message {
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 700;
-  color: var(--text);
-  margin-bottom: 28px;
-  line-height: 1.5;
-  letter-spacing: -0.2px;
+  color: #1c2a28;
+  margin-bottom: 32px;
+  line-height: 1.6;
+  letter-spacing: -0.3px;
 }
 
 .confirmation-buttons {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .confirm-btn {
-  padding: 12px 28px;
+  padding: 14px 32px;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -1012,25 +1020,27 @@ body {
 }
 
 .cancel-btn {
-  background: linear-gradient(135deg, #f0f2f1 0%, #e8eae9 100%);
-  color: var(--text);
-  border: 1.5px solid #d4d4d4;
+  background: #f5f7f6;
+  color: #505050;
+  border: none;
+  font-weight: 600;
 }
 
 .cancel-btn:hover {
-  background: linear-gradient(135deg, #e8eae9 0%, #dfe1e0 100%);
-  border-color: #b7cfc9;
+  background: #eff1f0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
 
 .refresh-btn {
-  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
-  color: #fff;
+  background: linear-gradient(135deg, #009C82 0%, #007A66 100%);
+  color: #ffffff;
   border: none;
+  font-weight: 700;
 }
 
 .refresh-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 156, 130, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 156, 130, 0.28);
 }
 
