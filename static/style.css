@@ -535,23 +535,36 @@ body {
 
 .option-list.categorical .option-card {
   flex-direction: row;
-  padding: 16px 18px;
+  padding: 12px 16px;
   gap: 0;
   min-width: auto;
-  border-radius: 18px 18px 18px 4px;
+  border-radius: 10px;
   width: 100%;
-  background: #fff;
-  border: 1px solid #d4ede8;
+  background: linear-gradient(135deg, #ffffff 0%, #f5fffe 100%);
+  border: 1px solid var(--teal);
   box-shadow: none;
   justify-content: flex-start;
-  min-height: 52px;
 }
 
 .option-list.categorical .option-card:hover {
-  background: #fff;
-  border-color: #d4ede8;
+  background: linear-gradient(135deg, #ffffff 0%, #f5fffe 100%);
+  border-color: var(--teal);
   box-shadow: none;
   cursor: pointer;
+}
+
+/* Heat Circuits application - bubble style */
+.option-list.categorical.heat-circuits-style .option-card {
+  padding: 16px 18px;
+  border-radius: 18px 18px 18px 4px;
+  background: #fff;
+  border: 1px solid #d4ede8;
+  min-height: 52px;
+}
+
+.option-list.categorical.heat-circuits-style .option-card:hover {
+  background: #fff;
+  border-color: #d4ede8;
 }
 
 .option-list.categorical .option-icon {

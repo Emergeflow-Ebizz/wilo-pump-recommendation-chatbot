@@ -1377,6 +1377,7 @@
     // Send data to API when pincode is submitted
     if (step.id === "lead-pincode") {
       state.pincodeSubmitted = true;
+      state.pincodeSubmittedUseCase = state.useCaseSlug;
       if (state.selectedPump) {
         // Normal flow: pump was found and selected
         console.log("[submitText] Sending pump data to API");
@@ -2078,14 +2079,16 @@
     var isSelected = state.selectedPump && state.selectedPump.recommendation.model_name === recommendation.model_name;
     selectBtn.textContent = isSelected ? "✓ Selected" : "Select";
     if (isSelected) selectBtn.classList.add("selected");
-    if (state.pincodeSubmitted && !isSelected) {
+    var isSameUseCaseAfterPincode = state.pincodeSubmitted && state.pincodeSubmittedUseCase === state.useCaseSlug;
+    if (isSameUseCaseAfterPincode && !isSelected) {
       selectBtn.disabled = true;
     }
     selectBtn.addEventListener("click", function () {
       var newPumpModel = recommendation.model_name || "pump";
       var currentPumpModel = state.selectedPump ? state.selectedPump.recommendation.model_name : null;
+      var isDifferentUseCase = state.pincodeSubmittedUseCase && state.pincodeSubmittedUseCase !== state.useCaseSlug;
 
-      if (state.pincodeSubmitted) {
+      if (state.pincodeSubmitted && !isDifferentUseCase) {
         showPumpSelectionModal(
           newPumpModel,
           newPumpModel,
@@ -2098,7 +2101,7 @@
         );
         var messageEl = document.querySelector(".pump-modal-message");
         if (messageEl) {
-          messageEl.textContent = "You've already selected " + currentPumpModel + ". Please proceed with email verification or select a different pump.";
+          messageEl.textContent = "Email verification process already started for " + currentPumpModel + " in this application. To select a different pump, explore other applications or wait for the current process to complete.";
         }
         return;
       }
@@ -2261,6 +2264,9 @@
       vOptions.className = "option-list";
       if (state.currentQuestion && CATEGORY_QUESTION_KEYS.includes(state.currentQuestion.key)) {
         vOptions.classList.add("categorical");
+        if (state.useCaseSlug === "heat_circulation") {
+          vOptions.classList.add("heat-circuits-style");
+        }
       }
       state.virtualOptions.forEach(function (option) {
         vOptions.appendChild(
@@ -2277,6 +2283,9 @@
       options.className = "option-list";
       if (state.currentQuestion && CATEGORY_QUESTION_KEYS.includes(state.currentQuestion.key)) {
         options.classList.add("categorical");
+        if (state.useCaseSlug === "heat_circulation") {
+          options.classList.add("heat-circuits-style");
+        }
       }
       step.options.forEach(function (option) {
         options.appendChild(
