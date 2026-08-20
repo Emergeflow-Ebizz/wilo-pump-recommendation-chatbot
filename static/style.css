@@ -544,9 +544,10 @@ body {
 }
 
 .option-list.categorical .option-card:hover {
-  background: linear-gradient(135deg, #f0fffe 0%, #e8fffe 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f5fffe 100%);
   border-color: var(--teal);
   box-shadow: none;
+  cursor: pointer;
 }
 
 .option-list.categorical .option-icon {
