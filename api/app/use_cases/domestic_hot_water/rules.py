@@ -1,4 +1,6 @@
+from app.common.features import get_features
 from app.common.schemas import PumpRecommendation
+from app.common.specs import get_specs
 from app.use_cases.base import UseCase
 from app.use_cases.domestic_hot_water.questions import QUESTIONS
 
@@ -20,5 +22,6 @@ class DomesticHotWaterUseCase(UseCase):
         model_name = select_dhw_pump(num_usage_points)
         return PumpRecommendation(
             model_name=model_name,
-            details={"num_usage_points": num_usage_points},
+            details={"num_usage_points": num_usage_points, "specs": get_specs(model_name)},
+            features=get_features(model_name),
         )

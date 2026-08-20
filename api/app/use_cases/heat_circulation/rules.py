@@ -1,4 +1,6 @@
+from app.common.features import get_features
 from app.common.schemas import PumpRecommendation
+from app.common.specs import get_specs
 from app.common.units import sqft_to_sqm
 from app.use_cases.base import UseCase
 from app.use_cases.heat_circulation.questions import QUESTIONS
@@ -45,9 +47,17 @@ def build_recommendations(area_sqm: float, heating_system: str) -> tuple[PumpRec
     standard_model, premium_model = select_heat_circulation_pumps(area_sqm, heating_system)
 
     details = {"area_sqm": area_sqm, "heating_system": heating_system}
-    standard = PumpRecommendation(model_name=standard_model, details=dict(details, tier="standard"))
+    standard = PumpRecommendation(
+        model_name=standard_model,
+        details=dict(details, tier="standard", specs=get_specs(standard_model)),
+        features=get_features(standard_model),
+    )
     premium = (
-        PumpRecommendation(model_name=premium_model, details=dict(details, tier="premium"))
+        PumpRecommendation(
+            model_name=premium_model,
+            details=dict(details, tier="premium", specs=get_specs(premium_model)),
+            features=get_features(premium_model),
+        )
         if premium_model is not None
         else None
     )

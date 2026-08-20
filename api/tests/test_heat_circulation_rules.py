@@ -48,6 +48,10 @@ def test_build_recommendations_ufh_includes_premium():
     standard, premium = build_recommendations(100, "ufh")
     assert standard.model_name == "Yonos PICO"
     assert premium.model_name == "Stratos PICO"
+    assert standard.features
+    assert premium.features
+    assert standard.details["specs"]["flow"] == "Up to 4 m3/hr"
+    assert premium.details["specs"]["flow"] == "Up to 4 m3/hr"
 
 
 def test_build_recommendations_radiators_has_no_premium():

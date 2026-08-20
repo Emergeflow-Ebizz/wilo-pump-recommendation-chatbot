@@ -117,7 +117,68 @@ FEATURES: dict[str, list[str]] = {
         "Suitable for fluid density from 1 to 1.06 kg/dm3.",
         "Suitable for fluid pH from 6 to 8.",
     ],
+    # heat_circulation and domestic_hot_water have no json_new catalog sheet,
+    # so their models are keyed directly by model name rather than filename.
+    "Yonos PICO": [
+        "Intuitive operation with Green Button Technology and smart settings.",
+        "High energy efficiency with EC motor and precise control.",
+        "Quick installation and easy replacement with optimized design.",
+        "Reliable operation with automatic/manual restart and venting functions.",
+        "Proven technology for maximum operational reliability.",
+    ],
+    "Yonos MAXO": [
+        "High-efficiency pump for reduced energy consumption.",
+        "LED display for operating status and fault indication.",
+        "Easy retrofit with compact design and Wilo plug connection.",
+        "Simple control mode selection via Green Button.",
+        "Reliable operation with fault signaling and optional BMS connectivity (Wilo-Connect).",
+    ],
+    "Stratos PICO": [
+        "User-friendly operation with Setup Assistant and Green Button Technology.",
+        "Maximum energy savings through EC motor and Dynamic Adapt Plus.",
+        "Optional communication modules for advanced connectivity.",
+        "High reliability with dry-run protection and auto restart.",
+        "Real-time monitoring of power consumption, head, and energy usage.",
+        "Easy electrical installation with Wilo-Connector.",
+    ],
+    "Stratos MAXO": [
+        "User-friendly setup with Guided Configuration and Green Button Technology.",
+        "Maximum energy savings with advanced efficiency functions (e.g., No-Flow Stop).",
+        "Intelligent control features for optimized system performance.",
+        "Bluetooth and Wilo Net connectivity for smart monitoring and pump networking.",
+        "Easy electrical installation with spacious terminal box and optimized Wilo-Connector.",
+    ],
+    "PARA": [
+        "Flexible integration with legacy and high-efficiency systems.",
+        "Compact, standardized design for easy installation.",
+        "Available in 3 control options to suit different applications.",
+        "Self-Controlled (SC): Multiple regulation modes with intuitive LED interface.",
+        "iPWM Control: Pump status and flow estimation feedback.",
+        "LIN/LINX Control: Advanced data exchange and digitalization features.",
+        "Integrated protection functions including air venting, manual restart, and factory reset options.",
+    ],
+    "PARA MAXO": [
+        "Flexible control modes: Δp-v, Δp-c, n-constant, 0-10V, iPWM, Modbus & LIN.",
+        "Instant pump status indication via green/red LED.",
+        "Fast and easy electrical installation with plug connection.",
+        "Front-facing product data for easy OEM identification.",
+        "High energy efficiency with optimized hydraulics and motor design.",
+    ],
 }
+
+_STAR_Z_FEATURES = [
+    "Brass housing pump with integrated timer and temperature control.",
+    "3 programmable switch-on and switch-off times.",
+    "Plug n Play – Red button technology, press and turn.",
+    "Display with symbolic language.",
+    "Inbuilt NRV and ball shut-off valve.",
+    "Energy efficient and user friendly operating concept.",
+    "Maintenance free.",
+]
+
+FEATURES["Star-Z NOVA"] = _STAR_Z_FEATURES
+FEATURES["Star-Z NOVA A"] = _STAR_Z_FEATURES
+FEATURES["Star-Z NOVA T"] = _STAR_Z_FEATURES
 
 
 def get_features(filename: str | None) -> list[str] | None:
