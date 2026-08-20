@@ -329,7 +329,7 @@ def test_parse_yes_no_ambiguous_raises():
 
 def test_parse_category_llm_unavailable_falls_back_to_literal_match():
     with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
-        result = parse_category(DELIVERY_TYPE_QUESTION, "ground_floor", ["ground_floor", "elevated_tank"])
+        result = parse_category(DELIVERY_TYPE_QUESTION, "ground_floor", ["ground_floor", "overhead_tank"])
 
     assert result.category == "ground_floor"
     assert result.needs_clarification is False
@@ -337,7 +337,7 @@ def test_parse_category_llm_unavailable_falls_back_to_literal_match():
 
 def test_parse_category_llm_unavailable_falls_back_to_keyword_ground_floor():
     with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
-        result = parse_category(DELIVERY_TYPE_QUESTION, "ground floor", ["ground_floor", "elevated_tank"])
+        result = parse_category(DELIVERY_TYPE_QUESTION, "ground floor", ["ground_floor", "overhead_tank"])
 
     assert result.category == "ground_floor"
     assert result.needs_clarification is False
@@ -345,16 +345,16 @@ def test_parse_category_llm_unavailable_falls_back_to_keyword_ground_floor():
 
 def test_parse_category_llm_unavailable_falls_back_to_keyword_case_insensitive():
     with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
-        result = parse_category(DELIVERY_TYPE_QUESTION, "Ground Floor", ["ground_floor", "elevated_tank"])
+        result = parse_category(DELIVERY_TYPE_QUESTION, "Ground Floor", ["ground_floor", "overhead_tank"])
 
     assert result.category == "ground_floor"
 
 
-def test_parse_category_llm_unavailable_falls_back_to_keyword_elevated_tank():
+def test_parse_category_llm_unavailable_falls_back_to_keyword_overhead_tank():
     with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
-        result = parse_category(DELIVERY_TYPE_QUESTION, "it goes to the roof tank", ["ground_floor", "elevated_tank"])
+        result = parse_category(DELIVERY_TYPE_QUESTION, "it goes to the roof tank", ["ground_floor", "overhead_tank"])
 
-    assert result.category == "elevated_tank"
+    assert result.category == "overhead_tank"
 
 
 def test_parse_category_llm_unavailable_falls_back_to_keyword_inside_outside():
@@ -373,7 +373,7 @@ def test_parse_category_llm_unavailable_falls_back_to_keyword_horizontal_vertica
 
 def test_parse_category_llm_unavailable_and_unmatched_needs_clarification():
     with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
-        result = parse_category(DELIVERY_TYPE_QUESTION, "blah blah unrelated", ["ground_floor", "elevated_tank"])
+        result = parse_category(DELIVERY_TYPE_QUESTION, "blah blah unrelated", ["ground_floor", "overhead_tank"])
 
     assert result.needs_clarification is True
     assert result.category is None
@@ -392,7 +392,7 @@ def test_parse_category_gives_up_after_two_attempts():
     ):
         result = parse_category(
             DELIVERY_TYPE_QUESTION, "the very begining one the start of my house the gate",
-            ["ground_floor", "elevated_tank"], clarification_attempts=2,
+            ["ground_floor", "overhead_tank"], clarification_attempts=2,
         )
 
     assert result.gave_up is True
@@ -403,7 +403,7 @@ def test_parse_category_gives_up_after_two_attempts():
 def test_parse_category_llm_unavailable_gives_up_after_two_attempts():
     with patch("app.common.llm_parser.llm_client.complete", side_effect=LLMUnavailableError("no key")):
         result = parse_category(
-            DELIVERY_TYPE_QUESTION, "basemenet", ["ground_floor", "elevated_tank"], clarification_attempts=2
+            DELIVERY_TYPE_QUESTION, "basemenet", ["ground_floor", "overhead_tank"], clarification_attempts=2
         )
 
     assert result.gave_up is True
@@ -418,7 +418,7 @@ def test_parse_category_does_not_give_up_before_second_attempt():
         side_effect=[extraction, message],
     ):
         result = parse_category(
-            DELIVERY_TYPE_QUESTION, "basemenet", ["ground_floor", "elevated_tank"], clarification_attempts=0
+            DELIVERY_TYPE_QUESTION, "basemenet", ["ground_floor", "overhead_tank"], clarification_attempts=0
         )
 
     assert result.gave_up is False

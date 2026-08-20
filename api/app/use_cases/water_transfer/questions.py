@@ -78,7 +78,7 @@ DELIVERY_TYPE_QUESTION = Question(
     domain_context=(
         "Determines which follow-up questions are asked. Ground-floor delivery "
         "requires only borewell diameter, depth, and optional motor power. "
-        "Elevated-tank delivery requires all fields including floors above ground "
+        "Overhead-tank delivery requires all fields including floors above ground "
         "and tank capacity."
     ),
 )

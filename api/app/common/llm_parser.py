@@ -869,7 +869,7 @@ PARSE_CATEGORY_SYSTEM_PROMPT = (
 # safely list synonyms for categories from every use case in one place.
 _CATEGORY_KEYWORDS: dict[str, list[str]] = {
     "ground_floor": ["ground floor", "ground-floor", "ground level", "groundfloor", "ground"],
-    "elevated_tank": ["elevated tank", "elevated roof", "roof tank", "terrace tank", "overhead tank", "elevated", "roof", "terrace", "tank"],
+    "overhead_tank": ["overhead tank"],
     "inside": ["inside", "indoor", "indoors"],
     "outside": ["outside", "outdoor", "outdoors"],
     "horizontal": ["horizontal"],
@@ -881,7 +881,7 @@ _CATEGORY_KEYWORDS: dict[str, list[str]] = {
 # is needed.
 _CATEGORY_LABELS: dict[str, str] = {
     "ground_floor": "Ground floor",
-    "elevated_tank": "Overhead tank",
+    "overhead_tank": "Overhead tank",
     "inside": "Inside",
     "outside": "Outside",
     "horizontal": "Horizontal",
