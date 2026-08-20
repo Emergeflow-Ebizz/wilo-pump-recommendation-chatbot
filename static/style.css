@@ -700,39 +700,40 @@ body {
 .overview-specs {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   border-top: none;
   padding-top: 0;
 }
 .overview-spec-line {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
+  gap: 18px;
+  padding: 18px 22px;
   border: none !important;
-  border-radius: 16px;
-  font-size: 15px;
-  background: #a8ddd1;
+  border-radius: 20px;
+  font-size: 16px;
+  background: #7dd3c0;
   box-shadow: none;
   justify-content: space-between !important;
+  min-height: 60px;
 }
 .overview-spec-line::before {
   content: attr(data-icon);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  width: 48px;
-  height: 48px;
-  background: rgba(47, 111, 98, 0.2);
-  border-radius: 12px;
-  font-size: 24px;
+  min-width: 52px;
+  width: 52px;
+  height: 52px;
+  background: rgba(47, 111, 98, 0.35);
+  border-radius: 14px;
+  font-size: 26px;
   flex-shrink: 0;
 }
 .overview-spec-line span:first-child {
   color: #ffffff;
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 700;
+  font-size: 16px;
   flex: 1;
   min-width: 80px;
 }
@@ -740,7 +741,7 @@ body {
   font-weight: 700;
   color: #ffffff;
   text-align: right;
-  font-size: 16px;
+  font-size: 17px;
   flex-shrink: 0;
 }
 .view-btn {
