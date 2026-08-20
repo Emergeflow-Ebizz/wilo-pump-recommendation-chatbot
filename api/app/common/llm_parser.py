@@ -740,17 +740,23 @@ def parse_answer(
 
     # Defensive: for a question that does NOT require a whole number (e.g.
     # well_depth, borewell_size, motor_power_hp, tank_capacity - all take any
-    # positive float), the model must never invent a whole-number requirement
-    # on its own initiative and ask for clarification anyway. If a complete,
-    # positive value (and unit, when one is required) was already extracted,
-    # override any spurious needs_clarification and accept the value as-is -
-    # this only applies to the current question, not a redirect (whichever
-    # question redirect_key names has its own requires_integer to honor).
+    # positive float; total_area sets min_value=0 to also allow zero), the
+    # model must never invent a stricter requirement on its own initiative
+    # and ask for clarification anyway (e.g. asking the user to confirm a
+    # zero area even though zero is this question's own explicit minimum).
+    # If a complete value meeting this question's floor (its min_value, or
+    # strictly positive when no min_value is set) and unit (when one is
+    # required) was already extracted, override any spurious
+    # needs_clarification and accept the value as-is - this only applies to
+    # the current question, not a redirect (whichever question redirect_key
+    # names has its own requires_integer to honor).
+    _meets_non_integer_floor = data.get("value") is not None and (
+        data["value"] >= question.min_value if question.min_value is not None else data["value"] > 0
+    )
     if (
         not data.get("redirect_key")
         and not question.requires_integer
-        and data.get("value") is not None
-        and data["value"] > 0
+        and _meets_non_integer_floor
         and (not question.requires_stated_unit or data.get("unit") is not None)
     ):
         data["needs_clarification"] = False
