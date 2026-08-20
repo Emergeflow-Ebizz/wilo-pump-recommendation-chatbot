@@ -51,7 +51,7 @@
   // On Vercel, vercel.json routes "/api/(.*)" to api/index.py which also uses /api
   // Dynamically determine API URL based on environment
   var API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8000'
+    ? 'http://localhost:8000/api'
     : '/api';
 
   function prettifyKey(key) {
@@ -79,6 +79,7 @@
   var UNIT_FIELD_OVERRIDES = {
     borewell_size: "borewell_unit",
     well_depth: "well_depth_unit",
+    total_area: "area_unit",
   };
   function unitFieldNameFor(key) {
     return UNIT_FIELD_OVERRIDES[key] || key + "_unit";
@@ -86,13 +87,20 @@
 
   // Fixed-choice questions that go through /answer_category (ParsedCategory)
   // instead of /answer (ParsedAnswer).
-  var CATEGORY_QUESTION_KEYS = ["delivery_type", "inside_or_outside", "horizontal_or_vertical"];
+  var CATEGORY_QUESTION_KEYS = ["delivery_type", "inside_or_outside", "horizontal_or_vertical", "heating_system"];
 
   function getPumpImagePath(modelName) {
     if (!modelName) return null;
     var imageFolderPath = "/Wilo%20Pump%20Images/";
     var modelUpper = modelName.toUpperCase();
     var pumpImages = {
+      "YONOS PICO": imageFolderPath + "Yonos%20PICO.png",
+      "YONOS MAXO": imageFolderPath + "Yonos%20MAXO.png",
+      "STRATOS PICO": imageFolderPath + "Stratos%20PICO.png",
+      "STRATOS MAXO": imageFolderPath + "Stratos%20MAXO.png",
+      "PARA MAXO": imageFolderPath + "Para%20MAXO.png",
+      "PARA": imageFolderPath + "Para.png",
+      "STAR-Z": imageFolderPath + "Star%20Z_Common%20for%20all%20models.png",
       "WBWP3": imageFolderPath + "WBWP3-WBWP4.jpg",
       "WBWP4": imageFolderPath + "WBWP3-WBWP4.jpg",
       "WBW3": imageFolderPath + "Wilo-WBW6-WBW7-WBW8.jpg",
@@ -172,6 +180,16 @@
           icon: "./Pressure Boosting.png",
         },
         {
+          label: "Heat Circuits Application",
+          value: "heating-circuits",
+          icon: "./Heating Circuits.png",
+        },
+        {
+          label: "Domestic Hot Water",
+          value: "domestic-hot-water",
+          icon: "./Domestic Hot Water.png",
+        },
+        {
           label: "Dewatering",
           value: "dewatering",
           icon: "./Dewatering.png",
@@ -179,24 +197,21 @@
         {
           label: "Borewell to Overhead tank",
           value: "water-transfer",
-          icon: "./Water Transfer from well to Overhead tank.png",
+          icon: "./Borewell to Overhead tank.png",
         },
         {
           label: "From Bottom tank to Overhead tank",
           value: "tank-filling",
-          icon: "./Tank Filling from Ground tank to upper tank.png",
+          icon: "./From Bottom tank to Overhead tank.png",
         },
-        // {
-        //   label: "Hot Water Circulation",
-        //   value: "hot-water-circulation",
-        //   icon: "♨️",
-        // },
       ],
       next: function (value) {
         if (value === "water-transfer") return "__dynamic__water_transfer";
         if (value === "tank-filling") return "__dynamic__tank_filling";
         if (value === "pressure-boosting") return "__dynamic__pressure_boosting";
         if (value === "dewatering") return "__dynamic__dewatering";
+        if (value === "heating-circuits") return "__dynamic__heat_circulation";
+        if (value === "domestic-hot-water") return "__dynamic__domestic_hot_water";
         return "coming-soon";
       },
     },
@@ -368,24 +383,34 @@
       },
       options: [
         {
-          label: "Water Transfer from well to Overhead tank",
-          value: "water-transfer",
-          icon: "./Water Transfer from well to Overhead tank.png",
-        },
-        {
-          label: "Transfer of water from a ground level reservoir to an Overhead tank",
-          value: "tank-filling",
-          icon: "./Tank Filling from Ground tank to upper tank.png",
-        },
-        {
           label: "Pressure Boosting",
           value: "pressure-boosting",
           icon: "./Pressure Boosting.png",
         },
         {
+          label: "Heat Circuits Application",
+          value: "heating-circuits",
+          icon: "./Heating Circuits.png",
+        },
+        {
+          label: "Domestic Hot Water",
+          value: "domestic-hot-water",
+          icon: "./Domestic Hot Water.png",
+        },
+        {
           label: "Dewatering",
           value: "dewatering",
           icon: "./Dewatering.png",
+        },
+        {
+          label: "Borewell to Overhead tank",
+          value: "water-transfer",
+          icon: "./Borewell to Overhead tank.png",
+        },
+        {
+          label: "From Bottom tank to Overhead tank",
+          value: "tank-filling",
+          icon: "./From Bottom tank to Overhead tank.png",
         },
       ],
       next: function (value) {
@@ -393,6 +418,8 @@
         if (value === "tank-filling") return "__dynamic__tank_filling";
         if (value === "pressure-boosting") return "__dynamic__pressure_boosting";
         if (value === "dewatering") return "__dynamic__dewatering";
+        if (value === "heating-circuits") return "__dynamic__heat_circulation";
+        if (value === "domestic-hot-water") return "__dynamic__domestic_hot_water";
         return "final-goodbye";
       },
     },
@@ -566,6 +593,8 @@
       "tank_filling": "Transfer of water from a ground level reservoir to an Overhead tank",
       "pressure_boosting": "Pressure Boosting",
       "dewatering": "Dewatering",
+      "heat_circulation": "Heat Circuits Application",
+      "domestic_hot_water": "Domestic Hot Water",
     };
 
     var payload = {
@@ -628,6 +657,8 @@
       "tank_filling": "Transfer of water from a ground level reservoir to an Overhead tank",
       "pressure_boosting": "Pressure Boosting",
       "dewatering": "Dewatering",
+      "heat_circulation": "Heat Circuits Application",
+      "domestic_hot_water": "Domestic Hot Water",
     };
 
     // Determine if initial contact is email or phone
@@ -766,38 +797,8 @@
           state.awaitingKind = "options";
           state.virtualOptions = [
             {
-              label: "Water Transfer",
-              icon: "💧",
-              onSelect: function () {
-                addUserMessage("Water Transfer");
-                state.virtualOptions = null;
-                state.useCaseSlug = "water_transfer";
-                state.dynamicAnswers = {};
-                state.clarificationAttempts = {};
-                state.clarificationUserInput = {};
-                state.clarificationSuggestedValues = {};
-                state.currentQuestion = null;
-                fetchNextQuestion().then(render);
-              },
-            },
-            {
-              label: "Tank Filling",
-              icon: "🏢",
-              onSelect: function () {
-                addUserMessage("Tank Filling");
-                state.virtualOptions = null;
-                state.useCaseSlug = "tank_filling";
-                state.dynamicAnswers = {};
-                state.clarificationAttempts = {};
-                state.clarificationUserInput = {};
-                state.clarificationSuggestedValues = {};
-                state.currentQuestion = null;
-                fetchNextQuestion().then(render);
-              },
-            },
-            {
               label: "Pressure Boosting",
-              icon: "⚡",
+              icon: "./Pressure Boosting.png",
               onSelect: function () {
                 addUserMessage("Pressure Boosting");
                 state.virtualOptions = null;
@@ -811,12 +812,72 @@
               },
             },
             {
+              label: "Heat Circuits Application",
+              icon: "./Heating Circuits.png",
+              onSelect: function () {
+                addUserMessage("Heat Circuits Application");
+                state.virtualOptions = null;
+                state.useCaseSlug = "heat_circulation";
+                state.dynamicAnswers = {};
+                state.clarificationAttempts = {};
+                state.clarificationUserInput = {};
+                state.clarificationSuggestedValues = {};
+                state.currentQuestion = null;
+                fetchNextQuestion().then(render);
+              },
+            },
+            {
+              label: "Domestic Hot Water",
+              icon: "./Domestic Hot Water.png",
+              onSelect: function () {
+                addUserMessage("Domestic Hot Water");
+                state.virtualOptions = null;
+                state.useCaseSlug = "domestic_hot_water";
+                state.dynamicAnswers = {};
+                state.clarificationAttempts = {};
+                state.clarificationUserInput = {};
+                state.clarificationSuggestedValues = {};
+                state.currentQuestion = null;
+                fetchNextQuestion().then(render);
+              },
+            },
+            {
               label: "Dewatering",
-              icon: "🔄",
+              icon: "./Dewatering.png",
               onSelect: function () {
                 addUserMessage("Dewatering");
                 state.virtualOptions = null;
                 state.useCaseSlug = "dewatering";
+                state.dynamicAnswers = {};
+                state.clarificationAttempts = {};
+                state.clarificationUserInput = {};
+                state.clarificationSuggestedValues = {};
+                state.currentQuestion = null;
+                fetchNextQuestion().then(render);
+              },
+            },
+            {
+              label: "Borewell to Overhead tank",
+              icon: "./Borewell to Overhead tank.png",
+              onSelect: function () {
+                addUserMessage("Borewell to Overhead tank");
+                state.virtualOptions = null;
+                state.useCaseSlug = "water_transfer";
+                state.dynamicAnswers = {};
+                state.clarificationAttempts = {};
+                state.clarificationUserInput = {};
+                state.clarificationSuggestedValues = {};
+                state.currentQuestion = null;
+                fetchNextQuestion().then(render);
+              },
+            },
+            {
+              label: "From Bottom tank to Overhead tank",
+              icon: "./From Bottom tank to Overhead tank.png",
+              onSelect: function () {
+                addUserMessage("From Bottom tank to Overhead tank");
+                state.virtualOptions = null;
+                state.useCaseSlug = "tank_filling";
                 state.dynamicAnswers = {};
                 state.clarificationAttempts = {};
                 state.clarificationUserInput = {};
@@ -886,12 +947,78 @@
       console.log("[fetchNextQuestion] question optional:", data.question.optional);
       console.log("[fetchNextQuestion] question unit:", data.question.unit);
       state.currentQuestion = data.question;
-      state.awaitingKind = "dynamic-input";
+
       var messageText = data.question.prompt;
       if (confirmationMessage) {
         messageText = confirmationMessage + "\n" + data.question.prompt;
       }
-      addBotMessage(messageText);
+
+      // Check if this is a categorical question - render as card options
+      if (CATEGORY_QUESTION_KEYS.indexOf(data.question.key) !== -1) {
+        console.log("[fetchNextQuestion] CATEGORICAL QUESTION - Rendering as card options");
+        // Remove the redundant option list from the question prompt for categorical questions
+        var questionOnly = data.question.prompt.split("?")[0] + "?";
+        messageText = confirmationMessage ? confirmationMessage + "\n" + questionOnly : questionOnly;
+        addBotMessage(messageText);
+        var categoryOptions = [];
+
+        // Map category values to display labels and icons
+        var categoryLabels = {
+          "ufh": "Underfloor Heating (UFH)",
+          "radiators": "Radiators",
+          "delivery_type": "Delivery Type",
+          "inside_or_outside": "Inside or Outside",
+          "horizontal_or_vertical": "Horizontal or Vertical",
+          "ground_floor": "Ground Floor",
+          "elevated_tank": "Elevated Tank",
+          "inside": "Inside",
+          "outside": "Outside",
+          "horizontal": "Horizontal",
+          "vertical": "Vertical"
+        };
+
+        var categoryIcons = {
+          "ufh": "🔥",
+          "radiators": "🌡️",
+          "delivery_type": "⬆️",
+          "ground_floor": "📍",
+          "elevated_tank": "🏢",
+          "inside": "🏠",
+          "outside": "🌳",
+          "horizontal": "↔️",
+          "vertical": "↕️"
+        };
+
+        // Build options from the question or known categories
+        var optionValues = [];
+        if (data.question.key === "heating_system") {
+          optionValues = ["ufh", "radiators"];
+        } else if (data.question.key === "delivery_type") {
+          optionValues = ["ground_floor", "elevated_tank"];
+        } else if (data.question.key === "inside_or_outside") {
+          optionValues = ["inside", "outside"];
+        } else if (data.question.key === "horizontal_or_vertical") {
+          optionValues = ["horizontal", "vertical"];
+        }
+
+        optionValues.forEach(function(value) {
+          categoryOptions.push({
+            label: categoryLabels[value] || value,
+            value: value,
+            icon: categoryIcons[value] || "•",
+            onSelect: function() {
+              submitCategoryAnswer(data.question, value);
+            }
+          });
+        });
+
+        state.awaitingKind = "options";
+        state.virtualOptions = categoryOptions;
+      } else {
+        addBotMessage(messageText);
+        state.awaitingKind = "dynamic-input";
+      }
+
       render();
       return;
     }
@@ -1162,6 +1289,8 @@
       else if (state.useCaseSlug === "tank_filling") appName = "From Bottom tank to Overhead tank";
       else if (state.useCaseSlug === "pressure_boosting") appName = "Pressure Boosting";
       else if (state.useCaseSlug === "dewatering") appName = "Dewatering";
+      else if (state.useCaseSlug === "heat_circulation") appName = "Heat Circuits Application";
+      else if (state.useCaseSlug === "domestic_hot_water") appName = "Domestic Hot Water";
 
       addBotHtmlMessage("Hi There, you have selected application as<br><strong style='color: #009C82;'>" + appName + "</strong>");
 
@@ -1371,7 +1500,7 @@
   // The "View Pump Details" modal shows more than the summary card: every
   // detail field the backend returns except internal ones (spec sheet name,
   // the raw curve array, which gets its own chart instead of a text row).
-  var TECHNICAL_DETAIL_BLACKLIST = ["sheet", "performance_curve", "head_unit", "target_head", "phase", "required_flow", "flow_unit"];
+  var TECHNICAL_DETAIL_BLACKLIST = ["sheet", "performance_curve", "head_unit", "target_head", "phase", "required_flow", "flow_unit", "heating_system", "tier", "specs", "area", "area_unit", "num_usage_points"];
   var TECHNICAL_DETAIL_RULES = DETAIL_DISPLAY_RULES.concat([
     {
       test: function (key) {
@@ -1398,12 +1527,34 @@
     var rows = [];
     var processedKeys = new Set();
 
+    // Check if specs are nested (new format for heat_circulation and domestic_hot_water)
+    var specs = details.specs || {};
+
+    // Display specs from the new nested format
+    if (Object.keys(specs).length > 0) {
+      var specLabels = {
+        "flow": "💧 Flow Rate",
+        "head": "📍 Head",
+        "fluid_temp": "🌡️ Fluid Temperature",
+        "connection": "🔌 Connection"
+      };
+      Object.keys(specs).forEach(function (key) {
+        if (specs[key]) {
+          rows.push({
+            label: specLabels[key] || prettifyKey(key),
+            value: specs[key]
+          });
+          processedKeys.add(key);
+        }
+      });
+    }
+
     var displayOrder = ["flow", "head", "hp", "art_no"];
 
     displayOrder.forEach(function (key) {
       if (key === "art_no") {
         if (recommendation.art_no != null) {
-          rows.push({ label: "Article No.", value: String(recommendation.art_no) });
+          rows.push({ label: "🏷️ Article No.", value: String(recommendation.art_no) });
         }
         processedKeys.add("art_no");
         return;
@@ -1842,6 +1993,31 @@
 
     var table = document.createElement("div");
     table.className = "specs-table";
+
+    // Display new nested specs format (heat_circulation, domestic_hot_water) in simple style
+    if (details.specs && typeof details.specs === "object") {
+      var specLabels = {
+        "flow": "Flow",
+        "head": "Head",
+        "fluid_temp": "Fluid Temperature",
+        "connection": "Connection"
+      };
+      Object.keys(details.specs).forEach(function (key) {
+        if (details.specs[key]) {
+          var line = document.createElement("div");
+          line.className = "spec-line";
+          var k = document.createElement("span");
+          k.textContent = specLabels[key] || prettifyKey(key);
+          var v = document.createElement("span");
+          v.textContent = String(details.specs[key]);
+          line.appendChild(k);
+          line.appendChild(v);
+          table.appendChild(line);
+        }
+      });
+    }
+
+    // Display old format specs (pressure_boosting, dewatering, etc)
     DETAIL_DISPLAY_RULES.forEach(function (rule) {
       var matchedKey = Object.keys(details).find(rule.test);
       if (matchedKey == null || details[matchedKey] == null || details[matchedKey] === "") return;
@@ -2075,6 +2251,9 @@
     if (state.virtualOptions) {
       var vOptions = document.createElement("div");
       vOptions.className = "option-list";
+      if (state.currentQuestion && CATEGORY_QUESTION_KEYS.includes(state.currentQuestion.key)) {
+        vOptions.classList.add("categorical");
+      }
       state.virtualOptions.forEach(function (option) {
         vOptions.appendChild(
           buildOptionCard(option, function () {
@@ -2088,6 +2267,9 @@
       var step = getStep(state.currentStepId);
       var options = document.createElement("div");
       options.className = "option-list";
+      if (state.currentQuestion && CATEGORY_QUESTION_KEYS.includes(state.currentQuestion.key)) {
+        options.classList.add("categorical");
+      }
       step.options.forEach(function (option) {
         options.appendChild(
           buildOptionCard(option, function () {
