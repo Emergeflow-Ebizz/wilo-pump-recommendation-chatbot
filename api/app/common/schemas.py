@@ -92,6 +92,34 @@ class PressureBoostingRequest(BaseModel):
     bathrooms_per_floor: int = Field(ge=1)
 
 
+class HeatCirculationRequest(BaseModel):
+    total_area: float = Field(gt=0)
+    area_unit: str
+    heating_system: str
+
+    _validate_total_area_finite = field_validator("total_area")(_require_finite)
+    _normalize_area_unit = field_validator("area_unit")(_normalize_unit)
+    _normalize_heating_system = field_validator("heating_system")(_normalize_unit)
+
+    @field_validator("area_unit")
+    @classmethod
+    def validate_area_unit(cls, v):
+        if v not in ("sqm", "sqft"):
+            raise ValueError('area_unit must be "sqm" or "sqft"')
+        return v
+
+    @field_validator("heating_system")
+    @classmethod
+    def validate_heating_system(cls, v):
+        if v not in ("ufh", "radiators"):
+            raise ValueError('heating_system must be "ufh" or "radiators"')
+        return v
+
+
+class DomesticHotWaterRequest(BaseModel):
+    num_usage_points: int = Field(ge=1)
+
+
 class DewateringRequest(BaseModel):
     depth_of_pit: float = Field(gt=0)
     depth_of_pit_unit: str

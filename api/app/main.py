@@ -35,6 +35,8 @@ if _sheets_handler is not None:
     logging.getLogger().addHandler(_sheets_handler)
 from app.common.schemas import (
     DewateringRequest,
+    DomesticHotWaterRequest,
+    HeatCirculationRequest,
     ParsedAnswer,
     ParsedCategory,
     PressureBoostingRequest,
@@ -52,6 +54,13 @@ from app.use_cases.dewatering.rules import (
     calculate_head as dewatering_calculate_head,
     normalize_depth_of_pit,
 )
+from app.use_cases.domestic_hot_water.questions import QUESTIONS as DOMESTIC_HOT_WATER_QUESTIONS
+from app.use_cases.domestic_hot_water.questions import next_question as domestic_hot_water_next_question
+from app.use_cases.domestic_hot_water.rules import DomesticHotWaterUseCase
+from app.use_cases.heat_circulation.questions import HEATING_SYSTEM_QUESTION
+from app.use_cases.heat_circulation.questions import QUESTIONS as HEAT_CIRCULATION_QUESTIONS
+from app.use_cases.heat_circulation.questions import next_question as heat_circulation_next_question
+from app.use_cases.heat_circulation.rules import HeatCirculationUseCase, build_recommendations as heat_circulation_build_recommendations, normalize_area as heat_circulation_normalize_area
 from app.use_cases.pressure_boosting.questions import QUESTIONS as PRESSURE_BOOSTING_QUESTIONS
 from app.use_cases.pressure_boosting.questions import next_question as pressure_boosting_next_question
 from app.use_cases.pressure_boosting.rules import (
@@ -78,7 +87,7 @@ from app.use_cases.water_transfer.rules import (
     calculate_head as water_transfer_calculate_head,
     normalize_well_depth,
 )
-from app.common.units import m_to_ft
+from app.common.units import m_to_ft, sqm_to_sqft
 from app.use_cases.tank_filling.rules import calculate_head as tank_filling_calculate_head
 
 app = FastAPI()
@@ -215,6 +224,8 @@ USE_CASES = {
         TankFillingUseCase(),
         PressureBoostingUseCase(),
         DewateringUseCase(),
+        HeatCirculationUseCase(),
+        DomesticHotWaterUseCase(),
     )
 }
 
@@ -223,6 +234,8 @@ NEXT_QUESTION_FNS = {
     "tank_filling": tank_filling_next_question,
     "pressure_boosting": pressure_boosting_next_question,
     "dewatering": dewatering_next_question,
+    "heat_circulation": heat_circulation_next_question,
+    "domestic_hot_water": domestic_hot_water_next_question,
 }
 
 QUESTIONS_BY_SLUG = {
@@ -230,6 +243,8 @@ QUESTIONS_BY_SLUG = {
     "tank_filling": {q.key: q for q in TANK_FILLING_QUESTIONS},
     "pressure_boosting": {q.key: q for q in PRESSURE_BOOSTING_QUESTIONS},
     "dewatering": {q.key: q for q in DEWATERING_QUESTIONS},
+    "heat_circulation": {q.key: q for q in HEAT_CIRCULATION_QUESTIONS},
+    "domestic_hot_water": {q.key: q for q in DOMESTIC_HOT_WATER_QUESTIONS},
 }
 
 # Fixed-choice questions whose answer must be one of a small, exact set of
@@ -242,6 +257,9 @@ CATEGORY_QUESTIONS_BY_SLUG: dict[str, dict[str, tuple[Question, list[str]]]] = {
     "tank_filling": {
         "inside_or_outside": (INSIDE_OR_OUTSIDE_QUESTION, ["inside", "outside"]),
         "horizontal_or_vertical": (HORIZONTAL_OR_VERTICAL_QUESTION, ["horizontal", "vertical"]),
+    },
+    "heat_circulation": {
+        "heating_system": (HEATING_SYSTEM_QUESTION, ["ufh", "radiators"]),
     },
 }
 
@@ -564,6 +582,50 @@ def dewatering_recommend(request: DewateringRequest) -> DewateringResponse:
             alt.details["head_unit"] = "m"
 
     return DewateringResponse(status="ok", recommendation=recommendation)
+
+
+class HeatCirculationResponse(BaseModel):
+    status: str
+    message: str | None = None
+    recommendation: PumpRecommendation | None = None
+    premium_recommendation: PumpRecommendation | None = None
+    area_unit: str | None = None
+
+
+@app.post("/heat_circulation/recommend", response_model=HeatCirculationResponse)
+def heat_circulation_recommend(request: HeatCirculationRequest) -> HeatCirculationResponse:
+    area_sqm = heat_circulation_normalize_area(request.total_area, request.area_unit)
+    standard, premium = heat_circulation_build_recommendations(area_sqm, request.heating_system)
+
+    for recommendation in (standard, premium):
+        if recommendation is None:
+            continue
+        if request.area_unit == "sqft":
+            recommendation.details["area"] = sqm_to_sqft(recommendation.details.pop("area_sqm"))
+        else:
+            recommendation.details["area"] = recommendation.details.pop("area_sqm")
+        recommendation.details["area_unit"] = request.area_unit
+
+    return HeatCirculationResponse(
+        status="ok",
+        recommendation=standard,
+        premium_recommendation=premium,
+        area_unit=request.area_unit,
+    )
+
+
+class DomesticHotWaterResponse(BaseModel):
+    status: str
+    message: str | None = None
+    recommendation: PumpRecommendation | None = None
+
+
+@app.post("/domestic_hot_water/recommend", response_model=DomesticHotWaterResponse)
+def domestic_hot_water_recommend(request: DomesticHotWaterRequest) -> DomesticHotWaterResponse:
+    uc = USE_CASES["domestic_hot_water"]
+    answers = {"num_usage_points": request.num_usage_points}
+    recommendation = uc.select_pump(answers)
+    return DomesticHotWaterResponse(status="ok", recommendation=recommendation)
 
 
 SEND_PUMP_DATA_URL = "https://wiloscan.pumpsearch.com/PumpManagement_V4/api/chatbot/send-selected-pump-mail"

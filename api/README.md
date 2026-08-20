@@ -28,6 +28,8 @@ name via their own `sheet_map.py` rather than owning private copies.
 | `tank_filling` | implemented |
 | `pressure_boosting` | Implemented |
 | `dewatering` | Implemented |
+| `heat_circulation` | Implemented |
+| `domestic_hot_water` | Implemented |
 | `hot_water_circulation` | Not yet implemented |
 
 ## Running

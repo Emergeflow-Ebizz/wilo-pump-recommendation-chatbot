@@ -28,3 +28,14 @@ def lpm_to_gpm(lpm: float) -> float:
 
 def gpm_to_lpm(gpm: float) -> float:
     return gpm / 0.264172
+
+
+SQM_TO_SQFT_FACTOR = 10.7639
+
+
+def sqm_to_sqft(sqm: float) -> float:
+    return sqm * SQM_TO_SQFT_FACTOR
+
+
+def sqft_to_sqm(sqft: float) -> float:
+    return sqft / SQM_TO_SQFT_FACTOR
