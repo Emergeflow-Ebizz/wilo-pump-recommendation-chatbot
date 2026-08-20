@@ -1,7 +1,7 @@
 # Pump Chatbot
 
-Chatbot backend serving 5 independent pump-selection use cases. A UI lets the
-user pick one of the 5 up front; the backend runs that use case's fixed
+Chatbot backend serving 6 independent pump-selection use cases. A UI lets the
+user pick one of the 6 up front; the backend runs that use case's fixed
 question sequence and rule engine to recommend a pump. The LLM is only used to
 parse free-text answers into structured values, not to choose the pump.
 
@@ -25,12 +25,11 @@ name via their own `sheet_map.py` rather than owning private copies.
 | Slug | Status |
 |---|---|
 | `water_transfer` | Implemented |
-| `tank_filling` | implemented |
+| `tank_filling` | Implemented |
 | `pressure_boosting` | Implemented |
 | `dewatering` | Implemented |
 | `heat_circulation` | Implemented |
 | `domestic_hot_water` | Implemented |
-| `hot_water_circulation` | Not yet implemented |
 
 ## Running
 
