@@ -4,14 +4,18 @@ from pydantic import BaseModel, Field, field_validator
 
 
 def _require_finite(v: float | None) -> float | None:
+    """Validate that a number is finite (not infinity or NaN)."""
     if v is not None and not math.isfinite(v):
         raise ValueError("must be a finite number")
     return v
 
 
 def _normalize_unit(v: str | None) -> str | None:
+    """Normalize unit text to lowercase and strip whitespace."""
     return v.strip().lower() if v is not None else v
 
+
+# ===== GENERIC SCHEMAS (used by all use cases) =====
 
 class Question(BaseModel):
     key: str
@@ -25,7 +29,10 @@ class Question(BaseModel):
     domain_context: str = ""
 
 
+# ===== APPLICATION-SPECIFIC SCHEMAS =====
+
 class WaterTransferRequest(BaseModel):
+    """Water transfer use case only."""
     delivery_type: str
     borewell_size: float = Field(gt=0)
     borewell_unit: str
@@ -61,6 +68,7 @@ class WaterTransferRequest(BaseModel):
 
 
 class TankFillingRequest(BaseModel):
+    """Tank filling use case only."""
     inside_or_outside: str
     horizontal_or_vertical: str | None = None
     tank_capacity: float | None = Field(default=None, gt=0)
@@ -88,11 +96,13 @@ class TankFillingRequest(BaseModel):
 
 
 class PressureBoostingRequest(BaseModel):
+    """Pressure boosting use case only."""
     num_floors: int = Field(ge=1)
     bathrooms_per_floor: int = Field(ge=1)
 
 
 class HeatCirculationRequest(BaseModel):
+    """Heat circulation use case only."""
     total_area: float = Field(ge=0)
     area_unit: str
     heating_system: str
@@ -117,10 +127,12 @@ class HeatCirculationRequest(BaseModel):
 
 
 class DomesticHotWaterRequest(BaseModel):
+    """Domestic hot water use case only."""
     num_usage_points: int = Field(ge=1)
 
 
 class DewateringRequest(BaseModel):
+    """Dewatering use case only."""
     depth_of_pit: float = Field(gt=0)
     depth_of_pit_unit: str
     motor_power_hp: float | None = Field(default=None, gt=0)
@@ -131,6 +143,7 @@ class DewateringRequest(BaseModel):
 
 
 class PumpRecommendation(BaseModel):
+    """Output of pump selection - the recommended pump model with its details."""
     model_name: str
     art_no: int | None = None
     details: dict = {}
@@ -156,6 +169,7 @@ class AdditionalAnswer(BaseModel):
 
 
 class ParsedAnswer(BaseModel):
+    """Result of parsing a numeric question answer - value, unit, and clarification state."""
     value: float | None = None
     unit: str | None = None
     needs_clarification: bool = False
@@ -164,18 +178,13 @@ class ParsedAnswer(BaseModel):
     redirect_key: str | None = None
     gave_up: bool = False
     confirmation_message: str | None = None
-    # Set only alongside needs_clarification=True for a genuinely ambiguous
-    # reply (see AMBIGUOUS in PARSE_ANSWER_SYSTEM_PROMPT) where exactly one
-    # reading looked most likely - e.g. "fourss" -> suggested_value=4. `value`
-    # itself stays None until the user actually confirms it; the caller
-    # carries suggested_value forward as previous_value so a plain "yes"
-    # reply on the next turn can resolve straight to it without re-parsing.
     suggested_value: float | None = None
     additional_answers: list[AdditionalAnswer] = []
     edit_not_supported: bool = False
 
 
 class ParsedCategory(BaseModel):
+    """Result of parsing a category question answer - mapped category and clarification state."""
     category: str | None = None
     needs_clarification: bool = False
     clarification_question: str | None = None
@@ -185,6 +194,7 @@ class ParsedCategory(BaseModel):
 
 
 class PumpDataUserDetails(BaseModel):
+    """User details for pump data export - contact and location info."""
     pincode: str
     name: str
     contactNumber: str
@@ -192,12 +202,14 @@ class PumpDataUserDetails(BaseModel):
 
 
 class PumpDataSearchDetails(BaseModel):
+    """Search parameters used for pump selection - application and requirements."""
     application: str
     RequiredHead: str
     RequiredPower: str
 
 
 class PumpDataSelectedPump(BaseModel):
+    """Selected pump details for export - model, specs, and matching values."""
     pumpModel: str
     articleNo: str
     motorRating: str
@@ -207,10 +219,12 @@ class PumpDataSelectedPump(BaseModel):
 
 
 class PumpDataPayload(BaseModel):
+    """Complete pump selection data for external export - user, search, and selected pump."""
     userDetails: PumpDataUserDetails
     searchDetails: PumpDataSearchDetails
     selectedPump: PumpDataSelectedPump
 
 
 class SendPumpDataRequest(BaseModel):
+    """Request to send pump data to external service."""
     data: PumpDataPayload
