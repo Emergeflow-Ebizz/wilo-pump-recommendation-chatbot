@@ -93,7 +93,7 @@ class PressureBoostingRequest(BaseModel):
 
 
 class HeatCirculationRequest(BaseModel):
-    total_area: float = Field(gt=0)
+    total_area: float = Field(ge=0)
     area_unit: str
     heating_system: str
 

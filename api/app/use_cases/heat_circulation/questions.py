@@ -6,14 +6,16 @@ QUESTIONS: list[Question] = [
         prompt="What is the total area of the building? (in **square meters** or **square feet**)",
         allowed_units=["sqm", "sqft"],
         requires_stated_unit=True,
+        min_value=0,
         domain_context=(
             "Determines which Wilo pump tier is recommended - up to 250 sq m vs "
             "above 250 sq m. Valid units are sqm and sqft - the user must state "
             "which one, this is never inferred from the number alone. The user "
             "may phrase the unit as 'meter'/'m'/'sq m'/'square meters' (all map "
             "to sqm) or 'feet'/'ft'/'sq ft'/'square feet' (all map to sqft) - no "
-            "other unit words are valid for this question. There is no minimum "
-            "or maximum area."
+            "other unit words are valid for this question. There is no maximum "
+            "area, and zero is a valid (if unusual) area - only negative values "
+            "are rejected."
         ),
     ),
 ]

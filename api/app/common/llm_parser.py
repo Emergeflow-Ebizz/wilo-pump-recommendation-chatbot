@@ -256,6 +256,9 @@ def _validate_additional_answers(
                 continue
             if target_question.min_value is not None and value < target_question.min_value:
                 continue
+        elif target_question.min_value is not None:
+            if value < target_question.min_value:
+                continue
         elif value <= 0:
             continue
         validated.append({"key": key, "value": value, "unit": unit})
@@ -286,12 +289,15 @@ PARSE_ANSWER_SYSTEM_PROMPT = (
     "any non-whole reply - set needs_clarification=true, value null, "
     "ask for a whole number. "
     "MINIMUM VALUE: Some questions have a stated minimum value (e.g. 'num_floors' "
-    "may require >= 1 to mean at least one floor, or >= 0 to allow ground floor). "
+    "may require >= 1 to mean at least one floor, or >= 0 to allow ground floor; "
+    "'total_area' requires >= 0 to allow a zero area). "
     "If a minimum is stated in the question details, reject any value below it - "
-    "set needs_clarification=true, value/unit null. If no minimum is stated, zero "
-    "is allowed for integer questions. For non-integer questions (borewell size, "
-    "well depth, motor power, tank capacity), zero and negative numbers are always "
-    "rejected - these are physical quantities that must be strictly positive. "
+    "set needs_clarification=true, value/unit null - but a value equal to the "
+    "stated minimum (including zero) is always valid. If no minimum is stated, "
+    "zero is allowed for integer questions. For non-integer questions with no "
+    "stated minimum (borewell size, well depth, motor power, tank capacity), "
+    "zero and negative numbers are always rejected - these are physical "
+    "quantities that must be strictly positive. "
     "SKIP: If optional and the user says skip/no/idk/don't know/etc, set "
     "skipped=true, leave value/unit/needs_clarification/clarification_question null. "
     "If NOT optional, never skip - ask for clarification instead. "
@@ -779,12 +785,14 @@ def parse_answer(
     target_question = next((q for q in other_questions if q.key == target_key), question)
 
     if rejected_value is not None:
-        min_floor = target_question.min_value if target_question.min_value is not None else (0 if target_question.requires_integer else 0)
         should_reject = False
 
-        if target_question.requires_integer and target_question.min_value is not None:
+        if target_question.requires_integer:
+            if target_question.min_value is not None:
+                should_reject = rejected_value < target_question.min_value
+        elif target_question.min_value is not None:
             should_reject = rejected_value < target_question.min_value
-        elif not target_question.requires_integer:
+        else:
             should_reject = rejected_value <= 0
 
         if should_reject:

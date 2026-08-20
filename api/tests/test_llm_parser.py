@@ -7,11 +7,13 @@ from app.common.llm_parser import AmbiguousConfirmationError, parse_answer, pars
 from app.use_cases.water_transfer.questions import DELIVERY_TYPE_QUESTION
 from app.use_cases.water_transfer.questions import QUESTIONS as WATER_TRANSFER_QUESTIONS
 from app.use_cases.tank_filling.questions import HORIZONTAL_OR_VERTICAL_QUESTION, INSIDE_OR_OUTSIDE_QUESTION
+from app.use_cases.heat_circulation.questions import QUESTIONS as HEAT_CIRCULATION_QUESTIONS
 
 BOREWELL_SIZE = next(q for q in WATER_TRANSFER_QUESTIONS if q.key == "borewell_size")
 WELL_DEPTH = next(q for q in WATER_TRANSFER_QUESTIONS if q.key == "well_depth")
 NUM_FLOORS = next(q for q in WATER_TRANSFER_QUESTIONS if q.key == "num_floors")
 MOTOR_POWER_HP = next(q for q in WATER_TRANSFER_QUESTIONS if q.key == "motor_power_hp")
+TOTAL_AREA = next(q for q in HEAT_CIRCULATION_QUESTIONS if q.key == "total_area")
 
 
 def _answer_json(**overrides):
@@ -212,6 +214,30 @@ def test_parse_answer_non_positive_rejection_falls_back_when_llm_unreachable():
     assert result.needs_clarification is True
     assert result.value is None
     assert "greater than zero" in result.clarification_question
+
+
+def test_parse_answer_zero_accepted_for_non_integer_question_with_zero_min_value():
+    """total_area has min_value=0 (explicitly allowing a zero area) despite
+    being non-integer - unlike borewell_size/well_depth/motor_power/tank
+    capacity, which have no min_value and must stay strictly positive."""
+    extraction = _answer_json(value=0.0, unit="sqm")
+    with patch("app.common.llm_parser.llm_client.complete", return_value=extraction):
+        result = parse_answer(TOTAL_AREA, "0 sqm")
+
+    assert result.needs_clarification is False
+    assert result.value == 0.0
+
+
+def test_parse_answer_negative_still_rejected_for_zero_min_value_question():
+    extraction = _answer_json(value=-5.0, unit="sqm")
+    with patch(
+        "app.common.llm_parser.llm_client.complete",
+        side_effect=[extraction, LLMUnavailableError("no key")],
+    ):
+        result = parse_answer(TOTAL_AREA, "-5 sqm")
+
+    assert result.needs_clarification is True
+    assert result.value is None
 
 
 def test_parse_answer_confirmation_message_absent_on_skip():
