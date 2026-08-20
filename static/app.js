@@ -2079,16 +2079,27 @@
     var isSelected = state.selectedPump && state.selectedPump.recommendation.model_name === recommendation.model_name;
     selectBtn.textContent = isSelected ? "✓ Selected" : "Select";
     if (isSelected) selectBtn.classList.add("selected");
+
     var isSameUseCaseAfterPincode = state.pincodeSubmitted && state.pincodeSubmittedUseCase === state.useCaseSlug;
     if (isSameUseCaseAfterPincode && !isSelected) {
       selectBtn.disabled = true;
+      selectBtn.title = "Email verification in progress for " + (state.selectedPump ? state.selectedPump.recommendation.model_name : "selected pump") + " in this application";
     }
+
     selectBtn.addEventListener("click", function () {
       var newPumpModel = recommendation.model_name || "pump";
       var currentPumpModel = state.selectedPump ? state.selectedPump.recommendation.model_name : null;
       var isDifferentUseCase = state.pincodeSubmittedUseCase && state.pincodeSubmittedUseCase !== state.useCaseSlug;
 
+      console.log("[selectBtn click] ===== PUMP SELECTION START =====");
+      console.log("[selectBtn click] newPumpModel:", newPumpModel);
+      console.log("[selectBtn click] currentPumpModel:", currentPumpModel);
+      console.log("[selectBtn click] state.pincodeSubmitted:", state.pincodeSubmitted);
+      console.log("[selectBtn click] isDifferentUseCase:", isDifferentUseCase);
+      console.log("[selectBtn click] isSameUseCaseAfterPincode:", isSameUseCaseAfterPincode);
+
       if (state.pincodeSubmitted && !isDifferentUseCase) {
+        console.log("[selectBtn click] SCENARIO: Pincode submitted in same use case - blocking change");
         showPumpSelectionModal(
           newPumpModel,
           newPumpModel,
@@ -2107,6 +2118,7 @@
       }
 
       if (state.selectedPump && currentPumpModel === newPumpModel) {
+        console.log("[selectBtn click] SCENARIO: Same pump selected again - already selected");
         showPumpSelectionModal(
           newPumpModel,
           newPumpModel,
@@ -2135,15 +2147,21 @@
         var pumpModel = recommendation.model_name || "pump";
         var html = "Great! You've selected <span style='color: #009C82; font-weight: bold;'>" + pumpModel + "</span>. To get the selection in your mailbox, please provide your email ID.";
         addBotHtmlMessage(html);
+        console.log('[selectBtn click] Selected pump:', pumpModel, 'for use case:', state.useCaseSlug);
         jumpToStep("lead-email");
         render();
       };
 
-      if (state.selectedPump && currentPumpModel && currentPumpModel !== newPumpModel) {
+      if (state.selectedPump && currentPumpModel && currentPumpModel !== newPumpModel && !isDifferentUseCase) {
+        console.log("[selectBtn click] SCENARIO: Switching pumps in same use case - show confirmation modal");
         showPumpSelectionModal(currentPumpModel, newPumpModel, confirmSelection, function () {
           closePumpSelectionModal();
         });
+      } else if (isDifferentUseCase && state.selectedPump && currentPumpModel && currentPumpModel !== newPumpModel) {
+        console.log("[selectBtn click] SCENARIO: Selecting pump for different use case - no modal, direct selection");
+        confirmSelection();
       } else {
+        console.log("[selectBtn click] SCENARIO: No prior selection or first pump in this use case");
         confirmSelection();
       }
     });
