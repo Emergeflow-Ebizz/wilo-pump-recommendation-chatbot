@@ -48,15 +48,15 @@ class WaterTransferRequest(BaseModel):
     @field_validator("delivery_type")
     @classmethod
     def validate_delivery_type(cls, v):
-        if v not in ("ground_floor", "elevated_tank"):
-            raise ValueError('delivery_type must be "ground_floor" or "elevated_tank"')
+        if v not in ("ground_floor", "overhead_tank"):
+            raise ValueError('delivery_type must be "ground_floor" or "overhead_tank"')
         return v
 
     @field_validator("num_floors")
     @classmethod
     def validate_num_floors(cls, v, info):
-        if info.data.get("delivery_type") == "elevated_tank" and v < 1:
-            raise ValueError("num_floors must be at least 1 for elevated_tank delivery")
+        if info.data.get("delivery_type") == "overhead_tank" and v < 1:
+            raise ValueError("num_floors must be at least 1 for overhead_tank delivery")
         return v
 
 
