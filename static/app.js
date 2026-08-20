@@ -953,8 +953,8 @@
         messageText = confirmationMessage + "\n" + data.question.prompt;
       }
 
-      // Check if this is a categorical question - render as card options
-      if (CATEGORY_QUESTION_KEYS.indexOf(data.question.key) !== -1) {
+      // Check if this is a categorical question - render as card options (only for heat_circulation)
+      if (state.useCaseSlug === "heat_circulation" && CATEGORY_QUESTION_KEYS.indexOf(data.question.key) !== -1) {
         console.log("[fetchNextQuestion] CATEGORICAL QUESTION - Rendering as card options");
         // Remove the redundant option list from the question prompt for categorical questions
         var questionOnly = data.question.prompt.split("?")[0] + "?";
