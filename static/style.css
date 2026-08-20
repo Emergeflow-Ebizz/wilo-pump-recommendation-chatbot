@@ -717,9 +717,8 @@ body {
   justify-content: space-between !important;
   min-height: 60px;
 }
-.overview-spec-line::before {
-  content: attr(data-icon);
-  display: inline-flex;
+.spec-icon-box {
+  display: flex;
   align-items: center;
   justify-content: center;
   min-width: 52px;
@@ -730,7 +729,6 @@ body {
   font-size: 26px;
   flex-shrink: 0;
   line-height: 1;
-  white-space: nowrap;
 }
 .overview-spec-line span:first-child {
   color: #ffffff;

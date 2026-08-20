@@ -1862,7 +1862,12 @@
       var line = document.createElement("div");
       line.className = "spec-line overview-spec-line";
       var icon = iconMap[row.label] || "•";
-      line.setAttribute("data-icon", icon);
+
+      var iconBox = document.createElement("div");
+      iconBox.className = "spec-icon-box";
+      iconBox.textContent = icon;
+      line.appendChild(iconBox);
+
       var k = document.createElement("span");
       k.textContent = row.label;
       var v = document.createElement("span");
