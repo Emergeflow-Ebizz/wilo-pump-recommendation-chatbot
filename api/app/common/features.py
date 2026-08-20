@@ -101,6 +101,13 @@ FEATURES: dict[str, list[str]] = {
     ],
     "HMHIL.json": _HMHIL_FMHIL_FEATURES,
     "FMHIL.json": _HMHIL_FMHIL_FEATURES,
+    "MHIL-MHI-BC.json": [
+        "Horizontal multistage stainless steel centrifugal pump with electric motor.",
+        "Built in over voltage, under voltage, short circuit motor overload and dry run protection with float.",
+        "Factory assembled system along with control panel supplied for ready to use.",
+        "Automatic pump cascading and alteration.",
+        "Easy to install and operate.",
+    ],
     "MNC.json": [
         "Self priming and back pull out design for easy maintenance.",
         "Non clog semi open impeller handles solids up to 40 mm.",
