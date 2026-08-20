@@ -1,0 +1,541 @@
+{
+  "CO 2MHIL105 BC": {
+    "art_no": 8058572,
+    "motor_rating": {
+      "kw": "2X0.55",
+      "hp": "2X0.75"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 8, "head": 47 },
+      { "flow": 17, "head": 44 },
+      { "flow": 25, "head": 40 },
+      { "flow": 33, "head": 34 },
+      { "flow": 42, "head": 28 },
+      { "flow": 50, "head": 20 },
+      { "flow": 58, "head": 20 }
+    ]
+  },
+  "CO 2MHIL106 BC": {
+    "art_no": 8048691,
+    "motor_rating": {
+      "kw": "2X0.55",
+      "hp": "2X0.75"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 8, "head": 57 },
+      { "flow": 17, "head": 53 },
+      { "flow": 25, "head": 47 },
+      { "flow": 33, "head": 40 },
+      { "flow": 42, "head": 32 },
+      { "flow": 50, "head": 22 },
+      { "flow": 58, "head": 22 }
+    ]
+  },
+  "CO 2MHIL302 BC": {
+    "art_no": 8014966,
+    "motor_rating": {
+      "kw": "2X0.37",
+      "hp": "2X0.50"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 21 },
+      { "flow": 33, "head": 19 },
+      { "flow": 50, "head": 15 },
+      { "flow": 67, "head": 11 },
+      { "flow": 83, "head": 6 },
+      { "flow": 100, "head": 1 }
+    ]
+  },
+  "CO 2MHIL303 BC": {
+    "art_no": 8014968,
+    "motor_rating": {
+      "kw": "2X0.55",
+      "hp": "2X0.75"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 32 },
+      { "flow": 33, "head": 27 },
+      { "flow": 50, "head": 22 },
+      { "flow": 67, "head": 16 },
+      { "flow": 83, "head": 9 },
+      { "flow": 100, "head": 1 }
+    ]
+  },
+  "CO 2MHIL304 BC": {
+    "art_no": 8014970,
+    "motor_rating": {
+      "kw": "2X0.55",
+      "hp": "2X0.75"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 40 },
+      { "flow": 33, "head": 35 },
+      { "flow": 50, "head": 28 },
+      { "flow": 67, "head": 21 },
+      { "flow": 83, "head": 11 },
+      { "flow": 100, "head": 1 }
+    ]
+  },
+  "CO 2MHIL305 BC": {
+    "art_no": 8014972,
+    "motor_rating": {
+      "kw": "2X0.75",
+      "hp": "2X1.00"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 50 },
+      { "flow": 33, "head": 44 },
+      { "flow": 50, "head": 36 },
+      { "flow": 67, "head": 26 },
+      { "flow": 83, "head": 14 },
+      { "flow": 100, "head": 2 }
+    ]
+  },
+  "CO 2MHIL306 BC": {
+    "art_no": 8014974,
+    "motor_rating": {
+      "kw": "2X1.10",
+      "hp": "2X1.50"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 62 },
+      { "flow": 33, "head": 56 },
+      { "flow": 50, "head": 47 },
+      { "flow": 67, "head": 36 },
+      { "flow": 83, "head": 21 },
+      { "flow": 100, "head": 3 }
+    ]
+  },
+  "CO 2MHIL502 BC": {
+    "art_no": 8014976,
+    "motor_rating": {
+      "kw": "2X0.55",
+      "hp": "2X0.75"
+    },
+    "suction_dia_mm": 32,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 21 },
+      { "flow": 33, "head": 20 },
+      { "flow": 50, "head": 19 },
+      { "flow": 67, "head": 17 },
+      { "flow": 83, "head": 15 },
+      { "flow": 100, "head": 13 },
+      { "flow": 117, "head": 10 },
+      { "flow": 133, "head": 7 },
+      { "flow": 150, "head": 4 }
+    ]
+  },
+  "CO 2MHIL503 BC": {
+    "art_no": 8014978,
+    "motor_rating": {
+      "kw": "2X0.55",
+      "hp": "2X0.75"
+    },
+    "suction_dia_mm": 32,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 31 },
+      { "flow": 33, "head": 29 },
+      { "flow": 50, "head": 27 },
+      { "flow": 67, "head": 24 },
+      { "flow": 83, "head": 21 },
+      { "flow": 100, "head": 17 },
+      { "flow": 117, "head": 13 },
+      { "flow": 133, "head": 8 },
+      { "flow": 150, "head": 2 }
+    ]
+  },
+  "CO 2MHIL504 BC": {
+    "art_no": 8014980,
+    "motor_rating": {
+      "kw": "2X0.75",
+      "hp": "2X1.00"
+    },
+    "suction_dia_mm": 32,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 42 },
+      { "flow": 33, "head": 40 },
+      { "flow": 50, "head": 37 },
+      { "flow": 67, "head": 34 },
+      { "flow": 83, "head": 29 },
+      { "flow": 100, "head": 25 },
+      { "flow": 117, "head": 19 },
+      { "flow": 133, "head": 12 },
+      { "flow": 150, "head": 5 }
+    ]
+  },
+  "CO 2MHIL505 BC": {
+    "art_no": 8014982,
+    "motor_rating": {
+      "kw": "2X1.10",
+      "hp": "2X1.50"
+    },
+    "suction_dia_mm": 32,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 54 },
+      { "flow": 33, "head": 52 },
+      { "flow": 50, "head": 49 },
+      { "flow": 67, "head": 46 },
+      { "flow": 83, "head": 41 },
+      { "flow": 100, "head": 35 },
+      { "flow": 117, "head": 28 },
+      { "flow": 133, "head": 19 },
+      { "flow": 150, "head": 8 }
+    ]
+  },
+  "CO 2MHIL902 BC": {
+    "art_no": 8014986,
+    "motor_rating": {
+      "kw": "2X0.75",
+      "hp": "2X1.00"
+    },
+    "suction_dia_mm": 38,
+    "discharge_dia_mm": 32,
+    "performance_curves": [
+      { "flow": 33, "head": 21 },
+      { "flow": 67, "head": 20 },
+      { "flow": 100, "head": 18 },
+      { "flow": 133, "head": 16 },
+      { "flow": 150, "head": 15 },
+      { "flow": 167, "head": 14 },
+      { "flow": 183, "head": 13 },
+      { "flow": 200, "head": 11 },
+      { "flow": 217, "head": 10 }
+    ]
+  },
+  "CO 2MHIL903 BC": {
+    "art_no": 8014988,
+    "motor_rating": {
+      "kw": "2X1.10",
+      "hp": "2X1.50"
+    },
+    "suction_dia_mm": 38,
+    "discharge_dia_mm": 32,
+    "performance_curves": [
+      { "flow": 33, "head": 33 },
+      { "flow": 67, "head": 31 },
+      { "flow": 100, "head": 29 },
+      { "flow": 133, "head": 27 },
+      { "flow": 150, "head": 25 },
+      { "flow": 167, "head": 23 },
+      { "flow": 183, "head": 21 },
+      { "flow": 200, "head": 18 },
+      { "flow": 217, "head": 15 }
+    ]
+  },
+  "CO 2MHI202 BC": {
+    "art_no": 8014932,
+    "motor_rating": {
+      "kw": "2X0.55",
+      "hp": "2X0.75"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 21 },
+      { "flow": 25, "head": 20 },
+      { "flow": 33, "head": 18 },
+      { "flow": 50, "head": 15 },
+      { "flow": 67, "head": 11 },
+      { "flow": 83, "head": 6 },
+      { "flow": 100, "head": 1 }
+    ]
+  },
+  "CO 2MHI203 BC": {
+    "art_no": 8014934,
+    "motor_rating": {
+      "kw": "2X0.55",
+      "hp": "2X0.75"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 30 },
+      { "flow": 25, "head": 28 },
+      { "flow": 33, "head": 26 },
+      { "flow": 50, "head": 21 },
+      { "flow": 67, "head": 15 },
+      { "flow": 83, "head": 8 },
+      { "flow": 100, "head": 1 }
+    ]
+  },
+  "CO 2MHI204 BC": {
+    "art_no": 8014936,
+    "motor_rating": {
+      "kw": "2X0.55",
+      "hp": "2X0.75"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 41 },
+      { "flow": 25, "head": 38 },
+      { "flow": 33, "head": 36 },
+      { "flow": 50, "head": 29 },
+      { "flow": 67, "head": 22 },
+      { "flow": 83, "head": 13 },
+      { "flow": 100, "head": 4 }
+    ]
+  },
+  "CO 2MHI205 BC": {
+    "art_no": 8014938,
+    "motor_rating": {
+      "kw": "2X0.75",
+      "hp": "2X1.00"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 55 },
+      { "flow": 25, "head": 52 },
+      { "flow": 33, "head": 49 },
+      { "flow": 50, "head": 42 },
+      { "flow": 67, "head": 33 },
+      { "flow": 83, "head": 23 },
+      { "flow": 100, "head": 10 }
+    ]
+  },
+  "CO 2MHI206 BC": {
+    "art_no": 8014940,
+    "motor_rating": {
+      "kw": "2X1.10",
+      "hp": "2X1.50"
+    },
+    "suction_dia_mm": 25,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 65 },
+      { "flow": 25, "head": 62 },
+      { "flow": 33, "head": 58 },
+      { "flow": 50, "head": 49 },
+      { "flow": 67, "head": 38 },
+      { "flow": 83, "head": 24 },
+      { "flow": 100, "head": 10 }
+    ]
+  },
+  "CO 2MHI402 BC": {
+    "art_no": 8014942,
+    "motor_rating": {
+      "kw": "2X0.55",
+      "hp": "2X0.75"
+    },
+    "suction_dia_mm": 32,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 22 },
+      { "flow": 33, "head": 21 },
+      { "flow": 50, "head": 20 },
+      { "flow": 67, "head": 19 },
+      { "flow": 83, "head": 17 },
+      { "flow": 100, "head": 15 },
+      { "flow": 117, "head": 12 },
+      { "flow": 133, "head": 9 }
+    ]
+  },
+  "CO 2MHI403 BC": {
+    "art_no": 8014944,
+    "motor_rating": {
+      "kw": "2X0.55",
+      "hp": "2X0.75"
+    },
+    "suction_dia_mm": 32,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 34 },
+      { "flow": 33, "head": 33 },
+      { "flow": 50, "head": 31 },
+      { "flow": 67, "head": 29 },
+      { "flow": 83, "head": 26 },
+      { "flow": 100, "head": 23 },
+      { "flow": 117, "head": 19 },
+      { "flow": 133, "head": 14 }
+    ]
+  },
+  "CO 2MHI404 BC": {
+    "art_no": 8014946,
+    "motor_rating": {
+      "kw": "2X0.75",
+      "hp": "2X1.00"
+    },
+    "suction_dia_mm": 32,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 45 },
+      { "flow": 33, "head": 44 },
+      { "flow": 50, "head": 42 },
+      { "flow": 67, "head": 39 },
+      { "flow": 83, "head": 35 },
+      { "flow": 100, "head": 31 },
+      { "flow": 117, "head": 26 },
+      { "flow": 133, "head": 19 },
+      { "flow": 147, "head": 11 }
+    ]
+  },
+  "CO 2MHI405 BC": {
+    "art_no": 8014948,
+    "motor_rating": {
+      "kw": "2X1.10",
+      "hp": "2X1.50"
+    },
+    "suction_dia_mm": 32,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 57 },
+      { "flow": 33, "head": 56 },
+      { "flow": 50, "head": 54 },
+      { "flow": 67, "head": 51 },
+      { "flow": 83, "head": 47 },
+      { "flow": 100, "head": 42 },
+      { "flow": 117, "head": 39 },
+      { "flow": 133, "head": 27 },
+      { "flow": 147, "head": 17 }
+    ]
+  },
+  "CO 2MHI406 BC": {
+    "art_no": 8014950,
+    "motor_rating": {
+      "kw": "2X1.50",
+      "hp": "2X2.00"
+    },
+    "suction_dia_mm": 32,
+    "discharge_dia_mm": 25,
+    "performance_curves": [
+      { "flow": 17, "head": 69 },
+      { "flow": 33, "head": 68 },
+      { "flow": 50, "head": 65 },
+      { "flow": 67, "head": 61 },
+      { "flow": 83, "head": 57 },
+      { "flow": 100, "head": 51 },
+      { "flow": 117, "head": 44 },
+      { "flow": 133, "head": 34 },
+      { "flow": 147, "head": 22 }
+    ]
+  },
+  "CO 2MHI802 BC": {
+    "art_no": 8014952,
+    "motor_rating": {
+      "kw": "2X0.75",
+      "hp": "2X1.00"
+    },
+    "suction_dia_mm": 38,
+    "discharge_dia_mm": 32,
+    "performance_curves": [
+      { "flow": 33, "head": 23 },
+      { "flow": 67, "head": 21 },
+      { "flow": 100, "head": 20 },
+      { "flow": 133, "head": 18 },
+      { "flow": 167, "head": 15 },
+      { "flow": 200, "head": 11 },
+      { "flow": 218, "head": 8 },
+      { "flow": 233, "head": 6 }
+    ]
+  },
+  "CO 2MHI803 BC": {
+    "art_no": 8014954,
+    "motor_rating": {
+      "kw": "2X1.10",
+      "hp": "2X1.50"
+    },
+    "suction_dia_mm": 38,
+    "discharge_dia_mm": 32,
+    "performance_curves": [
+      { "flow": 33, "head": 35 },
+      { "flow": 67, "head": 34 },
+      { "flow": 100, "head": 31 },
+      { "flow": 133, "head": 28 },
+      { "flow": 167, "head": 23 },
+      { "flow": 200, "head": 18 },
+      { "flow": 218, "head": 15 },
+      { "flow": 233, "head": 12 }
+    ]
+  },
+  "CO 2MHI804 BC": {
+    "art_no": 8014956,
+    "motor_rating": {
+      "kw": "2X1.50",
+      "hp": "2X2.00"
+    },
+    "suction_dia_mm": 38,
+    "discharge_dia_mm": 32,
+    "performance_curves": [
+      { "flow": 33, "head": 47 },
+      { "flow": 67, "head": 44 },
+      { "flow": 100, "head": 42 },
+      { "flow": 133, "head": 38 },
+      { "flow": 167, "head": 32 },
+      { "flow": 200, "head": 24 },
+      { "flow": 218, "head": 19 },
+      { "flow": 233, "head": 15 }
+    ]
+  },
+  "CO 2MHI805 BC": {
+    "art_no": 8014958,
+    "motor_rating": {
+      "kw": "2X1.85",
+      "hp": "2X2.50"
+    },
+    "suction_dia_mm": 38,
+    "discharge_dia_mm": 32,
+    "performance_curves": [
+      { "flow": 33, "head": 58 },
+      { "flow": 67, "head": 55 },
+      { "flow": 100, "head": 51 },
+      { "flow": 133, "head": 46 },
+      { "flow": 167, "head": 39 },
+      { "flow": 200, "head": 30 },
+      { "flow": 218, "head": 25 },
+      { "flow": 233, "head": 19 }
+    ]
+  },
+  "CO 2MHI1602/6 BC": {
+    "art_no": 8014960,
+    "motor_rating": {
+      "kw": "2X1.50",
+      "hp": "2X2.00"
+    },
+    "suction_dia_mm": 50,
+    "discharge_dia_mm": 38,
+    "performance_curves": [
+      { "flow": 83, "head": 22 },
+      { "flow": 166, "head": 21 },
+      { "flow": 250, "head": 18 },
+      { "flow": 333, "head": 14 },
+      { "flow": 416, "head": 6 },
+      { "flow": 450, "head": 3 }
+    ]
+  },
+  "CO 2MHI1603/6 BC": {
+    "art_no": 8014962,
+    "motor_rating": {
+      "kw": "2X2.20",
+      "hp": "2X3.00"
+    },
+    "suction_dia_mm": 50,
+    "discharge_dia_mm": 38,
+    "performance_curves": [
+      { "flow": 83, "head": 34 },
+      { "flow": 166, "head": 31 },
+      { "flow": 250, "head": 27 },
+      { "flow": 333, "head": 21 },
+      { "flow": 416, "head": 11 },
+      { "flow": 450, "head": 6 }
+    ]
+  }
+}

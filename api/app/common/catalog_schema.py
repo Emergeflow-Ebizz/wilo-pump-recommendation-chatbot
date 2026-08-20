@@ -26,8 +26,11 @@ class _PerfPoint(BaseModel):
 
 
 class _MotorRating(BaseModel):
-    hp: float
-    kw: float | None = None
+    # hp/kw are usually a plain float, but twin-pump sheets (e.g.
+    # MHIL-MHI-BC.json) record them as "2X0.75"-style strings - accepted
+    # as-is since no rules.py compares hp/kw numerically for those sheets.
+    hp: float | str
+    kw: float | str | None = None
 
 
 class _CatalogModel(BaseModel):
