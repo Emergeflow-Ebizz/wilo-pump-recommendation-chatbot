@@ -17,6 +17,7 @@ from app.common import llm_client
 from app.common.llm_client import LLMUnavailableError
 from app.common.schemas import ParsedAnswer, ParsedCategory, Question
 from app.use_cases.water_transfer import rules_based
+from app.use_cases.water_transfer.rules_based import _apply_rounding
 from app.use_cases.water_transfer.sheet_map import MAX_BOREWELL_SIZE, MIN_BOREWELL_SIZE
 
 logger = logging.getLogger(__name__)
@@ -117,7 +118,9 @@ PARSE_ANSWER_SYSTEM_PROMPT = (
     "and use 'answer' - do not use 'ambiguous' just because this one reply "
     "alone looks incomplete. Keep carrying the previous value/unit forward "
     "unless the current reply states a new, different number, in which case "
-    "the new number wins outright.\n"
+    "the new number wins outright. If the previous value has no unit "
+    "recorded (still null), never invent one just because the reply "
+    "confirms the number - unit stays null until the user actually states it.\n"
     "UNIT CONVERSION: if the user states a unit that is a real unit but not "
     "in the valid units list (e.g. cm when valid units are ft/m), use "
     "'ambiguous' and ask them to restate in one of the valid units yourself "
@@ -209,6 +212,7 @@ def _validate_additional_answers(
             continue
         if not _value_within_bounds(value, target_question):
             continue
+        value = _display_value(_apply_rounding(value, target_question.key))
         validated.append({"key": key, "value": value, "unit": unit})
     return validated
 
@@ -228,7 +232,16 @@ def _value_within_bounds(value: float, question: Question) -> bool:
     return value > 0
 
 
+def _display_value(value: float) -> float | int:
+    """Every water_transfer numeric field is logically whole - rounded per
+    question via _apply_rounding - so display as int (6, not 6.0) whenever
+    the value has no fractional part left.
+    """
+    return int(value) if value == int(value) else value
+
+
 def _confirmation_message(value: float, unit: str | None) -> str:
+    value = _display_value(value)
     return f"Got it: {value} {unit}" if unit else f"Got it: {value}"
 
 
@@ -360,12 +373,16 @@ def _validate_borewell_size(value: float) -> tuple[bool, str | None]:
 # does this, since a clean value still needs the borewell/bounds checks).
 
 class _Ctx:
-    __slots__ = ("user_text", "previous_value", "previous_unit", "clarification_attempts", "other_questions")
+    __slots__ = (
+        "user_text", "previous_value", "previous_unit", "pending_suggestion",
+        "clarification_attempts", "other_questions",
+    )
 
-    def __init__(self, user_text, previous_value, previous_unit, clarification_attempts, other_questions):
+    def __init__(self, user_text, previous_value, previous_unit, pending_suggestion, clarification_attempts, other_questions):
         self.user_text = user_text
         self.previous_value = previous_value
         self.previous_unit = previous_unit
+        self.pending_suggestion = pending_suggestion
         self.clarification_attempts = clarification_attempts
         self.other_questions = other_questions
 
@@ -393,9 +410,10 @@ def _handle_edit_attempt(question: Question, data: dict, ctx: _Ctx) -> ParsedAns
 
 def _handle_ambiguous(question: Question, data: dict, ctx: _Ctx) -> ParsedAnswer:
     suggested_value = data.get("suggested_value")
-    reason = "unit_not_valid" if data.get("value") is not None and question.allowed_units else "ambiguous"
+    known_number = data.get("value") if data.get("value") is not None else suggested_value
+    reason = "unit_not_valid" if known_number is not None and question.allowed_units else "ambiguous"
     question_text = _generate_clarification_question(
-        question, reason, ctx.clarification_attempts, data.get("value"),
+        question, reason, ctx.clarification_attempts, known_number,
         user_text=ctx.user_text, suggested_value=suggested_value,
     )
     return ParsedAnswer(needs_clarification=True, clarification_question=question_text, suggested_value=suggested_value)
@@ -408,11 +426,12 @@ def _handle_redirect(question: Question, data: dict, ctx: _Ctx) -> ParsedAnswer 
     if target is None or value is None or not _value_within_bounds(value, target):
         # Not a usable redirect - treat as an ambiguous reply to the current question.
         return _handle_ambiguous(question, {**data, "value": None, "suggested_value": None}, ctx)
+    value = _apply_rounding(value, target.key)
     unit = data.get("unit")
     if target.allowed_units and len(target.allowed_units) == 1:
         unit = target.allowed_units[0]
     return ParsedAnswer(
-        value=value, unit=unit, redirect_key=redirect_key,
+        value=_display_value(value), unit=unit, redirect_key=redirect_key,
         confirmation_message=_confirmation_message(value, unit),
     )
 
@@ -437,13 +456,33 @@ def _handle_answer(question: Question, data: dict, ctx: _Ctx) -> ParsedAnswer | 
         unit = None
     elif value is not None and unit is None and previous_unit_applies(ctx, value):
         unit = ctx.previous_unit
+    elif (
+        value is not None
+        and unit is not None
+        and _unit_was_never_stated(ctx, value)
+        and ctx.user_text.strip() not in (question.allowed_units or [])
+    ):
+        # The number matches a previously seen value/suggestion that never
+        # had a confirmed unit - the model attached one anyway (e.g.
+        # confirming "yes" to a bare number it earlier guessed, whether that
+        # number came from previous_value or an unconfirmed pending_suggestion).
+        # That unit was never actually stated, so drop it and ask for it
+        # explicitly instead of trusting a guess.
+        unit = None
 
     if value is None and ctx.previous_value is not None:
         value = ctx.previous_value
 
     missing_unit = question.requires_stated_unit and unit is None
     if value is None or missing_unit:
-        return _handle_ambiguous(question, {**data, "value": value}, ctx)
+        # When the number itself is known and only the unit is missing, carry
+        # it forward as suggested_value so the caller can send it back as
+        # pending_suggestion/previous_value - the user only needs to state
+        # the unit next, not repeat the number too.
+        ambiguous_data = {**data, "value": None}
+        if missing_unit and value is not None:
+            ambiguous_data["suggested_value"] = value
+        return _handle_ambiguous(question, ambiguous_data, ctx)
 
     if not _value_within_bounds(value, question):
         reason = "ambiguous"
@@ -451,6 +490,11 @@ def _handle_answer(question: Question, data: dict, ctx: _Ctx) -> ParsedAnswer | 
             question, reason, ctx.clarification_attempts, value, user_text=ctx.user_text,
         )
         return ParsedAnswer(needs_clarification=True, clarification_question=question_text)
+
+    # Every water_transfer numeric field is logically whole - round per
+    # question the same way rules_based.py's fallback does, so the LLM and
+    # rule-based paths never disagree on a decimal reply (e.g. "6.5 inch").
+    value = _apply_rounding(value, question.key)
 
     if question.allowed_units and len(question.allowed_units) == 1:
         unit = question.allowed_units[0]
@@ -460,13 +504,29 @@ def _handle_answer(question: Question, data: dict, ctx: _Ctx) -> ParsedAnswer | 
         if message and not ask_confirmation:
             return ParsedAnswer(needs_clarification=True, clarification_question=message)
         if message:
-            return ParsedAnswer(value=value, unit=unit, needs_clarification=True, clarification_question=message)
+            return ParsedAnswer(
+                value=_display_value(value), unit=unit, needs_clarification=True, clarification_question=message
+            )
 
-    return ParsedAnswer(value=value, unit=unit, confirmation_message=_confirmation_message(value, unit))
+    return ParsedAnswer(
+        value=_display_value(value), unit=unit, confirmation_message=_confirmation_message(value, unit)
+    )
 
 
 def previous_unit_applies(ctx: _Ctx, value: float) -> bool:
     return ctx.previous_value is not None and value == ctx.previous_value and ctx.previous_unit is not None
+
+
+def _unit_was_never_stated(ctx: _Ctx, value: float) -> bool:
+    """True when this value matches a number the user gave in an earlier
+    turn - either a confirmed previous_value or an unconfirmed
+    pending_suggestion - for which no unit was ever recorded.
+    """
+    if ctx.previous_value is not None and value == ctx.previous_value and ctx.previous_unit is None:
+        return True
+    if ctx.pending_suggestion is not None and value == ctx.pending_suggestion:
+        return True
+    return False
 
 
 _INTENT_HANDLERS = {
@@ -499,12 +559,6 @@ def parse_answer(
     extracts only that intent's fields; a small handler per intent turns it
     into a ParsedAnswer. Fallback: rule-based mode when LLM unavailable.
     """
-    if previous_value is not None and user_text.lower().strip() in ("yes", "yeah", "ok", "okay", "confirm", "yes."):
-        return ParsedAnswer(
-            value=previous_value, unit=previous_unit,
-            confirmation_message=_confirmation_message(previous_value, previous_unit),
-        )
-
     other_questions_line = (
         "This use case's OTHER questions - each is (key, prompt): "
         f"{[(q.key, q.prompt) for q in other_questions]!r}\n"
@@ -519,10 +573,14 @@ def parse_answer(
         else ""
     )
     pending_suggestion_line = (
-        f"A pending, UNCONFIRMED suggestion from last turn: {pending_suggestion!r}. Only "
-        "treat the current reply as 'answer' with this value if it's a clear "
-        "affirmative response (e.g. 'yes', 'correct') - a bare repeat of the "
-        "same unclear word is not confirmation; use 'ambiguous' again instead.\n"
+        f"A pending, UNCONFIRMED suggestion from last turn: {pending_suggestion!r}. Treat "
+        "the current reply as 'answer' with this value if EITHER: it's a clear "
+        "affirmative response (e.g. 'yes', 'correct'), or it states only a unit "
+        "with no number (that unit belongs to this pending number - combine "
+        "them, don't ask the user to reconfirm the number itself). A bare "
+        "repeat of the same unclear word, or a reply that doesn't affirm and "
+        "doesn't give a unit, is not confirmation; use 'ambiguous' again "
+        "instead, keeping this same value as suggested_value.\n"
         if pending_suggestion is not None
         else ""
     )
@@ -570,7 +628,7 @@ def parse_answer(
             logger.warning("water_transfer parse_answer: unknown intent %r, treating as ambiguous", intent)
             handler = _handle_ambiguous
 
-        ctx = _Ctx(user_text, previous_value, previous_unit, clarification_attempts, other_questions)
+        ctx = _Ctx(user_text, previous_value, previous_unit, pending_suggestion, clarification_attempts, other_questions)
         result = handler(question, data, ctx)
         if result is None:
             result = _handle_ambiguous(question, data, ctx)

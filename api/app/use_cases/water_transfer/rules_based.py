@@ -44,6 +44,11 @@ def _round_motor_power_hp(value: float) -> float:
     return math.floor(value)
 
 
+def _round_roof_tank_capacity(value: float) -> float:
+    """Round DOWN to smaller for roof_tank_capacity (6.5 → 6, 7.5 → 7)."""
+    return math.floor(value)
+
+
 def _apply_rounding(value: float, question_key: str) -> float:
     """Apply question-specific rounding."""
     if question_key == "borewell_size":
@@ -52,6 +57,8 @@ def _apply_rounding(value: float, question_key: str) -> float:
         return _round_well_depth(value)
     elif question_key == "motor_power_hp":
         return _round_motor_power_hp(value)
+    elif question_key == "roof_tank_capacity":
+        return _round_roof_tank_capacity(value)
     return value
 
 
