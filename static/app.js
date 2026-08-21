@@ -2190,12 +2190,12 @@
     row.className = "row bot";
     row.style.maxWidth = "100%";
     row.style.gap = "10px";
-    row.appendChild(buildRecommendationCard(message.recommendation, "Best Fit"));
+    row.appendChild(buildRecommendationCard(message.recommendation, "Standard Fit"));
 
     var alternatives = message.tiedAlternatives || [];
     if (alternatives.length) {
       var alternativeLabel = (state.useCaseSlug === "heat_circulation" || state.useCaseSlug === "domestic_hot_water")
-        ? "Standard Fit"
+        ? "Premium Fit (2ND SUGGESTED)"
         : "Alternative";
       alternatives.forEach(function (alt) {
         if (alt && typeof alt === "object" && alt.model_name) {
