@@ -469,7 +469,8 @@
     nextStepAfterPincode: "explore-more", // where to go after pincode in rejection flow (explore-more or final-goodbye)
     skipDealerSteps: false, // true in rejection flow to skip dealer-notification/international-dealer steps
     pumpSelectionPending: null, // { recommendation, tierLabel } - holds pump data awaiting confirmation
-    pincodeSubmitted: false, // true after pincode is submitted - prevents pump changes
+    pincodeSubmitted: false, // true after pincode is submitted - prevents pump changes in same use case
+    pincodeSubmittedUseCase: null, // the use case where pincode was submitted - lock only applies to same use case
   };
 
   function addBotMessage(text) {
@@ -536,6 +537,7 @@
     state.nextStepAfterPincode = "explore-more";
     state.skipDealerSteps = false;
     state.pincodeSubmitted = false;
+    state.pincodeSubmittedUseCase = null;
     initConversation();
     render();
   }
@@ -2440,6 +2442,7 @@
     state.useCaseSlug = null;
     state.currentStepId = null;
     state.pincodeSubmitted = false;
+    state.pincodeSubmittedUseCase = null;
     initConversation();
     closeRefreshConfirmation();
     render();
