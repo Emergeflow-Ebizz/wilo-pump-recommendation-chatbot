@@ -1277,6 +1277,12 @@
     var trimmed = rawValue.trim();
     if (!trimmed) return;
 
+    // Prevent duplicate submissions while processing
+    if (state.awaitingKind === "loading") {
+      console.log("[submitDynamicAnswer] Already loading, ignoring duplicate submission");
+      return;
+    }
+
     addUserMessage(trimmed);
     state.inputError = null;
     state.awaitingKind = "loading";
@@ -2387,6 +2393,13 @@
     if (el.composerInput.disabled) return;
     var value = el.composerInput.value;
     if (!value.trim()) return;
+
+    // Prevent submission while loading
+    if (state.awaitingKind === "loading") {
+      console.log("[handleSend] Already loading, ignoring submission");
+      return;
+    }
+
     el.composerInput.value = "";
     if (state.confirmationHandler) {
       state.confirmationHandler(value);
