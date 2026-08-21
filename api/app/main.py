@@ -313,6 +313,13 @@ def parse_free_text_answer(use_case_slug: str, request: AnswerRequest) -> Parsed
         request.unit_ask_attempts if request.unit_ask_attempts is not None else request.clarification_attempts
     )
 
+    category_questions = CATEGORY_QUESTIONS_BY_SLUG.get(use_case_slug, {})
+    locked_in_answers = {
+        key: value
+        for key, value in request.answers_so_far.items()
+        if key in category_questions and key != request.question_key
+    }
+
     # Route to use-case-specific parser
     if use_case_slug == "water_transfer":
         return water_transfer_parser.parse_answer(
@@ -320,16 +327,13 @@ def parse_free_text_answer(use_case_slug: str, request: AnswerRequest) -> Parsed
             request.user_text,
             previous_value=request.previous_value,
             previous_unit=request.previous_unit,
+            pending_suggestion=request.pending_suggestion,
+            other_questions=other_questions,
             clarification_attempts=clarification_attempts,
+            locked_in_answers=locked_in_answers or None,
         )
 
     # Generic parser for other use cases
-    category_questions = CATEGORY_QUESTIONS_BY_SLUG.get(use_case_slug, {})
-    locked_in_answers = {
-        key: value
-        for key, value in request.answers_so_far.items()
-        if key in category_questions and key != request.question_key
-    }
     return llm_parser.parse_answer(
         question,
         request.user_text,

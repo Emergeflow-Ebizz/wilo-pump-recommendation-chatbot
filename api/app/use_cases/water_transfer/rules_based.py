@@ -314,11 +314,16 @@ def parse_answer_rule_based(
         return ParsedAnswer(
             value=previous_value,
             needs_clarification=False,
+            confirmation_message=f"Got it: {previous_value}",
         )
 
     parsed = try_parse_numeric(user_text, question.allowed_units, question, previous_value)
 
     if parsed is not None:
+        if not parsed.get("needs_clarification") and not parsed.get("skipped") and parsed.get("value") is not None:
+            parsed["confirmation_message"] = (
+                f"Got it: {parsed['value']} {parsed['unit']}" if parsed.get("unit") else f"Got it: {parsed['value']}"
+            )
         return ParsedAnswer(**parsed)
 
     # Parsing failed
