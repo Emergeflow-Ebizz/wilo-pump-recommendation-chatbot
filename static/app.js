@@ -2167,13 +2167,6 @@
         render();
       };
 
-      console.log("[selectBtn click] DEBUG - Checking Scenario 2 conditions:");
-      console.log("[selectBtn click]   state.selectedPump:", !!state.selectedPump);
-      console.log("[selectBtn click]   currentPumpModel:", currentPumpModel);
-      console.log("[selectBtn click]   newPumpModel:", newPumpModel);
-      console.log("[selectBtn click]   differentPumps:", currentPumpModel !== newPumpModel);
-      console.log("[selectBtn click]   !isDifferentUseCase:", !isDifferentUseCase);
-
       if (state.selectedPump && currentPumpModel && currentPumpModel !== newPumpModel && !isDifferentUseCase) {
         console.log("[selectBtn click] SCENARIO: Switching pumps in same use case - show confirmation modal");
         showPumpSelectionModal(currentPumpModel, newPumpModel, confirmSelection, function () {
