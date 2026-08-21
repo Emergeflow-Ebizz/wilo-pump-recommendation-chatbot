@@ -1293,6 +1293,11 @@
       state.clarificationUserInput = {};
       state.clarificationSuggestedValues = {};
       state.currentQuestion = null;
+
+      // Reset pincode flags when exploring new application - allows fresh pump selection with new parameters
+      state.pincodeSubmitted = false;
+      state.pincodeSubmittedUseCase = null;
+
       // Add confirmation message with selected application
       var appName = "";
       if (state.useCaseSlug === "water_transfer") appName = "Borewell to Overhead tank";
