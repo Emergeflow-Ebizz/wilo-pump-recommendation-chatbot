@@ -111,9 +111,10 @@
       "WPO": imageFolderPath + "WPO%20Raptor.jpg",
       "FMHIL": imageFolderPath + "FMHIL.png",
       "HMHIL": imageFolderPath + "HMHIL.jpg",
+      "CO 2MHIL": imageFolderPath + "CO%202%20MHIL.png",
+      "CO 2MHI": imageFolderPath + "CO%202%20MHIL.png",
       "MHIL": imageFolderPath + "MHIL.jpg",
       "VMHIL": imageFolderPath + "VMHIL.png",
-      "CO2MHIL": imageFolderPath + "CO%202%20MHIL.png",
       "CIFAC": imageFolderPath + "CIFAC.jpg",
       "FAC": imageFolderPath + "FAS%2CFAC.jpg",
       "FAS": imageFolderPath + "FAS%2CFAC.jpg",
@@ -133,9 +134,12 @@
       "HI PERI": imageFolderPath + "Hi%20Peri.png",
       "KUSHAL": imageFolderPath + "WMB%20Kushal.png",
     };
-    for (var key in pumpImages) {
-      if (modelUpper.indexOf(key) !== -1) {
-        return pumpImages[key];
+    var keys = Object.keys(pumpImages).sort(function(a, b) {
+      return b.length - a.length;
+    });
+    for (var i = 0; i < keys.length; i++) {
+      if (modelUpper.indexOf(keys[i]) !== -1) {
+        return pumpImages[keys[i]];
       }
     }
     return null;
@@ -774,7 +778,11 @@
     if (data.status === "ok") {
       console.log("[runRecommendation] STATUS: OK - Showing recommendation");
       addBotMessage("Based on what you shared, here's wilo solution to meet your requirements.");
-      addRecommendationMessage(data.recommendation, data.recommendation && data.recommendation.tied_alternatives);
+      var tiedAlts = (data.recommendation && data.recommendation.tied_alternatives) || [];
+      if (data.premium_recommendation) {
+        tiedAlts = [data.premium_recommendation].concat(tiedAlts);
+      }
+      addRecommendationMessage(data.recommendation, tiedAlts);
       state.lastRecommendation = data.recommendation;
       render();
       return;
@@ -2186,9 +2194,12 @@
 
     var alternatives = message.tiedAlternatives || [];
     if (alternatives.length) {
+      var alternativeLabel = (state.useCaseSlug === "heat_circulation" || state.useCaseSlug === "domestic_hot_water")
+        ? "Standard Fit"
+        : "Alternative";
       alternatives.forEach(function (alt) {
         if (alt && typeof alt === "object" && alt.model_name) {
-          row.appendChild(buildRecommendationCard(alt, "Alternative"));
+          row.appendChild(buildRecommendationCard(alt, alternativeLabel));
         }
       });
     }
