@@ -639,6 +639,23 @@ def parse_answer(
     ):
         data["value"] = previous_value
 
+    # When the user confirms pending_suggestion but doesn't re-state the
+    # unit, use the previously-confirmed unit. Example: clarification asks
+    # "Is the total area 251 square meters?" and the user replies "yes"
+    # without repeating the unit - pending_suggestion=251 and
+    # previous_unit="sqm" are already known, but the LLM extracted
+    # value=251, unit=None. Restore the unit so this doesn't look like
+    # missing_required_info and trip the give-up threshold.
+    if (
+        not data.get("redirect_key")
+        and not data.get("skipped")
+        and pending_suggestion is not None
+        and data.get("value") == pending_suggestion
+        and data.get("unit") is None
+        and previous_unit is not None
+    ):
+        data["unit"] = previous_unit
+
     # Defensive: a question with exactly one valid unit (e.g. hp-only motor
     # power, litres-only tank capacity) never needs a unit-ask - that unit is
     # implicit. Don't rely solely on the model following the per-question
