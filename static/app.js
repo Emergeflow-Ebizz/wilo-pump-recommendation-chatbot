@@ -777,7 +777,11 @@
     if (data.status === "ok") {
       console.log("[runRecommendation] STATUS: OK - Showing recommendation");
       addBotMessage("Based on what you shared, here's wilo solution to meet your requirements.");
-      addRecommendationMessage(data.recommendation, data.recommendation && data.recommendation.tied_alternatives);
+      var tiedAlts = (data.recommendation && data.recommendation.tied_alternatives) || [];
+      if (data.premium_recommendation) {
+        tiedAlts = [data.premium_recommendation].concat(tiedAlts);
+      }
+      addRecommendationMessage(data.recommendation, tiedAlts);
       state.lastRecommendation = data.recommendation;
       render();
       return;
@@ -2189,9 +2193,12 @@
 
     var alternatives = message.tiedAlternatives || [];
     if (alternatives.length) {
+      var alternativeLabel = (state.useCaseSlug === "heat_circulation" || state.useCaseSlug === "domestic_hot_water")
+        ? "Standard Fit"
+        : "Alternative";
       alternatives.forEach(function (alt) {
         if (alt && typeof alt === "object" && alt.model_name) {
-          row.appendChild(buildRecommendationCard(alt, "Alternative"));
+          row.appendChild(buildRecommendationCard(alt, alternativeLabel));
         }
       });
     }
