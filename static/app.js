@@ -111,7 +111,7 @@
       "WPO": imageFolderPath + "WPO%20Raptor.jpg",
       "FMHIL": imageFolderPath + "FMHIL.png",
       "HMHIL": imageFolderPath + "HMHIL.jpg",
-      "CO2MHIL": imageFolderPath + "CO%202%20MHIL.png",
+      "CO 2MHIL": imageFolderPath + "CO%202%20MHIL.png",
       "MHIL": imageFolderPath + "MHIL.jpg",
       "VMHIL": imageFolderPath + "VMHIL.png",
       "CIFAC": imageFolderPath + "CIFAC.jpg",

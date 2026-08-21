@@ -50,10 +50,10 @@ The image mapping is implemented in `static/app.js` in the `getPumpImagePath()` 
 ### Key Substring Conflicts Resolved
 
 The following pump patterns are substrings of other patterns and require careful ordering:
-- `MHIL` appears in: FMHIL, HMHIL, CO2MHIL, VMHIL
+- `MHIL` appears in: FMHIL, HMHIL, CO 2MHIL, VMHIL
 - `PARA` appears in: PARA MAXO
 - `WPO` appears in: WPOV
 - `FAC` appears in: CIFAC
 - `STAR` appears in: STAR-Z
 
-By sorting keys by length (longest first), longer patterns like "CO2MHIL" are matched before shorter ones like "MHIL".
+By sorting keys by length (longest first), longer patterns like "CO 2MHIL" are matched before shorter ones like "MHIL".
