@@ -2195,7 +2195,7 @@
     var alternatives = message.tiedAlternatives || [];
     if (alternatives.length) {
       var alternativeLabel = (state.useCaseSlug === "heat_circulation" || state.useCaseSlug === "domestic_hot_water")
-        ? "Premium Fit (2ND SUGGESTED)"
+        ? "Premium Fit"
         : "Alternative";
       alternatives.forEach(function (alt) {
         if (alt && typeof alt === "object" && alt.model_name) {
