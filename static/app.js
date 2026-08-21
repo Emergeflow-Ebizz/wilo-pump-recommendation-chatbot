@@ -287,10 +287,20 @@
 
         if (state.skipDealerSteps) {
           state.skipDealerSteps = false;
-          var nextStep = state.nextStepAfterPincode || "explore-more";
-          state.nextStepAfterPincode = "explore-more";
-          console.log("[lead-pincode next] skipDealerSteps=true, going to:", nextStep);
-          return nextStep;
+          // In rejection flow, still show dealer info based on pincode
+          if (pincode) {
+            var trimmed = pincode.trim();
+            if (/^\d{6}$/.test(trimmed)) {
+              console.log("[lead-pincode next] Rejection flow - Indian pincode, showing dealer-notification");
+              return "dealer-notification";
+            } else {
+              console.log("[lead-pincode next] Rejection flow - International pincode, showing international-dealer");
+              return "international-dealer";
+            }
+          } else {
+            console.log("[lead-pincode next] Rejection flow - No pincode, showing dealer-locator");
+            return "dealer-locator";
+          }
         }
 
         // Normal flow (when pump was found)
