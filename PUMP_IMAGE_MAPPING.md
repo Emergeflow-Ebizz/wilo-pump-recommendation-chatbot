@@ -18,7 +18,7 @@ This document maps pump image filenames to their corresponding pump models.
 | FMHIL | FMHIL |
 | HMHIL | HMHIL |
 | VMHIL | VMHIL |
-| CO 2 MHIL | TWIN CO2BC, SV, MV |
+| CO 2 MHIL | CO 2MHIL, CO 2MHI (TWIN CO2BC, SV, MV) |
 | MNC | MNC |
 | Challenger | Challenger |
 | Initial Waste | Initial Waste |

@@ -112,6 +112,7 @@
       "FMHIL": imageFolderPath + "FMHIL.png",
       "HMHIL": imageFolderPath + "HMHIL.jpg",
       "CO 2MHIL": imageFolderPath + "CO%202%20MHIL.png",
+      "CO 2MHI": imageFolderPath + "CO%202%20MHIL.png",
       "MHIL": imageFolderPath + "MHIL.jpg",
       "VMHIL": imageFolderPath + "VMHIL.png",
       "CIFAC": imageFolderPath + "CIFAC.jpg",
