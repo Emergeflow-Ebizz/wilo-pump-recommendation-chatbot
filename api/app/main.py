@@ -74,6 +74,7 @@ from app.use_cases.tank_filling.questions import QUESTIONS as TANK_FILLING_QUEST
 from app.use_cases.tank_filling.questions import next_question as tank_filling_next_question
 from app.use_cases.water_transfer.questions import DELIVERY_TYPE_QUESTION
 from app.use_cases.tank_filling.rules import NoTankFillingMatchError, TankFillingUseCase
+from app.use_cases.water_transfer import parser as water_transfer_parser
 from app.use_cases.water_transfer.questions import QUESTIONS as WATER_TRANSFER_QUESTIONS
 from app.use_cases.water_transfer.questions import next_question as water_transfer_next_question
 from app.use_cases.water_transfer.rules import (
@@ -320,6 +321,21 @@ def parse_free_text_answer(use_case_slug: str, request: AnswerRequest) -> Parsed
         for key, value in request.answers_so_far.items()
         if key in category_questions and key != request.question_key
     }
+
+    # Route to use-case-specific parser
+    if use_case_slug == "water_transfer":
+        return water_transfer_parser.parse_answer(
+            question,
+            request.user_text,
+            previous_value=request.previous_value,
+            previous_unit=request.previous_unit,
+            pending_suggestion=request.pending_suggestion,
+            other_questions=other_questions,
+            clarification_attempts=clarification_attempts,
+            locked_in_answers=locked_in_answers or None,
+        )
+
+    # Generic parser for other use cases
     return llm_parser.parse_answer(
         question,
         request.user_text,
@@ -336,6 +352,10 @@ class CategoryAnswerRequest(BaseModel):
     question_key: str
     user_text: str
     clarification_attempts: int = 0
+    # The prior turn's suggested_category (see ParsedCategory), when that
+    # reply was genuinely ambiguous - mirrors pending_suggestion on
+    # AnswerRequest for numeric questions.
+    pending_suggestion: str | None = None
 
 
 @app.post("/{use_case_slug}/answer_category", response_model=ParsedCategory)
@@ -348,6 +368,15 @@ def parse_category_answer(use_case_slug: str, request: CategoryAnswerRequest) ->
             detail=f"Unknown categorical question for {use_case_slug}: {request.question_key}",
         )
     question, valid_categories = entry
+
+    # Route to use-case-specific parser
+    if use_case_slug == "water_transfer":
+        return water_transfer_parser.parse_category(
+            question, request.user_text, valid_categories, request.clarification_attempts,
+            pending_suggestion=request.pending_suggestion,
+        )
+
+    # Generic parser for other use cases
     return llm_parser.parse_category(
         question, request.user_text, valid_categories, request.clarification_attempts
     )

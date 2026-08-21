@@ -287,10 +287,20 @@
 
         if (state.skipDealerSteps) {
           state.skipDealerSteps = false;
-          var nextStep = state.nextStepAfterPincode || "explore-more";
-          state.nextStepAfterPincode = "explore-more";
-          console.log("[lead-pincode next] skipDealerSteps=true, going to:", nextStep);
-          return nextStep;
+          // In rejection flow, still show dealer info based on pincode
+          if (pincode) {
+            var trimmed = pincode.trim();
+            if (/^\d{6}$/.test(trimmed)) {
+              console.log("[lead-pincode next] Rejection flow - Indian pincode, showing dealer-notification");
+              return "dealer-notification";
+            } else {
+              console.log("[lead-pincode next] Rejection flow - International pincode, showing international-dealer");
+              return "international-dealer";
+            }
+          } else {
+            console.log("[lead-pincode next] Rejection flow - No pincode, showing dealer-locator");
+            return "dealer-locator";
+          }
         }
 
         // Normal flow (when pump was found)
@@ -469,7 +479,8 @@
     nextStepAfterPincode: "explore-more", // where to go after pincode in rejection flow (explore-more or final-goodbye)
     skipDealerSteps: false, // true in rejection flow to skip dealer-notification/international-dealer steps
     pumpSelectionPending: null, // { recommendation, tierLabel } - holds pump data awaiting confirmation
-    pincodeSubmitted: false, // true after pincode is submitted - prevents pump changes
+    pincodeSubmitted: false, // true after pincode is submitted - prevents pump changes in same use case
+    pincodeSubmittedUseCase: null, // the use case where pincode was submitted - lock only applies to same use case
   };
 
   function addBotMessage(text) {
@@ -536,6 +547,7 @@
     state.nextStepAfterPincode = "explore-more";
     state.skipDealerSteps = false;
     state.pincodeSubmitted = false;
+    state.pincodeSubmittedUseCase = null;
     initConversation();
     render();
   }
@@ -962,7 +974,7 @@
       }
 
       // Check if this is a categorical question - render as card options
-      if (CATEGORY_QUESTION_KEYS.indexOf(data.question.key) !== -1) {
+      if ((state.useCaseSlug === "heat_circulation" || state.useCaseSlug === "water_transfer" || state.useCaseSlug === "tank_filling") && CATEGORY_QUESTION_KEYS.indexOf(data.question.key) !== -1) {
         console.log("[fetchNextQuestion] CATEGORICAL QUESTION - Rendering as card options");
         // Remove the redundant option list from the question prompt for categorical questions
         var questionOnly = data.question.prompt.split("?")[0] + "?";
@@ -1267,6 +1279,12 @@
     var trimmed = rawValue.trim();
     if (!trimmed) return;
 
+    // Prevent duplicate submissions while processing
+    if (state.awaitingKind === "loading") {
+      console.log("[submitDynamicAnswer] Already loading, ignoring duplicate submission");
+      return;
+    }
+
     addUserMessage(trimmed);
     state.inputError = null;
     state.awaitingKind = "loading";
@@ -1293,6 +1311,11 @@
       state.clarificationUserInput = {};
       state.clarificationSuggestedValues = {};
       state.currentQuestion = null;
+
+      // Reset pincode flags when exploring new application - allows fresh pump selection with new parameters
+      state.pincodeSubmitted = false;
+      state.pincodeSubmittedUseCase = null;
+
       // Add confirmation message with selected application
       var appName = "";
       if (state.useCaseSlug === "water_transfer") appName = "Borewell to Overhead tank";
@@ -2192,12 +2215,12 @@
     row.className = "row bot";
     row.style.maxWidth = "100%";
     row.style.gap = "10px";
-    row.appendChild(buildRecommendationCard(message.recommendation, "Best Fit"));
+    row.appendChild(buildRecommendationCard(message.recommendation, "Standard Fit"));
 
     var alternatives = message.tiedAlternatives || [];
     if (alternatives.length) {
       var alternativeLabel = (state.useCaseSlug === "heat_circulation" || state.useCaseSlug === "domestic_hot_water")
-        ? "Standard Fit"
+        ? "Premium Fit"
         : "Alternative";
       alternatives.forEach(function (alt) {
         if (alt && typeof alt === "object" && alt.model_name) {
@@ -2372,6 +2395,13 @@
     if (el.composerInput.disabled) return;
     var value = el.composerInput.value;
     if (!value.trim()) return;
+
+    // Prevent submission while loading
+    if (state.awaitingKind === "loading") {
+      console.log("[handleSend] Already loading, ignoring submission");
+      return;
+    }
+
     el.composerInput.value = "";
     if (state.confirmationHandler) {
       state.confirmationHandler(value);
@@ -2442,6 +2472,7 @@
     state.useCaseSlug = null;
     state.currentStepId = null;
     state.pincodeSubmitted = false;
+    state.pincodeSubmittedUseCase = null;
     initConversation();
     closeRefreshConfirmation();
     render();
