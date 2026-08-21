@@ -191,6 +191,10 @@ class ParsedCategory(BaseModel):
     skipped: bool = False
     confirmation_message: str | None = None
     gave_up: bool = False
+    # An unconfirmed best guess for a genuinely unclear reply (see suggested_value
+    # on ParsedAnswer) - stays null until the user gives a clear affirmative
+    # reply to the "did you mean X?" clarification_question naming it.
+    suggested_category: str | None = None
 
 
 class PumpDataUserDetails(BaseModel):

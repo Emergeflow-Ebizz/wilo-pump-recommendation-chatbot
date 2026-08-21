@@ -350,6 +350,10 @@ class CategoryAnswerRequest(BaseModel):
     question_key: str
     user_text: str
     clarification_attempts: int = 0
+    # The prior turn's suggested_category (see ParsedCategory), when that
+    # reply was genuinely ambiguous - mirrors pending_suggestion on
+    # AnswerRequest for numeric questions.
+    pending_suggestion: str | None = None
 
 
 @app.post("/{use_case_slug}/answer_category", response_model=ParsedCategory)
@@ -366,7 +370,8 @@ def parse_category_answer(use_case_slug: str, request: CategoryAnswerRequest) ->
     # Route to use-case-specific parser
     if use_case_slug == "water_transfer":
         return water_transfer_parser.parse_category(
-            question, request.user_text, valid_categories, request.clarification_attempts
+            question, request.user_text, valid_categories, request.clarification_attempts,
+            pending_suggestion=request.pending_suggestion,
         )
 
     # Generic parser for other use cases
