@@ -1163,6 +1163,8 @@
     var pendingSuggestion = state.clarificationSuggestedValues[question.key];
     if (pendingSuggestion !== undefined && pendingSuggestion !== null) {
       payload.pending_suggestion = pendingSuggestion;
+      var previousUnit = state.dynamicAnswers[unitFieldNameFor(question.key)];
+      if (previousUnit !== undefined) payload.previous_unit = previousUnit;
     } else {
       var previousValue = state.dynamicAnswers[question.key];
       if (previousValue !== undefined && previousValue !== null) {
