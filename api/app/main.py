@@ -72,7 +72,6 @@ from app.use_cases.tank_filling.questions import HORIZONTAL_OR_VERTICAL_QUESTION
 from app.use_cases.tank_filling.questions import INSIDE_OR_OUTSIDE_QUESTION
 from app.use_cases.tank_filling.questions import QUESTIONS as TANK_FILLING_QUESTIONS
 from app.use_cases.tank_filling.questions import next_question as tank_filling_next_question
-from app.use_cases.tank_filling import parser as tank_filling_parser
 from app.use_cases.water_transfer.questions import DELIVERY_TYPE_QUESTION
 from app.use_cases.tank_filling.rules import NoTankFillingMatchError, TankFillingUseCase
 from app.use_cases.water_transfer.questions import QUESTIONS as WATER_TRANSFER_QUESTIONS
@@ -324,15 +323,6 @@ def parse_free_text_answer(use_case_slug: str, request: AnswerRequest) -> Parsed
             clarification_attempts=clarification_attempts,
         )
 
-    if use_case_slug == "tank_filling":
-        return tank_filling_parser.parse_answer(
-            question,
-            request.user_text,
-            previous_value=request.previous_value,
-            previous_unit=request.previous_unit,
-            clarification_attempts=clarification_attempts,
-        )
-
     # Generic parser for other use cases
     category_questions = CATEGORY_QUESTIONS_BY_SLUG.get(use_case_slug, {})
     locked_in_answers = {
@@ -372,11 +362,6 @@ def parse_category_answer(use_case_slug: str, request: CategoryAnswerRequest) ->
     # Route to use-case-specific parser
     if use_case_slug == "water_transfer":
         return water_transfer_parser.parse_category(
-            question, request.user_text, valid_categories, request.clarification_attempts
-        )
-
-    if use_case_slug == "tank_filling":
-        return tank_filling_parser.parse_category(
             question, request.user_text, valid_categories, request.clarification_attempts
         )
 
