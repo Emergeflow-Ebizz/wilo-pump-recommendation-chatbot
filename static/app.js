@@ -712,6 +712,8 @@
           motorRating: details.hp ? details.hp + " " + powerUnit : "",
           selectedHead: details.matched_head ? Math.round(details.matched_head) + " " + headUnitLabel : (details.specs && details.specs.head ? details.specs.head : ""),
           selectedFlow: details.flow ? details.flow + " " + flowUnit : (details.specs && details.specs.flow ? details.specs.flow : ""),
+          fluidTemperature: details.specs && details.specs.fluid_temp ? details.specs.fluid_temp : "",
+          connection: details.specs && details.specs.connection ? details.specs.connection : "",
           features: pump.features ? pump.features.join(", ") : "",
         },
       },
