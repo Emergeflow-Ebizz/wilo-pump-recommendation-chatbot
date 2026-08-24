@@ -710,9 +710,9 @@
           pumpModel: pump.model_name || "",
           articleNo: pump.art_no ? String(pump.art_no) : "",
           motorRating: details.hp ? details.hp + " " + powerUnit : "",
-          selectedHead: details.matched_head ? Math.round(details.matched_head) + " " + headUnitLabel : "",
-          selectedFlow: details.flow ? details.flow + " " + flowUnit : "",
-          features: "",
+          selectedHead: details.matched_head ? Math.round(details.matched_head) + " " + headUnitLabel : (details.specs && details.specs.head ? details.specs.head : ""),
+          selectedFlow: details.flow ? details.flow + " " + flowUnit : (details.specs && details.specs.flow ? details.specs.flow : ""),
+          features: pump.features ? pump.features.join(", ") : "",
         },
       },
     };
