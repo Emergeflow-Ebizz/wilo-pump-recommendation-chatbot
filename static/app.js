@@ -1446,10 +1446,10 @@
 
     var greet = document.createElement("p");
     greet.className = "greet";
-    greet.innerHTML = "<strong style='font-size: 16px;'>👋 Hi I am <span style='color: #009C82;'>WiWo</span>!</strong>";
+    greet.innerHTML = "<strong style='font-size: 16px;'>👋 Hi I am <span style='color: #009C82;'>WiWa</span>!</strong>";
 
     var line2 = document.createElement("p");
-    line2.textContent = "Let's get started.";
+    line2.textContent = "Wilo Warrior AI pump tool";
     line2.className = "line2-text";
 
     var message = document.createElement("p");
