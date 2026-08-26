@@ -91,7 +91,7 @@
 
   function getPumpImagePath(modelName) {
     if (!modelName) return null;
-    var imageFolderPath = "/wilo-pump-images/";
+    var imageFolderPath = "./Wilo Pump Images/";
     var modelUpper = modelName.toUpperCase();
     var pumpImages = {
       "YONOS PICO": imageFolderPath + "Yonos%20PICO.png",
