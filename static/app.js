@@ -91,7 +91,7 @@
 
   function getPumpImagePath(modelName) {
     if (!modelName) return null;
-    var imageFolderPath = "/Wilo%20Pump%20Images/";
+    var imageFolderPath = "/wilo-pump-images/";
     var modelUpper = modelName.toUpperCase();
     var pumpImages = {
       "YONOS PICO": imageFolderPath + "Yonos%20PICO.png",
@@ -180,31 +180,37 @@
       options: [
         {
           label: "Pressure Boosting",
+          description: "Enjoy strong and consistent water pressure.",
           value: "pressure-boosting",
           icon: "./Pressure Boosting.png",
         },
         {
-          label: "Heat Circuits Application",
+          label: "Heating Circuit",
+          description: "Keep every room comfortably warm.",
           value: "heating-circuits",
           icon: "./Heating Circuits.png",
         },
         {
           label: "Domestic Hot Water",
+          description: "Get hot water quickly when you need it.",
           value: "domestic-hot-water",
           icon: "./Domestic Hot Water.png",
         },
         {
           label: "Dewatering",
+          description: "Remove unwanted water efficiently.",
           value: "dewatering",
           icon: "./Dewatering.png",
         },
         {
-          label: "Borewell to Overhead tank",
+          label: "Borewell to Overhead Tank",
+          description: "Supply water from your borewell to the storage tank.",
           value: "water-transfer",
           icon: "./Borewell to Overhead tank.png",
         },
         {
-          label: "From Bottom tank to Overhead tank",
+          label: "Bottom Tank to Overhead Tank",
+          description: "Transfer water from the ground tank to the rooftop tank.",
           value: "tank-filling",
           icon: "./From Bottom tank to Overhead tank.png",
         },
@@ -398,31 +404,37 @@
       options: [
         {
           label: "Pressure Boosting",
+          description: "Enjoy strong and consistent water pressure.",
           value: "pressure-boosting",
           icon: "./Pressure Boosting.png",
         },
         {
-          label: "Heat Circuits Application",
+          label: "Heating Circuit",
+          description: "Keep every room comfortably warm.",
           value: "heating-circuits",
           icon: "./Heating Circuits.png",
         },
         {
           label: "Domestic Hot Water",
+          description: "Get hot water quickly when you need it.",
           value: "domestic-hot-water",
           icon: "./Domestic Hot Water.png",
         },
         {
           label: "Dewatering",
+          description: "Remove unwanted water efficiently.",
           value: "dewatering",
           icon: "./Dewatering.png",
         },
         {
-          label: "Borewell to Overhead tank",
+          label: "Borewell to Overhead Tank",
+          description: "Supply water from your borewell to the storage tank.",
           value: "water-transfer",
           icon: "./Borewell to Overhead tank.png",
         },
         {
-          label: "From Bottom tank to Overhead tank",
+          label: "Bottom Tank to Overhead Tank",
+          description: "Transfer water from the ground tank to the rooftop tank.",
           value: "tank-filling",
           icon: "./From Bottom tank to Overhead tank.png",
         },
@@ -834,10 +846,10 @@
               },
             },
             {
-              label: "Heat Circuits Application",
+              label: "Heating Circuit",
               icon: "./Heating Circuits.png",
               onSelect: function () {
-                addUserMessage("Heat Circuits Application");
+                addUserMessage("Heating Circuit");
                 state.virtualOptions = null;
                 state.useCaseSlug = "heat_circulation";
                 state.dynamicAnswers = {};
@@ -879,10 +891,10 @@
               },
             },
             {
-              label: "Borewell to Overhead tank",
+              label: "Borewell to Overhead Tank",
               icon: "./Borewell to Overhead tank.png",
               onSelect: function () {
-                addUserMessage("Borewell to Overhead tank");
+                addUserMessage("Borewell to Overhead Tank");
                 state.virtualOptions = null;
                 state.useCaseSlug = "water_transfer";
                 state.dynamicAnswers = {};
@@ -894,10 +906,10 @@
               },
             },
             {
-              label: "From Bottom tank to Overhead tank",
+              label: "Bottom Tank to Overhead Tank",
               icon: "./From Bottom tank to Overhead tank.png",
               onSelect: function () {
-                addUserMessage("From Bottom tank to Overhead tank");
+                addUserMessage("Bottom Tank to Overhead Tank");
                 state.virtualOptions = null;
                 state.useCaseSlug = "tank_filling";
                 state.dynamicAnswers = {};
@@ -1177,13 +1189,14 @@
     var pendingSuggestion = state.clarificationSuggestedValues[question.key];
     if (pendingSuggestion !== undefined && pendingSuggestion !== null) {
       payload.pending_suggestion = pendingSuggestion;
-    } else {
-      var previousValue = state.dynamicAnswers[question.key];
-      if (previousValue !== undefined && previousValue !== null) {
-        payload.previous_value = previousValue;
-        var previousUnit = state.dynamicAnswers[unitFieldNameFor(question.key)];
-        if (previousUnit !== undefined) payload.previous_unit = previousUnit;
-      }
+    }
+
+    // Also send previous_value + unit if available (for unit corrections after ambiguous answers)
+    var previousValue = state.dynamicAnswers[question.key];
+    if (previousValue !== undefined && previousValue !== null) {
+      payload.previous_value = previousValue;
+      var previousUnit = state.dynamicAnswers[unitFieldNameFor(question.key)];
+      if (previousUnit !== undefined) payload.previous_unit = previousUnit;
     }
     if (state.clarificationAttempts[question.key]) {
       payload.clarification_attempts = state.clarificationAttempts[question.key];
@@ -2257,10 +2270,10 @@
     title.textContent = option.label;
     text.appendChild(title);
 
-    if (option.subtitle) {
+    if (option.description || option.subtitle) {
       var subtitle = document.createElement("span");
       subtitle.className = "option-subtitle";
-      subtitle.textContent = option.subtitle;
+      subtitle.textContent = option.description || option.subtitle;
       text.appendChild(subtitle);
     }
 
