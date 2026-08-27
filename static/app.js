@@ -205,41 +205,24 @@
       bot: function () {
         return "Please select your country.";
       },
-      options: function () {
-        var selectedLanguage = state.answers.language;
-        var countryOptions = [
-          {
-            label: "India",
-            value: "india",
-          },
-          {
-            label: "China",
-            value: "china",
-          },
-          {
-            label: "Korea",
-            value: "korea",
-          },
-          {
-            label: "Turkey",
-            value: "turkey",
-          },
-        ];
-
-        // If language is selected, prioritize matching country
-        if (selectedLanguage === "chinese") {
-          return countryOptions.filter(function(c) { return c.value === "china"; })
-            .concat(countryOptions.filter(function(c) { return c.value !== "china"; }));
-        } else if (selectedLanguage === "korean") {
-          return countryOptions.filter(function(c) { return c.value === "korea"; })
-            .concat(countryOptions.filter(function(c) { return c.value !== "korea"; }));
-        } else if (selectedLanguage === "turkish") {
-          return countryOptions.filter(function(c) { return c.value === "turkey"; })
-            .concat(countryOptions.filter(function(c) { return c.value !== "turkey"; }));
-        }
-
-        return countryOptions;
-      },
+      options: [
+        {
+          label: "India",
+          value: "india",
+        },
+        {
+          label: "China",
+          value: "china",
+        },
+        {
+          label: "Korea",
+          value: "korea",
+        },
+        {
+          label: "Turkey",
+          value: "turkey",
+        },
+      ],
       next: function () {
         return "application";
       },
