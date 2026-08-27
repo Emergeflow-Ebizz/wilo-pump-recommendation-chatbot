@@ -2470,15 +2470,22 @@
     var hasRecommendation = lastMessage && lastMessage.recommendation;
     var isApplicationStep = state.currentStepId === "application";
 
-    setTimeout(function () {
-      // Don't scroll for application cards or pump recommendations
-      if (hasRecommendation || isApplicationStep) return;
+    // Don't scroll for application cards or pump recommendations
+    if (hasRecommendation || isApplicationStep) return;
 
-      // Scroll to show the current question/answer
-      if (state.messages.length > 1) {
+    // Scroll to show the current question/answer
+    if (state.messages.length > 1 && el.thread) {
+      setTimeout(function () {
         el.thread.scrollTop = el.thread.scrollHeight;
+      }, 50);
+
+      // Also try with requestAnimationFrame for smoother scrolling
+      if (window.requestAnimationFrame) {
+        requestAnimationFrame(function () {
+          el.thread.scrollTop = el.thread.scrollHeight;
+        });
       }
-    }, 100);
+    }
   }
 
   function handleSend() {
