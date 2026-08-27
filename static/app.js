@@ -555,6 +555,7 @@
     pumpSelectionPending: null, // { recommendation, tierLabel } - holds pump data awaiting confirmation
     pincodeSubmitted: false, // true after pincode is submitted - prevents pump changes in same use case
     pincodeSubmittedUseCase: null, // the use case where pincode was submitted - lock only applies to same use case
+    recommendationScrolled: false, // true after scrolling to first recommendation, prevents re-scrolling
   };
 
   function addBotMessage(text) {
@@ -622,6 +623,7 @@
     state.skipDealerSteps = false;
     state.pincodeSubmitted = false;
     state.pincodeSubmittedUseCase = null;
+    state.recommendationScrolled = false;
     initConversation();
     render();
   }
@@ -1390,6 +1392,7 @@
       // Reset pincode flags when exploring new application - allows fresh pump selection with new parameters
       state.pincodeSubmitted = false;
       state.pincodeSubmittedUseCase = null;
+      state.recommendationScrolled = false;
 
       // Add confirmation message with selected application
       var appName = "";
@@ -2465,25 +2468,27 @@
       el.inputError.hidden = true;
     }
 
-    // Scroll to latest message - but not for application list or pump recommendations
+    // Scroll to latest message - but not for application list or recommendations
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
-    var isApplicationStep = state.currentStepId === "application";
+    var isApplicationSelectionStep = state.currentStepId === "application" && !state.useCaseSlug;
+    var isLoadingRecommendation = lastMessage && lastMessage.text && lastMessage.text.includes("Let me find the best pump for you");
 
-    // Don't scroll for application cards or pump recommendations
-    if (hasRecommendation || isApplicationStep) return;
+    // Only scroll for normal questions
+    // Don't scroll for: (1) application selection screen, (2) "Let me find the best pump..." and after
+    var shouldScroll = !(isApplicationSelectionStep || hasRecommendation || isLoadingRecommendation) && state.messages.length > 0 && el.thread;
 
-    // Scroll to show the current question/answer
-    if (state.messages.length > 1 && el.thread) {
-      setTimeout(function () {
+    if (shouldScroll) {
+      function scrollToBottom() {
         el.thread.scrollTop = el.thread.scrollHeight;
-      }, 50);
+      }
 
-      // Also try with requestAnimationFrame for smoother scrolling
+      scrollToBottom();
+      setTimeout(scrollToBottom, 50);
+      setTimeout(scrollToBottom, 100);
+
       if (window.requestAnimationFrame) {
-        requestAnimationFrame(function () {
-          el.thread.scrollTop = el.thread.scrollHeight;
-        });
+        requestAnimationFrame(scrollToBottom);
       }
     }
   }
