@@ -2492,6 +2492,7 @@
     // Scroll to latest message - but position to show intro message with pump card
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
+    var isInitialFlowStep = state.currentStepId && ["language", "country", "application"].includes(state.currentStepId);
 
     setTimeout(function () {
       if (hasRecommendation) {
@@ -2501,9 +2502,9 @@
           var introRow = rows[rows.length - 2];
           introRow.scrollIntoView({ behavior: 'auto', block: 'start' });
         }
-      } else {
+      } else if (!isInitialFlowStep) {
         // For regular chat, scroll to latest message
-        // But not on initial load - let welcome card show first
+        // But not on initial load or initial flow steps - keep screen stable
         if (state.messages.length > 2) {
           el.thread.scrollTop = el.thread.scrollHeight;
         }
