@@ -2293,7 +2293,7 @@
     row.className = "row bot";
     row.style.maxWidth = "100%";
     row.style.gap = "10px";
-    row.appendChild(buildRecommendationCard(message.recommendation, "Standard Fit"));
+    row.appendChild(buildRecommendationCard(message.recommendation, "Best Fit"));
 
     var alternatives = message.tiedAlternatives || [];
     if (alternatives.length) {
@@ -2472,11 +2472,11 @@
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
     var isApplicationSelectionStep = state.currentStepId === "application" && !state.useCaseSlug;
-    var isLoadingRecommendation = lastMessage && lastMessage.text && lastMessage.text.includes("Let me find the best pump for you");
+    var isSolutionMessage = lastMessage && lastMessage.text && lastMessage.text.includes("Based on what you shared");
 
-    // Only scroll for normal questions
-    // Don't scroll for: (1) application selection screen, (2) "Let me find the best pump..." and after
-    var shouldScroll = !(isApplicationSelectionStep || hasRecommendation || isLoadingRecommendation) && state.messages.length > 0 && el.thread;
+    // Only scroll for normal questions and loading message
+    // Don't scroll for: (1) application selection screen, (2) "Based on what you shared..." and after
+    var shouldScroll = !(isApplicationSelectionStep || hasRecommendation || isSolutionMessage) && state.messages.length > 0 && el.thread;
 
     if (shouldScroll) {
       function scrollToBottom() {
