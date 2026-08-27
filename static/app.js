@@ -2506,10 +2506,15 @@
         // For regular chat, scroll to latest message to show new questions
         // But not when showing application cards - keep them visible
         if (state.messages.length > 2) {
-          el.thread.scrollTop = el.thread.scrollHeight;
+          var lastOptionList = el.thread.querySelector('.option-list:last-of-type');
+          if (lastOptionList) {
+            lastOptionList.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          } else {
+            el.thread.scrollTop = el.thread.scrollHeight;
+          }
         }
       }
-    }, 100);
+    }, 150);
   }
 
   function handleSend() {
