@@ -50,9 +50,7 @@
   // When running locally with uvicorn api.index:app, routes are at /api/...
   // On Vercel, vercel.json routes "/api/(.*)" to api/index.py which also uses /api
   // Dynamically determine API URL based on environment
-  var API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://127.0.0.1:8000'
-    : '/api';
+  var API_BASE_URL = '/api';
 
   function prettifyKey(key) {
     return key
@@ -145,6 +143,28 @@
     return null;
   }
 
+  function getQuestionImagePath(useCaseSlug, questionKey) {
+    if (!useCaseSlug || !questionKey) return null;
+    var imageFolderPath = "./Question Images/";
+    var questionImages = {
+      "pressure_boosting": {
+        "num_floors": imageFolderPath + "pressure-boosting/Boosting%20No%20of%20Floors.png",
+        "bathrooms_per_floor": imageFolderPath + "pressure-boosting/No%20of%20Outlets%20per%20Floor.png",
+      },
+      "water_transfer": {
+        "borewell_size": imageFolderPath + "water-transfer/Borewell%20Diameter.png",
+        "well_depth": imageFolderPath + "water-transfer/Borewell%20depth.png",
+        "num_floors": imageFolderPath + "water-transfer/Bottom%20Tank%20to%20Overhead%20tank%20no%20of%20Floors.png",
+      },
+      "dewatering": {
+        "depth_of_pit": imageFolderPath + "dewatering/Dewatering%20sump%20depth.png",
+      },
+      "tank_filling": {
+        "num_floors": imageFolderPath + "tank-filling/Bottom%20Tank%20to%20Overhead%20tank%20no%20of%20Floors.png",
+      },
+    };
+    return (questionImages[useCaseSlug] && questionImages[useCaseSlug][questionKey]) || null;
+  }
 
   // ---------------------------------------------------------------------
   // Conversation flow. The application question and lead-capture are fixed;
@@ -1068,7 +1088,7 @@
           "inside_or_outside": "Inside or Outside",
           "horizontal_or_vertical": "Horizontal or Vertical",
           "ground_floor": "Ground Floor",
-          "elevated_tank": "Elevated Tank",
+          "overhead_tank": "Overhead Tank",
           "inside": "Inside",
           "outside": "Outside",
           "horizontal": "Horizontal",
@@ -1080,7 +1100,7 @@
           "radiators": "🌡️",
           "delivery_type": "⬆️",
           "ground_floor": "📍",
-          "elevated_tank": "🏢",
+          "overhead_tank": "🏢",
           "inside": "🏠",
           "outside": "🌳",
           "horizontal": "↔️",
@@ -1092,7 +1112,7 @@
         if (data.question.key === "heating_system") {
           optionValues = ["ufh", "radiators"];
         } else if (data.question.key === "delivery_type") {
-          optionValues = ["ground_floor", "elevated_tank"];
+          optionValues = ["ground_floor", "overhead_tank"];
         } else if (data.question.key === "inside_or_outside") {
           optionValues = ["inside", "outside"];
         } else if (data.question.key === "horizontal_or_vertical") {
@@ -1100,20 +1120,60 @@
         }
 
         optionValues.forEach(function(value) {
-          categoryOptions.push({
+          var option = {
             label: categoryLabels[value] || value,
             value: value,
             icon: categoryIcons[value] || "•",
             onSelect: function() {
               submitCategoryAnswer(data.question, value);
             }
-          });
+          };
+
+          // Add images for delivery_type in water_transfer
+          if (data.question.key === "delivery_type" && state.useCaseSlug === "water_transfer") {
+            if (value === "ground_floor") {
+              option.icon = './Question Images/water-transfer/' + encodeURIComponent('Borewell to Ground level.png');
+            } else if (value === "overhead_tank") {
+              option.icon = './Question Images/water-transfer/' + encodeURIComponent('Borewell to Overhead level.jpg');
+            }
+          }
+
+          // Add images for inside_or_outside in tank_filling
+          if (data.question.key === "inside_or_outside" && state.useCaseSlug === "tank_filling") {
+            if (value === "inside") {
+              option.icon = './Question Images/tank-filling/' + encodeURIComponent('Inside the tank (Horizontal).png');
+            } else if (value === "outside") {
+              option.icon = './Question Images/tank-filling/' + encodeURIComponent('Outside the tank.png');
+            }
+          }
+
+          // Add images for horizontal_or_vertical in tank_filling
+          if (data.question.key === "horizontal_or_vertical" && state.useCaseSlug === "tank_filling") {
+            if (value === "horizontal") {
+              option.icon = './Question Images/tank-filling/' + encodeURIComponent('Inside the tank (Horizontal).png');
+            } else if (value === "vertical") {
+              option.icon = './Question Images/tank-filling/' + encodeURIComponent('Inside the tank (Verticle).png');
+            }
+          }
+
+          categoryOptions.push(option);
         });
 
         state.awaitingKind = "options";
         state.virtualOptions = categoryOptions;
       } else {
-        addBotMessage(messageText);
+        var questionImage = getQuestionImagePath(state.useCaseSlug, data.question.key);
+        if (questionImage) {
+          var formattedText = messageText.replace(/\n/g, '<br>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+          var htmlMessage = '<div style="display:flex; flex-direction:column; gap:10px;">' +
+            '<div>' + formattedText + '</div>' +
+            '<div style="display:flex; justify-content:center;">' +
+            '<img src="' + questionImage + '" style="max-width:100%; width:auto; max-height:280px; height:auto; object-fit:contain; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1);" alt="Question guide image">' +
+            '</div></div>';
+          addBotHtmlMessage(htmlMessage);
+        } else {
+          addBotMessage(messageText);
+        }
         state.awaitingKind = "dynamic-input";
       }
 
@@ -1182,6 +1242,11 @@
     console.log("[submitCategoryAnswer] question key:", question.key);
     console.log("[submitCategoryAnswer] user input:", trimmed);
 
+    state.awaitingKind = "loading";
+    state.virtualOptions = null;
+    addBotMessage("Processing your selection...");
+    render();
+
     var payload = { question_key: question.key, user_text: trimmed, answers_so_far: state.dynamicAnswers };
     if (state.clarificationAttempts[question.key]) {
       payload.clarification_attempts = state.clarificationAttempts[question.key];
@@ -1232,6 +1297,12 @@
     delete state.clarificationAttempts[question.key];
     state.dynamicAnswers[question.key] = data.category;
     console.log("[submitCategoryAnswer] cumulative answers so far:", JSON.stringify(state.dynamicAnswers, null, 2));
+
+    // Remove "Processing..." message before showing next question
+    if (state.messages.length > 0 && state.messages[state.messages.length - 1].text === "Processing your selection...") {
+      state.messages.pop();
+    }
+
     state.currentQuestion = null;
     await fetchNextQuestion(data.confirmation_message);
   }
