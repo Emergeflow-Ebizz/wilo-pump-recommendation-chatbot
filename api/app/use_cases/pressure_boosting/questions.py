@@ -15,13 +15,13 @@ QUESTIONS: list[Question] = [
     ),
     Question(
         key="bathrooms_per_floor",
-        prompt="Please specify the number of bathrooms per floor",
+        prompt="Please specify the number of usage point per floor including jacuzzi, shower, bathtub, Wash basing & Toilets",
         requires_integer=True,
         min_value=1,
         domain_context=(
             "Used with num_floors to calculate total required flow - each "
-            "bathroom contributes a fixed flow rate at 60% utilisation. Must "
-            "be at least 1 - fractional bathrooms are meaningless."
+            "usage point contributes a fixed flow rate at 60% utilisation. Must "
+            "be at least 1 - fractional usage points are meaningless."
         ),
     ),
 ]

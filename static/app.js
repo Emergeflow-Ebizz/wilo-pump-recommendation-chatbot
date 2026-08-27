@@ -2544,11 +2544,11 @@
     var hasRecommendation = lastMessage && lastMessage.recommendation;
     var isApplicationSelectionStep = state.currentStepId === "application" && !state.useCaseSlug;
     var isSolutionMessage = lastMessage && lastMessage.text && lastMessage.text.includes("Based on what you shared");
+    var isLoadingMessage = lastMessage && lastMessage.text && lastMessage.text.includes("Let me find the best pump");
 
     // Only scroll for normal questions
-    // Don't scroll for: (1) application selection, (2) "Based on what you shared..." and (3) pump recommendations
-    // DO scroll for: "Let me find the best pump..." (loading message)
-    var shouldScroll = !(isApplicationSelectionStep || hasRecommendation || isSolutionMessage) && state.messages.length > 0 && el.thread;
+    // Don't scroll for: (1) application selection, (2) "Based on what you shared...", (3) pump recommendations, or (4) loading message "Let me find the best pump"
+    var shouldScroll = !(isApplicationSelectionStep || hasRecommendation || isSolutionMessage || isLoadingMessage) && state.messages.length > 0 && el.thread;
 
     if (shouldScroll) {
       function scrollToBottom() {
