@@ -2492,6 +2492,7 @@
     // Scroll to latest message - but position to show intro message with pump card
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
+    var isApplicationStep = state.currentStepId === "application";
 
     setTimeout(function () {
       if (hasRecommendation) {
@@ -2501,8 +2502,9 @@
           var introRow = rows[rows.length - 2];
           introRow.scrollIntoView({ behavior: 'auto', block: 'start' });
         }
-      } else {
+      } else if (!isApplicationStep) {
         // For regular chat, scroll to latest message to show new questions
+        // But not when showing application cards - keep them visible
         if (state.messages.length > 2) {
           el.thread.scrollTop = el.thread.scrollHeight;
         }
