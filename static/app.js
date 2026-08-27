@@ -2469,24 +2469,16 @@
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
     var isApplicationStep = state.currentStepId === "application";
-    var isDynamicQuestion = state.awaitingKind === "dynamic-input" || state.awaitingKind === "input" ||
-                            state.awaitingKind === "text";
 
     setTimeout(function () {
-      if (!hasRecommendation && !isApplicationStep && isDynamicQuestion) {
-        // Only scroll for dynamic questions - to show the current question
-        var lastOptionList = el.thread.querySelector('.option-list:last-of-type');
-        if (lastOptionList) {
-          lastOptionList.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        } else {
-          // Scroll to show the latest message/question
-          el.thread.scrollTop = el.thread.scrollHeight;
-        }
+      // Don't scroll for application cards or pump recommendations
+      if (hasRecommendation || isApplicationStep) return;
+
+      // Scroll to show the current question/answer
+      if (state.messages.length > 1) {
+        el.thread.scrollTop = el.thread.scrollHeight;
       }
-      // Don't scroll for:
-      // - Application cards (isApplicationStep)
-      // - Pump recommendations (hasRecommendation)
-    }, 150);
+    }, 100);
   }
 
   function handleSend() {
