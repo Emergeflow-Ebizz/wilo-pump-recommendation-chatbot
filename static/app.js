@@ -2539,16 +2539,13 @@
       el.inputError.hidden = true;
     }
 
-    // Scroll to latest message - but not for application list or recommendations
+    // Scroll to latest message - but not for application list or first pump recommendation card
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
     var isApplicationSelectionStep = state.currentStepId === "application" && !state.useCaseSlug;
-    var isSolutionMessage = lastMessage && lastMessage.text && lastMessage.text.includes("Based on what you shared");
-    var isLoadingMessage = lastMessage && lastMessage.text && lastMessage.text.includes("Let me find the best pump");
 
-    // Only scroll for normal questions
-    // Don't scroll for: (1) application selection, (2) "Based on what you shared...", (3) pump recommendations, or (4) loading message "Let me find the best pump"
-    var shouldScroll = !(isApplicationSelectionStep || hasRecommendation || isSolutionMessage || isLoadingMessage) && state.messages.length > 0 && el.thread;
+    // Scroll for all messages except: (1) application selection, (2) first pump recommendation card
+    var shouldScroll = !(isApplicationSelectionStep || hasRecommendation) && state.messages.length > 0 && el.thread;
 
     if (shouldScroll) {
       function scrollToBottom() {
