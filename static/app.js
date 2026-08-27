@@ -51,7 +51,7 @@
   // On Vercel, vercel.json routes "/api/(.*)" to api/index.py which also uses /api
   // Dynamically determine API URL based on environment
   var API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8000/api'
+    ? 'http://127.0.0.1:8000'
     : '/api';
 
   function prettifyKey(key) {
@@ -172,47 +172,121 @@
 
   var FLOW = [
     {
-      id: "application",
+      id: "language",
       kind: "options",
       bot: function () {
-        return "";
+        return "Please select your preferred language.";
       },
       options: [
         {
+          label: "English",
+          value: "english",
+        },
+        {
+          label: "Hindi",
+          value: "hindi",
+        },
+        {
+          label: "Chinese",
+          value: "chinese",
+        },
+        {
+          label: "Korean",
+          value: "korean",
+        },
+        {
+          label: "Turkish",
+          value: "turkish",
+        },
+      ],
+      next: function () {
+        return "country";
+      },
+    },
+    {
+      id: "country",
+      kind: "options",
+      bot: function () {
+        return "Please select your country.";
+      },
+      options: function () {
+        var selectedLanguage = state.answers.language;
+        var countryOptions = [
+          {
+            label: "India",
+            value: "india",
+          },
+          {
+            label: "China",
+            value: "china",
+          },
+          {
+            label: "Korea",
+            value: "korea",
+          },
+          {
+            label: "Turkey",
+            value: "turkey",
+          },
+        ];
+
+        // If language is selected, prioritize matching country
+        if (selectedLanguage === "hindi") {
+          return countryOptions.filter(function(c) { return c.value === "india"; })
+            .concat(countryOptions.filter(function(c) { return c.value !== "india"; }));
+        } else if (selectedLanguage === "chinese") {
+          return countryOptions.filter(function(c) { return c.value === "china"; })
+            .concat(countryOptions.filter(function(c) { return c.value !== "china"; }));
+        } else if (selectedLanguage === "korean") {
+          return countryOptions.filter(function(c) { return c.value === "korea"; })
+            .concat(countryOptions.filter(function(c) { return c.value !== "korea"; }));
+        } else if (selectedLanguage === "turkish") {
+          return countryOptions.filter(function(c) { return c.value === "turkey"; })
+            .concat(countryOptions.filter(function(c) { return c.value !== "turkey"; }));
+        }
+
+        return countryOptions;
+      },
+      next: function () {
+        return "application";
+      },
+    },
+    {
+      id: "application",
+      kind: "options",
+      bot: function () {
+        return "Please select an application.";
+      },
+      options: [
+        {
+          index: 1,
           label: "Pressure Boosting",
-          description: "Enjoy strong and consistent water pressure.",
           value: "pressure-boosting",
-          icon: "./Pressure Boosting.png",
         },
         {
+          index: 2,
           label: "Heating Circuit",
-          description: "Keep every room comfortably warm.",
           value: "heating-circuits",
-          icon: "./Heating Circuits.png",
         },
         {
+          index: 3,
           label: "Domestic Hot Water",
-          description: "Get hot water quickly when you need it.",
           value: "domestic-hot-water",
-          icon: "./Domestic Hot Water.png",
         },
         {
+          index: 4,
           label: "Dewatering",
-          description: "Remove unwanted water efficiently.",
           value: "dewatering",
-          icon: "./Dewatering.png",
         },
         {
+          index: 5,
           label: "Borewell to Overhead Tank",
-          description: "Supply water from your borewell to the storage tank.",
           value: "water-transfer",
-          icon: "./Borewell to Overhead tank.png",
         },
         {
+          index: 6,
           label: "Bottom Tank to Overhead Tank",
-          description: "Transfer water from the ground tank to the rooftop tank.",
           value: "tank-filling",
-          icon: "./From Bottom tank to Overhead tank.png",
         },
       ],
       next: function (value) {
@@ -2244,41 +2318,61 @@
     return row;
   }
 
-  function buildOptionCard(option, onClick) {
+  function buildOptionCard(option, onClick, index) {
     var card = document.createElement("button");
     card.type = "button";
     card.className = "option-card";
 
-    var icon = document.createElement("span");
-    icon.className = "option-icon";
+    // Check if it's a simple list option (has index and no icon image)
+    var isSimpleList = index !== undefined && index !== null &&
+                       (!option.icon || !/\.(png|jpg|jpeg|gif|svg)$/i.test(option.icon));
 
-    if (option.icon && /\.(png|jpg|jpeg|gif|svg)$/i.test(option.icon)) {
-      var img = document.createElement("img");
-      img.src = option.icon;
-      img.alt = option.label;
-      img.className = "option-image";
-      icon.appendChild(img);
+    if (isSimpleList) {
+      // Simple numbered text style design
+      var number = document.createElement("span");
+      number.className = "option-number-text";
+      number.textContent = String(index + 1);
+
+      var label = document.createElement("span");
+      label.className = "option-text-label";
+      label.textContent = option.label;
+
+      card.appendChild(number);
+      card.appendChild(label);
     } else {
-      icon.textContent = option.icon || "•";
+      // Original card design for application options
+      var icon = document.createElement("span");
+      icon.className = "option-icon";
+
+      if (option.icon && /\.(png|jpg|jpeg|gif|svg)$/i.test(option.icon)) {
+        var img = document.createElement("img");
+        img.src = option.icon;
+        img.alt = option.label;
+        img.className = "option-image";
+        icon.appendChild(img);
+      } else {
+        icon.textContent = option.icon || "•";
+      }
+
+      var text = document.createElement("span");
+      text.className = "option-text";
+
+      var title = document.createElement("span");
+      title.className = "option-title";
+      title.textContent = option.label;
+      text.appendChild(title);
+
+      if (option.description || option.subtitle) {
+        var subtitle = document.createElement("span");
+        subtitle.className = "option-subtitle";
+        subtitle.textContent = option.description || option.subtitle;
+        text.appendChild(subtitle);
+      }
+
+      card.appendChild(icon);
+      card.appendChild(text);
     }
 
-    var text = document.createElement("span");
-    text.className = "option-text";
-
-    var title = document.createElement("span");
-    title.className = "option-title";
-    title.textContent = option.label;
-    text.appendChild(title);
-
-    if (option.description || option.subtitle) {
-      var subtitle = document.createElement("span");
-      subtitle.className = "option-subtitle";
-      subtitle.textContent = option.description || option.subtitle;
-      text.appendChild(subtitle);
-    }
-
-    card.appendChild(icon);
-    card.appendChild(text);
     card.addEventListener("click", onClick);
     return card;
   }
@@ -2335,17 +2429,18 @@
           vOptions.classList.add("heat-circuits-style");
         }
       }
-      state.virtualOptions.forEach(function (option) {
+      state.virtualOptions.forEach(function (option, index) {
         vOptions.appendChild(
           buildOptionCard(option, function () {
             state.virtualOptions = null;
             option.onSelect();
-          })
+          }, index)
         );
       });
       el.thread.appendChild(vOptions);
     } else if (state.awaitingKind === "options") {
       var step = getStep(state.currentStepId);
+      var optionsArray = typeof step.options === 'function' ? step.options(state.answers) : step.options;
       var options = document.createElement("div");
       options.className = "option-list";
       if (state.currentQuestion && CATEGORY_QUESTION_KEYS.includes(state.currentQuestion.key)) {
@@ -2354,11 +2449,11 @@
           options.classList.add("heat-circuits-style");
         }
       }
-      step.options.forEach(function (option) {
+      optionsArray.forEach(function (option, index) {
         options.appendChild(
           buildOptionCard(option, function () {
             submitOption(option.value, option.label);
-          })
+          }, index)
         );
       });
       el.thread.appendChild(options);
