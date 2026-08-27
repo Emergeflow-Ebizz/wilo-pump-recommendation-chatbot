@@ -74,60 +74,58 @@ def _next_head_above(catalog: dict, head: float) -> float | None:
     return higher[0] if higher else None
 
 
+def _model_matched_head(model: dict, target_head: float) -> float | None:
+    """For a single model, find its smallest head point >= target_head."""
+    model_heads = sorted(point["head"] for point in model["performance_curves"])
+    candidates = [h for h in model_heads if h >= target_head]
+    return candidates[0] if candidates else None
+
+
+def _find_matching_models_per_model(catalog: dict, target_head: float, required_flow_lpm: float) -> list[tuple[str, dict, float]]:
+    """Find models using per-model matching: each model checked @ its own matched head.
+
+    Returns list of (model_name, model, matched_head) tuples for models meeting requirement.
+    """
+    matching = []
+
+    for model_name, model in catalog.items():
+        model_matched_head = _model_matched_head(model, target_head)
+        if model_matched_head is None:
+            continue
+
+        flow = _flow_at_head(model, model_matched_head)
+        if flow is not None and flow >= required_flow_lpm:
+            matching.append((model_name, model, model_matched_head))
+
+    return matching
+
+
 def resolve_pressure_boosting_catalog(
     target_head: float, required_flow_lpm: float | None = None
 ) -> tuple[dict, str, float, str]:
-    """Walk SHEET_SEQUENCE at each sheet's own matched head, then (if
-    needed) exactly one head level higher in that same sheet, to find a
-    sheet/head that can deliver required_flow_lpm - never returns a match
-    whose best flow at the matched head is below required_flow_lpm.
+    """Walk SHEET_SEQUENCE using per-model matching: for each sheet, check each
+    model individually at its own matched head, to find a sheet that can deliver
+    required_flow_lpm - never returns a match whose flow is below required_flow_lpm.
 
-    When required_flow_lpm is given, two passes over SHEET_SEQUENCE:
+    When required_flow_lpm is given:
+    Uses per-model matching: for each sheet, each model is checked at its own
+    smallest head >= target_head. The first sheet with any model meeting the
+    requirement wins.
 
-    Pass 1: for each sheet, its own matched head (the smallest head in
-    that sheet's own catalog that is >= target_head, via _match_head). The
-    first sheet whose best flow there reaches required_flow_lpm wins.
-
-    Pass 2 (only if pass 1 found nothing): for each sheet, exactly one head
-    level above its own matched head - still that sheet's own next
-    available head, not some other sheet's. The first sheet whose best flow
-    there reaches required_flow_lpm wins.
-
-    Each sheet's climb is anchored to its own head grid rather than a
-    shared list of head values across all sheets - the sheets have
-    different, unevenly spaced head points, so comparing across a shared
-    list would skip a sheet's genuinely-nearby head just because another
-    sheet happened to have a closer point at that exact value.
-
-    When required_flow_lpm is None: unchanged - the first sheet with any
-    head >= target wins regardless of flow.
+    When required_flow_lpm is None: the first sheet with any head >= target wins
+    regardless of flow.
 
     Returns (catalog, sheet_name, matched_head, sheet_file). Raises
-    NoPressureBoostingMatchError if no sheet/head combination satisfies the
-    requirement - for required_flow_lpm given, this means neither a
-    sheet's matched head nor its next head level up reaches it in any
-    sheet; we never fall back to a head that can't deliver enough flow.
+    NoPressureBoostingMatchError if no sheet/model combination satisfies the
+    requirement.
     """
     if required_flow_lpm is not None:
-        catalogs = {}
-        matched_heads = {}
-        for sheet_name, sheet_file, decimal_mode in SHEET_SEQUENCE:
+        for sheet_name, sheet_file, _decimal_mode in SHEET_SEQUENCE:
             catalog = load_sheet(sheet_file)
-            catalogs[sheet_file] = catalog
-            matched_heads[sheet_file] = _match_head(catalog, target_head, decimal_mode)
-
-        for sheet_name, sheet_file, _decimal_mode in SHEET_SEQUENCE:
-            matched_head = matched_heads[sheet_file]
-            if matched_head is not None and _best_flow_at_head(catalogs[sheet_file], matched_head) >= required_flow_lpm:
-                return catalogs[sheet_file], sheet_name, matched_head, sheet_file
-
-        for sheet_name, sheet_file, _decimal_mode in SHEET_SEQUENCE:
-            matched_head = matched_heads[sheet_file]
-            if matched_head is None:
-                continue
-            next_head = _next_head_above(catalogs[sheet_file], matched_head)
-            if next_head is not None and _best_flow_at_head(catalogs[sheet_file], next_head) >= required_flow_lpm:
-                return catalogs[sheet_file], sheet_name, next_head, sheet_file
+            matching_models = _find_matching_models_per_model(catalog, target_head, required_flow_lpm)
+            if matching_models:
+                _, _, matched_head = matching_models[0]
+                return catalog, sheet_name, matched_head, sheet_file
 
         raise NoPressureBoostingMatchError(NO_MODEL_AVAILABLE_MESSAGE)
 
@@ -138,6 +136,16 @@ def resolve_pressure_boosting_catalog(
             return catalog, sheet_name, matched_head, sheet_file
 
     raise NoPressureBoostingMatchError(NO_MODEL_AVAILABLE_MESSAGE)
+
+
+def select_model_per_model(catalog: dict, target_head: float, required_flow_lpm: float) -> list[tuple[str, dict, float]]:
+    """Return matching models using per-model matching.
+
+    Each model is checked at its own matched head (smallest head >= target_head
+    for that model). Returns list of (name, model, matched_head) for all models
+    meeting the requirement.
+    """
+    return _find_matching_models_per_model(catalog, target_head, required_flow_lpm)
 
 
 def select_model(catalog: dict, matched_head: float, required_flow_lpm: float | None) -> list[tuple[str, dict]]:
@@ -199,15 +207,15 @@ class PressureBoostingUseCase(UseCase):
         target_head = calculate_head(num_floors)
         required_flow_lpm = calculate_required_flow(num_floors, bathrooms_per_floor)
 
-        catalog, sheet_name, matched_head, sheet_file = resolve_pressure_boosting_catalog(target_head, required_flow_lpm)
-        matched_models = select_model(catalog, matched_head, required_flow_lpm)
+        catalog, sheet_name, _, sheet_file = resolve_pressure_boosting_catalog(target_head, required_flow_lpm)
+        matched_models_with_heads = select_model_per_model(catalog, target_head, required_flow_lpm)
 
-        def build_recommendation(model_name: str, model: dict) -> PumpRecommendation:
-            flow_lpm = _flow_at_head(model, matched_head)
+        def build_recommendation(model_name: str, model: dict, model_matched_head: float) -> PumpRecommendation:
+            flow_lpm = _flow_at_head(model, model_matched_head)
             details = {
                 "sheet": sheet_name,
                 "target_head": target_head,
-                "matched_head": matched_head,
+                "matched_head": model_matched_head,
                 "required_flow": required_flow_lpm,
                 "flow": flow_lpm,
                 "hp": model["motor_rating"]["hp"],
@@ -221,9 +229,9 @@ class PressureBoostingUseCase(UseCase):
                 image_url=get_image_url(sheet_file),
             )
 
-        primary_name, primary_model = matched_models[0]
-        recommendation = build_recommendation(primary_name, primary_model)
+        primary_name, primary_model, primary_head = matched_models_with_heads[0]
+        recommendation = build_recommendation(primary_name, primary_model, primary_head)
         recommendation.tied_alternatives = [
-            build_recommendation(name, model) for name, model in matched_models[1:]
+            build_recommendation(name, model, model_head) for name, model, model_head in matched_models_with_heads[1:]
         ]
         return recommendation
