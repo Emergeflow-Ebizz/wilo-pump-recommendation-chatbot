@@ -183,10 +183,6 @@
           value: "english",
         },
         {
-          label: "Hindi",
-          value: "hindi",
-        },
-        {
           label: "Chinese",
           value: "chinese",
         },
@@ -231,10 +227,7 @@
         ];
 
         // If language is selected, prioritize matching country
-        if (selectedLanguage === "hindi") {
-          return countryOptions.filter(function(c) { return c.value === "india"; })
-            .concat(countryOptions.filter(function(c) { return c.value !== "india"; }));
-        } else if (selectedLanguage === "chinese") {
+        if (selectedLanguage === "chinese") {
           return countryOptions.filter(function(c) { return c.value === "china"; })
             .concat(countryOptions.filter(function(c) { return c.value !== "china"; }));
         } else if (selectedLanguage === "korean") {
