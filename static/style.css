@@ -525,16 +525,16 @@ body {
   justify-content: flex-start;
   align-items: center;
   text-align: left;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 12px;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border: 1.5px solid #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   width: 100%;
   margin: 0;
-  font-size: 14.5px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.4;
   transition: all 0.2s ease;
 }
 
@@ -560,16 +560,12 @@ body {
 .option-number-text {
   font-weight: 700;
   color: #505050;
-  min-width: 28px;
+  min-width: 20px;
   flex-shrink: 0;
-  font-size: 15px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #e8e8e8;
-  border-radius: 6px;
-  height: 28px;
-  width: 28px;
 }
 
 .option-text-label {
