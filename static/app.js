@@ -1459,7 +1459,7 @@
     if (!trimmed) return;
 
     // Check if user wants to skip an optional field
-    var isSkipKeyword = /^(skip|no|nope|don't|dont|decline|pass)$/i.test(trimmed);
+    var isSkipKeyword = /^(skip|no|nope|don't|dont|decline|pass|no need|not needed|doesn't matter|doesn't apply)$/i.test(trimmed);
     var isOptional = typeof step.optional === "function" ? step.optional() : step.optional;
     if (isOptional && isSkipKeyword) {
       console.log("[submitText] User skipped optional field:", step.id);
