@@ -2555,9 +2555,24 @@
       scrollToBottom();
       setTimeout(scrollToBottom, 50);
       setTimeout(scrollToBottom, 100);
+      setTimeout(scrollToBottom, 300);
 
       if (window.requestAnimationFrame) {
         requestAnimationFrame(scrollToBottom);
+      }
+
+      // Also scroll when images load to account for image rendering time
+      var lastMessageEl = el.thread.querySelector('[id^="msg-"]:last-child');
+      if (lastMessageEl) {
+        var images = lastMessageEl.querySelectorAll('img');
+        images.forEach(function(img) {
+          if (img.complete) {
+            scrollToBottom();
+          } else {
+            img.addEventListener('load', scrollToBottom);
+            img.addEventListener('error', scrollToBottom);
+          }
+        });
       }
     }
   }
