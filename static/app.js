@@ -2489,31 +2489,27 @@
       el.inputError.hidden = true;
     }
 
-    // Scroll to latest message - but position to show intro message with pump card
+    // Scroll to latest message - but not for application list or pump recommendations
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
     var isApplicationStep = state.currentStepId === "application";
+    var isDynamicQuestion = state.awaitingKind === "dynamic-input" || state.awaitingKind === "input" ||
+                            state.awaitingKind === "text";
 
     setTimeout(function () {
-      if (hasRecommendation) {
-        // For pump cards, scroll to show the intro message above the card
-        var rows = el.thread.querySelectorAll('.row');
-        if (rows.length >= 2) {
-          var introRow = rows[rows.length - 2];
-          introRow.scrollIntoView({ behavior: 'auto', block: 'start' });
-        }
-      } else if (!isApplicationStep) {
-        // For regular chat, scroll to latest message to show new questions
-        // But not when showing application cards - keep them visible
-        if (state.messages.length > 2) {
-          var lastOptionList = el.thread.querySelector('.option-list:last-of-type');
-          if (lastOptionList) {
-            lastOptionList.scrollIntoView({ behavior: 'smooth', block: 'end' });
-          } else {
-            el.thread.scrollTop = el.thread.scrollHeight;
-          }
+      if (!hasRecommendation && !isApplicationStep && isDynamicQuestion) {
+        // Only scroll for dynamic questions - to show the current question
+        var lastOptionList = el.thread.querySelector('.option-list:last-of-type');
+        if (lastOptionList) {
+          lastOptionList.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        } else {
+          // Scroll to show the latest message/question
+          el.thread.scrollTop = el.thread.scrollHeight;
         }
       }
+      // Don't scroll for:
+      // - Application cards (isApplicationStep)
+      // - Pump recommendations (hasRecommendation)
     }, 150);
   }
 
