@@ -508,11 +508,11 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(135deg, #fafbfb 0%, #ffffff 100%);
-  border: 1.5px solid rgba(0, 156, 130, 0.12);
+  background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
+  border: 1.5px solid #e0e0e0;
   border-radius: 16px;
   padding: 14px;
-  box-shadow: 0 2px 10px rgba(0, 156, 130, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   text-align: center;
   font-family: inherit;
@@ -528,9 +528,9 @@ body {
   gap: 12px;
   padding: 12px 16px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #f0faf8 0%, #ffffff 100%);
-  border: 1.5px solid rgba(0, 156, 130, 0.15);
-  box-shadow: 0 2px 8px rgba(0, 156, 130, 0.08);
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border: 1.5px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   width: 100%;
   margin: 0;
   font-size: 14.5px;
@@ -539,34 +539,34 @@ body {
 }
 
 .option-card:hover {
-  border-color: var(--teal);
-  box-shadow: 0 4px 12px rgba(0, 156, 130, 0.15);
+  border-color: #505050;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
 
 .option-card:has(.option-number-text):hover {
-  background: linear-gradient(135deg, #e8f7f4 0%, #f5fffe 100%);
-  border-color: var(--teal);
-  box-shadow: 0 4px 12px rgba(0, 156, 130, 0.2);
+  background: linear-gradient(135deg, #f0f1f3 0%, #fafbfc 100%);
+  border-color: #505050;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   transform: translateY(-1px);
 }
 
 .option-card:has(.option-number-text):active {
-  background: linear-gradient(135deg, #d9f0ed 0%, #e8faff 100%);
-  border-color: var(--teal);
-  box-shadow: 0 2px 6px rgba(0, 156, 130, 0.15);
+  background: linear-gradient(135deg, #e8e9eb 0%, #f5f6f8 100%);
+  border-color: #505050;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .option-number-text {
   font-weight: 700;
-  color: var(--teal);
+  color: #505050;
   min-width: 28px;
   flex-shrink: 0;
   font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 156, 130, 0.1);
+  background: #e8e8e8;
   border-radius: 6px;
   height: 28px;
   width: 28px;
@@ -587,9 +587,9 @@ body {
   justify-content: center;
   font-size: 32px;
   overflow: hidden;
-  background: linear-gradient(135deg, #f0faf8 0%, #e8f7f4 100%);
+  background: linear-gradient(135deg, #f5f5f5 0%, #f0f0f0 100%);
   border-radius: 12px;
-  border: 1px solid rgba(0, 156, 130, 0.1);
+  border: 1px solid #e0e0e0;
 }
 
 /* Categorical question options as column */
