@@ -2542,41 +2542,50 @@
       el.inputError.hidden = true;
     }
 
-    // Scroll to latest message - but not for application list or first pump recommendation card
-    var lastMessage = state.messages[state.messages.length - 1];
-    var hasRecommendation = lastMessage && lastMessage.recommendation;
+    // Scroll to latest message for all messages except initial application selection
     var isApplicationSelectionStep = state.currentStepId === "application" && !state.useCaseSlug;
-
-    // Scroll for all messages except: (1) application selection, (2) first pump recommendation card
-    var shouldScroll = !(isApplicationSelectionStep || hasRecommendation) && state.messages.length > 0 && el.thread;
+    var shouldScroll = !isApplicationSelectionStep && state.messages.length > 0 && el.thread;
 
     if (shouldScroll) {
       function scrollToBottom() {
-        el.thread.scrollTop = el.thread.scrollHeight;
+        if (el.thread) {
+          el.thread.scrollTop = el.thread.scrollHeight;
+        }
       }
 
+      // Scroll immediately first
       scrollToBottom();
+      setTimeout(scrollToBottom, 0);
       setTimeout(scrollToBottom, 50);
-      setTimeout(scrollToBottom, 100);
-      setTimeout(scrollToBottom, 300);
 
       if (window.requestAnimationFrame) {
         requestAnimationFrame(scrollToBottom);
       }
 
-      // Also scroll when images load to account for image rendering time
+      // Then scroll again when images load
       var lastMessageEl = el.thread.querySelector('[id^="msg-"]:last-child');
+      if (!lastMessageEl) {
+        lastMessageEl = el.thread.querySelector('.row:last-child');
+      }
+
       if (lastMessageEl) {
         var images = lastMessageEl.querySelectorAll('img');
         images.forEach(function(img) {
           if (img.complete) {
             scrollToBottom();
           } else {
-            img.addEventListener('load', scrollToBottom);
-            img.addEventListener('error', scrollToBottom);
+            img.addEventListener('load', function() {
+              scrollToBottom();
+            });
+            img.addEventListener('error', function() {
+              scrollToBottom();
+            });
           }
         });
       }
+
+      // Final fallback scroll
+      setTimeout(scrollToBottom, 300);
     }
   }
 
