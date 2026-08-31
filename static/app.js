@@ -2542,9 +2542,14 @@
       el.inputError.hidden = true;
     }
 
-    // Scroll to latest message for all messages except initial application selection
+    // Scroll to latest message - keep Best Fit recommendation visible, scroll for everything else
+    var lastMessage = state.messages[state.messages.length - 1];
+    var hasRecommendation = lastMessage && lastMessage.recommendation;
     var isApplicationSelectionStep = state.currentStepId === "application" && !state.useCaseSlug;
-    var shouldScroll = !isApplicationSelectionStep && state.messages.length > 0 && el.thread;
+
+    // Don't scroll if last message is a recommendation (to keep Best Fit visible)
+    // Do scroll for all other messages (user messages, questions with images, bot responses)
+    var shouldScroll = !isApplicationSelectionStep && !hasRecommendation && state.messages.length > 0 && el.thread;
 
     if (shouldScroll) {
       function scrollToBottom() {
