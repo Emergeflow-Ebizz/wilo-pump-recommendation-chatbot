@@ -1126,7 +1126,7 @@
           var option = {
             label: categoryLabels[value] || value,
             value: value,
-            icon: categoryIcons[value] || "•",
+            icon: (data.question.key === "heating_system") ? null : (categoryIcons[value] || "•"),
             onSelect: function() {
               submitCategoryAnswer(data.question, value);
             }
