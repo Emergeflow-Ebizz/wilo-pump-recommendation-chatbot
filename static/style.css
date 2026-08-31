@@ -673,10 +673,26 @@ body {
   flex: 1 1 auto;
   width: 100%;
   max-width: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  gap: 0 !important;
 }
 
 .option-list.heat-circuits-style .option-icon {
   display: none;
+}
+
+.option-list.heat-circuits-style .option-number-text {
+  display: none !important;
+}
+
+.option-list.heat-circuits-style .option-text-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .option-image {
