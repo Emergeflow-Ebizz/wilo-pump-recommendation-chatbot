@@ -162,6 +162,13 @@
       "tank_filling": {
         "num_floors": imageFolderPath + "tank-filling/Bottom%20Tank%20to%20Overhead%20tank%20no%20of%20Floors.png",
       },
+      "heat_circulation": {
+        "total_area": imageFolderPath + "heat-circuits/Building%20Area.png",
+        "heating_system": imageFolderPath + "heat-circuits/Heating%20System.png",
+      },
+      "domestic_hot_water": {
+        "num_usage_points": imageFolderPath + "domestic-hot-water/No%20of%20Outlets%20per%20Floor.png",
+      },
     };
     return (questionImages[useCaseSlug] && questionImages[useCaseSlug][questionKey]) || null;
   }
