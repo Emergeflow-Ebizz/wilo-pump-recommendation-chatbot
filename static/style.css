@@ -663,6 +663,22 @@ body {
   text-align: center;
   margin-bottom: 4px;
 }
+
+.option-list.heat-circuits-style {
+  flex-direction: column !important;
+  gap: 10px;
+}
+
+.option-list.heat-circuits-style .option-card {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+}
+
+.option-list.heat-circuits-style .option-icon {
+  display: none;
+}
+
 .option-image {
   width: 100%;
   height: 100%;
