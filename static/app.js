@@ -1159,15 +1159,6 @@
             }
           }
 
-          // Add images for heating_system in heat_circulation
-          if (data.question.key === "heating_system" && state.useCaseSlug === "heat_circulation") {
-            if (value === "ufh") {
-              option.icon = './Question Images/heat-circuits/' + encodeURIComponent('Underfloor Heating.png');
-            } else if (value === "radiators") {
-              option.icon = './Question Images/heat-circuits/' + encodeURIComponent('Radiators.png');
-            }
-          }
-
           categoryOptions.push(option);
         });
 
