@@ -1131,8 +1131,8 @@
             label: categoryLabels[value] || value,
             value: value,
             icon: (data.question.key === "heating_system") ? null : (categoryIcons[value] || "•"),
-            onSelect: function(selectedOption) {
-              submitCategoryAnswer(data.question, value, selectedOption || this);
+            onSelect: function(selectedOption, allOptions) {
+              submitCategoryAnswer(data.question, value, selectedOption || this, allOptions);
             }
           };
 
@@ -1244,15 +1244,15 @@
 
   /** Sends the user's free-text reply to the backend's fixed-choice parser
    * (ParsedCategory) for questions like inside_or_outside / horizontal_or_vertical. */
-  async function submitCategoryAnswer(question, trimmed, selectedOption) {
+  async function submitCategoryAnswer(question, trimmed, selectedOption, allOptions) {
     console.log("[submitCategoryAnswer] ===== SUBMIT CATEGORY ANSWER START =====");
     console.log("[submitCategoryAnswer] question key:", question.key);
     console.log("[submitCategoryAnswer] user input:", trimmed);
 
-    // Mark cards as disabled/non-clickable by clearing their onSelect handlers
-    if (state.virtualOptions) {
-      state.virtualOptions.forEach(function(option) {
-        option.onSelect = null; // Disable clicking
+    // Mark all options as disabled/non-clickable by clearing their onSelect handlers
+    if (allOptions) {
+      allOptions.forEach(function(option) {
+        option.onSelect = null;
       });
     }
 
@@ -1261,7 +1261,7 @@
 
     state.awaitingKind = "loading";
     addBotMessage("Processing your selection...");
-    render(); // Cards remain visible but non-clickable
+    render(); // Cards remain visible in original position but non-clickable
 
     var payload = { question_key: question.key, user_text: trimmed, answers_so_far: state.dynamicAnswers };
     if (state.clarificationAttempts[question.key]) {
@@ -2580,8 +2580,9 @@
       state.virtualOptions.forEach(function (option, index) {
         vOptions.appendChild(
           buildOptionCard(option, function () {
+            var allOptions = state.virtualOptions;
             state.virtualOptions = null;
-            option.onSelect(option);
+            option.onSelect(option, allOptions);
           }, index)
         );
       });
