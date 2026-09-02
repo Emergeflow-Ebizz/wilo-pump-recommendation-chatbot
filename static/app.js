@@ -704,11 +704,11 @@
     }
 
     var applicationMap = {
-      "water_transfer": "Water Extraction From Borewell",
-      "tank_filling": "Transfer of water from a ground level reservoir to an Overhead tank",
+      "water_transfer": "Borewell to Overhead Tank",
+      "tank_filling": "Bottom Tank to Overhead Tank",
       "pressure_boosting": "Pressure Boosting",
       "dewatering": "Dewatering",
-      "heat_circulation": "Heat Circuits Application",
+      "heat_circulation": "Heating Circuit",
       "domestic_hot_water": "Domestic Hot Water",
     };
 
@@ -768,11 +768,11 @@
 
     // Map application type based on use case
     var applicationMap = {
-      "water_transfer": "Water Extraction From Borewell",
-      "tank_filling": "Transfer of water from a ground level reservoir to an Overhead tank",
+      "water_transfer": "Borewell to Overhead Tank",
+      "tank_filling": "Bottom Tank to Overhead Tank",
       "pressure_boosting": "Pressure Boosting",
       "dewatering": "Dewatering",
-      "heat_circulation": "Heat Circuits Application",
+      "heat_circulation": "Heating Circuit",
       "domestic_hot_water": "Domestic Hot Water",
     };
 
