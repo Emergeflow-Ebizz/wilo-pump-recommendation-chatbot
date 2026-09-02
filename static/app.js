@@ -581,6 +581,7 @@
     pincodeSubmitted: false, // true after pincode is submitted - prevents pump changes in same use case
     pincodeSubmittedUseCase: null, // the use case where pincode was submitted - lock only applies to same use case
     recommendationScrolled: false, // true after scrolling to first recommendation, prevents re-scrolling
+    recommendationShown: false, // true when recommendation card has appeared, stops further scrolling
   };
 
   function addBotMessage(text) {
@@ -651,6 +652,7 @@
     state.pincodeSubmitted = false;
     state.pincodeSubmittedUseCase = null;
     state.recommendationScrolled = false;
+    state.recommendationShown = false;
     initConversation();
     render();
   }
@@ -2626,14 +2628,14 @@
       el.inputError.hidden = true;
     }
 
-    // Scroll to latest message - keep Best Fit recommendation visible, scroll for everything else
+    // Scroll to show messages and Best Fit card, then stop
     var lastMessage = state.messages[state.messages.length - 1];
     var hasRecommendation = lastMessage && lastMessage.recommendation;
     var isApplicationSelectionStep = state.currentStepId === "application" && !state.useCaseSlug;
 
-    // Don't scroll if last message is a recommendation (to keep Best Fit visible)
-    // Do scroll for all other messages (user messages, questions with images, bot responses)
-    var shouldScroll = !isApplicationSelectionStep && !hasRecommendation && state.messages.length > 0 && el.thread;
+    // Don't auto-scroll when showing pump recommendations - user should manually scroll
+    // Only scroll after a pump is selected
+    var shouldScroll = !isApplicationSelectionStep && state.messages.length > 0 && el.thread && !hasRecommendation;
 
     if (shouldScroll) {
       function scrollToBottom() {
