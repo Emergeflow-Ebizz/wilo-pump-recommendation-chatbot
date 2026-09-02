@@ -576,6 +576,8 @@
     nextStepAfterPincode: "explore-more", // where to go after pincode in rejection flow (explore-more or final-goodbye)
     skipDealerSteps: false, // true in rejection flow to skip dealer-notification/international-dealer steps
     pumpSelectionPending: null, // { recommendation, tierLabel } - holds pump data awaiting confirmation
+    emailSubmitted: false, // true after email is submitted - prevents pump changes in same use case
+    emailSubmittedUseCase: null, // the use case where email was submitted - lock only applies to same use case
     pincodeSubmitted: false, // true after pincode is submitted - prevents pump changes in same use case
     pincodeSubmittedUseCase: null, // the use case where pincode was submitted - lock only applies to same use case
     recommendationScrolled: false, // true after scrolling to first recommendation, prevents re-scrolling
@@ -644,6 +646,8 @@
     state.isRejectionFlow = false;
     state.nextStepAfterPincode = "explore-more";
     state.skipDealerSteps = false;
+    state.emailSubmitted = false;
+    state.emailSubmittedUseCase = null;
     state.pincodeSubmitted = false;
     state.pincodeSubmittedUseCase = null;
     state.recommendationScrolled = false;
@@ -1127,8 +1131,8 @@
             label: categoryLabels[value] || value,
             value: value,
             icon: (data.question.key === "heating_system") ? null : (categoryIcons[value] || "•"),
-            onSelect: function() {
-              submitCategoryAnswer(data.question, value);
+            onSelect: function(selectedOption) {
+              submitCategoryAnswer(data.question, value, selectedOption || this);
             }
           };
 
@@ -1240,15 +1244,24 @@
 
   /** Sends the user's free-text reply to the backend's fixed-choice parser
    * (ParsedCategory) for questions like inside_or_outside / horizontal_or_vertical. */
-  async function submitCategoryAnswer(question, trimmed) {
+  async function submitCategoryAnswer(question, trimmed, selectedOption) {
     console.log("[submitCategoryAnswer] ===== SUBMIT CATEGORY ANSWER START =====");
     console.log("[submitCategoryAnswer] question key:", question.key);
     console.log("[submitCategoryAnswer] user input:", trimmed);
 
+    // Mark cards as disabled/non-clickable by clearing their onSelect handlers
+    if (state.virtualOptions) {
+      state.virtualOptions.forEach(function(option) {
+        option.onSelect = null; // Disable clicking
+      });
+    }
+
+    // Add user selection message
+    addUserMessage(selectedOption.label);
+
     state.awaitingKind = "loading";
-    state.virtualOptions = null;
     addBotMessage("Processing your selection...");
-    render();
+    render(); // Cards remain visible but non-clickable
 
     var payload = { question_key: question.key, user_text: trimmed, answers_so_far: state.dynamicAnswers };
     if (state.clarificationAttempts[question.key]) {
@@ -1268,7 +1281,7 @@
     } catch (err) {
       console.error("[submitCategoryAnswer] fetch error:", err);
       showUnreachableBackendError(function () {
-        return submitCategoryAnswer(question, trimmed);
+        return submitCategoryAnswer(question, trimmed, selectedOption);
       });
       return;
     }
@@ -1463,7 +1476,9 @@
       state.clarificationSuggestedValues = {};
       state.currentQuestion = null;
 
-      // Reset pincode flags when exploring new application - allows fresh pump selection with new parameters
+      // Reset email and pincode flags when exploring new application - allows fresh pump selection with new parameters
+      state.emailSubmitted = false;
+      state.emailSubmittedUseCase = null;
       state.pincodeSubmitted = false;
       state.pincodeSubmittedUseCase = null;
       state.selectedPump = null;
@@ -1532,6 +1547,41 @@
     if (step.kind !== "input") return;
     var trimmed = rawValue.trim();
     if (!trimmed) return;
+
+    // Special handling for email step
+    if (step.id === "lead-email") {
+      // Check if user wants to skip an optional field
+      var isSkipKeyword = /^(skip|no|nope|don't|dont|decline|pass|no need|not needed|doesn't matter|doesn't apply)$/i.test(trimmed);
+      var isOptional = typeof step.optional === "function" ? step.optional() : step.optional;
+      if (isOptional && isSkipKeyword) {
+        console.log("[submitText] User skipped optional email field");
+        state.answers[step.id] = null;
+        addUserMessage(trimmed);
+        advance(step, null);
+        render();
+        return;
+      }
+
+      var error = step.validate ? step.validate(trimmed) : null;
+      if (error) {
+        addUserMessage(trimmed);
+        addBotMessage(error);
+        render();
+        return;
+      }
+
+      var cleanValue = trimmed;
+      state.answers[step.id] = cleanValue;
+      addUserMessage(trimmed);
+
+      state.emailSubmitted = true;
+      state.emailSubmittedUseCase = state.useCaseSlug;
+      console.log("[submitText] Email submitted: " + trimmed + " for use case: " + state.useCaseSlug);
+
+      advance(step, cleanValue);
+      render();
+      return;
+    }
 
     // Special handling for pincode step
     if (step.id === "lead-pincode") {
@@ -2295,26 +2345,29 @@
     selectBtn.textContent = isSelected ? "✓ Selected" : "Select";
     if (isSelected) selectBtn.classList.add("selected");
 
+    var isSameUseCaseAfterEmail = state.emailSubmitted && state.emailSubmittedUseCase === state.useCaseSlug;
     var isSameUseCaseAfterPincode = state.pincodeSubmitted && state.pincodeSubmittedUseCase === state.useCaseSlug;
-    if (isSameUseCaseAfterPincode && !isSelected) {
+    if ((isSameUseCaseAfterEmail || isSameUseCaseAfterPincode) && !isSelected) {
       selectBtn.disabled = true;
-      selectBtn.title = "Email verification in progress for " + (state.selectedPump ? state.selectedPump.recommendation.model_name : "selected pump") + " in this application";
+      selectBtn.title = "Email sending in progress for " + (state.selectedPump ? state.selectedPump.recommendation.model_name : "selected pump") + " in this application";
     }
 
     selectBtn.addEventListener("click", function () {
       var newPumpModel = recommendation.model_name || "pump";
       var currentPumpModel = state.selectedPump ? state.selectedPump.recommendation.model_name : null;
-      var isDifferentUseCase = state.pincodeSubmittedUseCase && state.pincodeSubmittedUseCase !== state.useCaseSlug;
+      var isDifferentUseCase = (state.emailSubmittedUseCase && state.emailSubmittedUseCase !== state.useCaseSlug) || (state.pincodeSubmittedUseCase && state.pincodeSubmittedUseCase !== state.useCaseSlug);
 
       console.log("[selectBtn click] ===== PUMP SELECTION START =====");
       console.log("[selectBtn click] newPumpModel:", newPumpModel);
       console.log("[selectBtn click] currentPumpModel:", currentPumpModel);
+      console.log("[selectBtn click] state.emailSubmitted:", state.emailSubmitted);
       console.log("[selectBtn click] state.pincodeSubmitted:", state.pincodeSubmitted);
       console.log("[selectBtn click] isDifferentUseCase:", isDifferentUseCase);
+      console.log("[selectBtn click] isSameUseCaseAfterEmail:", isSameUseCaseAfterEmail);
       console.log("[selectBtn click] isSameUseCaseAfterPincode:", isSameUseCaseAfterPincode);
 
-      if (state.pincodeSubmitted && !isDifferentUseCase) {
-        console.log("[selectBtn click] SCENARIO: Pincode submitted in same use case - blocking change");
+      if ((state.emailSubmitted || state.pincodeSubmitted) && !isDifferentUseCase) {
+        console.log("[selectBtn click] SCENARIO: Email or pincode submitted in same use case - blocking change");
         showPumpSelectionModal(
           newPumpModel,
           newPumpModel,
@@ -2327,7 +2380,7 @@
         );
         var messageEl = document.querySelector(".pump-modal-message");
         if (messageEl) {
-          messageEl.textContent = "Email verification process already started for " + currentPumpModel + " in this application. To select a different pump, explore other applications or wait for the current process to complete.";
+          messageEl.textContent = "Email sending process has already started for " + currentPumpModel + " in this application. To select a different pump, explore other applications or wait for the email process to complete.";
         }
         return;
       }
@@ -2528,7 +2581,7 @@
         vOptions.appendChild(
           buildOptionCard(option, function () {
             state.virtualOptions = null;
-            option.onSelect();
+            option.onSelect(option);
           }, index)
         );
       });
@@ -2704,6 +2757,8 @@
     state.virtualOptions = null;
     state.useCaseSlug = null;
     state.currentStepId = null;
+    state.emailSubmitted = false;
+    state.emailSubmittedUseCase = null;
     state.pincodeSubmitted = false;
     state.pincodeSubmittedUseCase = null;
     initConversation();
