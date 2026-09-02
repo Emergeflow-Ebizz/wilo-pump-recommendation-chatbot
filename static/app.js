@@ -1466,6 +1466,7 @@
       // Reset pincode flags when exploring new application - allows fresh pump selection with new parameters
       state.pincodeSubmitted = false;
       state.pincodeSubmittedUseCase = null;
+      state.selectedPump = null;
       state.recommendationScrolled = false;
 
       // Add confirmation message with selected application
@@ -1532,6 +1533,53 @@
     var trimmed = rawValue.trim();
     if (!trimmed) return;
 
+    // Special handling for pincode step
+    if (step.id === "lead-pincode") {
+      var cleanedInput = trimmed.replace(/\s/g, "");
+      var isNumeric = /^\d+$/.test(cleanedInput);
+
+      // If input contains non-numeric characters or is clearly text/wording, treat as refusal
+      if (!isNumeric) {
+        console.log("[submitText] User refused to share pincode with text:", trimmed);
+        state.answers[step.id] = null;
+        addUserMessage(trimmed);
+        jumpToStep("dealer-locator");
+        render();
+        return;
+      }
+
+      // Validate numeric input: 4-10 digits
+      if (!/^\d{4,10}$/.test(cleanedInput)) {
+        console.log("[submitText] Invalid pincode/zipcode length:", cleanedInput);
+        addUserMessage(trimmed);
+        addBotMessage("Please enter a valid pin code (6 digits) or zip code (4-10 digits).");
+        render();
+        return;
+      }
+
+      // Valid numeric code: check if 6-digit (Indian) or 4-10 (International)
+      state.answers[step.id] = cleanedInput;
+      addUserMessage(trimmed);
+
+      state.pincodeSubmitted = true;
+      state.pincodeSubmittedUseCase = state.useCaseSlug;
+      if (state.selectedPump) {
+        sendPumpDataToAPI();
+      } else if (state.isRejectionFlow) {
+        sendRejectionLeadToAPI();
+      }
+
+      if (cleanedInput.length === 6) {
+        console.log("[submitText] 6-digit Indian pincode, showing dealer-notification");
+        jumpToStep("dealer-notification");
+      } else {
+        console.log("[submitText] International zipcode (" + cleanedInput.length + " digits), showing international-dealer");
+        jumpToStep("international-dealer");
+      }
+      render();
+      return;
+    }
+
     // Check if user wants to skip an optional field
     var isSkipKeyword = /^(skip|no|nope|don't|dont|decline|pass|no need|not needed|doesn't matter|doesn't apply)$/i.test(trimmed);
     var isOptional = typeof step.optional === "function" ? step.optional() : step.optional;
@@ -1553,26 +1601,8 @@
     }
 
     var cleanValue = trimmed;
-    if (step.id === "lead-pincode") {
-      cleanValue = trimmed.replace(/\s/g, "");
-    }
     state.answers[step.id] = cleanValue;
     addUserMessage(trimmed);
-
-    // Send data to API when pincode is submitted
-    if (step.id === "lead-pincode") {
-      state.pincodeSubmitted = true;
-      state.pincodeSubmittedUseCase = state.useCaseSlug;
-      if (state.selectedPump) {
-        // Normal flow: pump was found and selected
-        console.log("[submitText] Sending pump data to API");
-        sendPumpDataToAPI();
-      } else if (state.isRejectionFlow) {
-        // Rejection flow: no pump found
-        console.log("[submitText] Sending rejection lead data to API");
-        sendRejectionLeadToAPI();
-      }
-    }
 
     advance(step, cleanValue);
     render();
