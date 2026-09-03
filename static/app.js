@@ -685,7 +685,7 @@
       console.log("[Rejection Lead API] Sending rejection lead to backend...");
       console.log("[Rejection Lead API] Payload:", JSON.stringify(payload, null, 2));
 
-      var res = await fetch(API_BASE_URL + "/send-rejection-lead", {
+      var res = await fetch(API_BASE_URL + "/send-pump-data", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
