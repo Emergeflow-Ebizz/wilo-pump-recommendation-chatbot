@@ -329,37 +329,9 @@
         return "";
       },
       placeholder: "Email address",
-      validate: function (value) {
-        var trimmed = value.trim();
-        if (state.isRejectionFlow) {
-          return null;
-        }
-        return emailValidate(value);
-      },
-      optional: function () {
-        return state.isRejectionFlow;
-      },
+      validate: emailValidate,
+      optional: false,
       next: function () {
-        if (state.isRejectionFlow) {
-          // In rejection flow, check if email was actually provided
-          var email = state.answers["lead-email"];
-          console.log("[lead-email next] isRejectionFlow:", state.isRejectionFlow, "email provided:", email);
-
-          // If user skipped email (null), go to explore-more
-          if (!email) {
-            console.log("[lead-email next] Email was skipped, going to explore-more");
-            state.isRejectionFlow = false;
-            state.nextStepAfterEmail = "explore-more";
-            return "explore-more";
-          }
-
-          // If email was provided, go to pincode
-          var nextStep = state.nextStepAfterEmail || "lead-pincode";
-          state.isRejectionFlow = false;
-          state.nextStepAfterEmail = "explore-more";
-          console.log("[lead-email next] Email was provided, going to:", nextStep);
-          return nextStep;
-        }
         return "lead-pincode";
       },
     },
@@ -374,27 +346,8 @@
       optional: true,
       next: function () {
         var pincode = state.answers["lead-pincode"];
-        console.log("[lead-pincode next] skipDealerSteps:", state.skipDealerSteps, "pincode:", pincode);
+        console.log("[lead-pincode next] pincode:", pincode, "isRejectionFlow:", state.isRejectionFlow);
 
-        if (state.skipDealerSteps) {
-          state.skipDealerSteps = false;
-          // In rejection flow, still show dealer info based on pincode
-          if (pincode) {
-            var trimmed = pincode.trim();
-            if (/^\d{6}$/.test(trimmed)) {
-              console.log("[lead-pincode next] Rejection flow - Indian pincode, showing dealer-notification");
-              return "dealer-notification";
-            } else {
-              console.log("[lead-pincode next] Rejection flow - International pincode, showing international-dealer");
-              return "international-dealer";
-            }
-          } else {
-            console.log("[lead-pincode next] Rejection flow - No pincode, showing dealer-locator");
-            return "dealer-locator";
-          }
-        }
-
-        // Normal flow (when pump was found)
         if (pincode) {
           var trimmed = pincode.trim();
           if (/^\d{6}$/.test(trimmed)) {
@@ -572,9 +525,6 @@
     lastRecommendation: null, // the ok recommendation, kept around for /explain_model follow-ups
     selectedPump: null, // { recommendation, tierLabel } when user selects a pump
     isRejectionFlow: false, // true when pump not found or question fails
-    nextStepAfterEmail: "explore-more", // where to go after email in rejection flow
-    nextStepAfterPincode: "explore-more", // where to go after pincode in rejection flow (explore-more or final-goodbye)
-    skipDealerSteps: false, // true in rejection flow to skip dealer-notification/international-dealer steps
     pumpSelectionPending: null, // { recommendation, tierLabel } - holds pump data awaiting confirmation
     emailSubmitted: false, // true after email is submitted - prevents pump changes in same use case
     emailSubmittedUseCase: null, // the use case where email was submitted - lock only applies to same use case
@@ -645,8 +595,6 @@
     state.lastRecommendation = null;
     state.selectedPump = null;
     state.isRejectionFlow = false;
-    state.nextStepAfterPincode = "explore-more";
-    state.skipDealerSteps = false;
     state.emailSubmitted = false;
     state.emailSubmittedUseCase = null;
     state.pincodeSubmitted = false;
@@ -1033,8 +981,6 @@
     var rejectionMsg = 'For this requirement you need a special pump, please provide your email ID so we can contact you, or visit our website to locate the nearest dealer 📧 <a href="mailto:sales@wilo.com" target="_blank">sales@wilo.com</a> 🌐 <a href="https://wilo.com/in/en/Dealers/" target="_blank">https://wilo.com/in/en/Dealers/</a>';
     addBotHtmlMessage(rejectionMsg);
     state.isRejectionFlow = true;
-    state.nextStepAfterEmail = "lead-pincode";
-    state.skipDealerSteps = true;
     jumpToStep("lead-email");
     console.log("[runRecommendation] ===== REJECTION FLOW INITIATED =====");
     render();
@@ -1228,9 +1174,6 @@
       state.clarificationSuggestedValues = {};
       state.currentQuestion = null;
       state.isRejectionFlow = true;
-      state.nextStepAfterEmail = "lead-pincode";
-      state.skipDealerSteps = true;
-      state.nextStepAfterPincode = "final-goodbye";
 
       jumpToStep("lead-email");
       console.log("[handleUnansweredQuestion] ===== REJECTION FLOW INITIATED (FROM UNANSWERED QUESTION) =====");
