@@ -666,17 +666,32 @@
       "domestic_hot_water": "Domestic Hot Water",
     };
 
+    var contact = state.answers["lead-contact"] || "";
+    var isEmail = /^\S+@\S+\.\S+$/.test(contact);
+    var userDetails = {
+      pincode: pincode,
+      name: state.answers["lead-name"] || "",
+      contactNumber: isEmail ? "" : contact,
+      email: isEmail ? contact : email,
+    };
+
     var payload = {
       data: {
-        userDetails: {
-          email: email,
-          pincode: pincode,
-          name: state.answers["lead-name"] || "",
-        },
-        rejectionDetails: {
+        userDetails: userDetails,
+        searchDetails: {
           application: applicationMap[state.useCaseSlug] || "Unknown",
-          noSuitablePumpFound: true,
-          answeredQuestions: state.dynamicAnswers,
+          RequiredHead: null,
+          RequiredPower: null,
+        },
+        selectedPump: {
+          pumpModel: null,
+          articleNo: null,
+          motorRating: null,
+          selectedHead: null,
+          selectedFlow: null,
+          fluidTemperature: null,
+          connection: null,
+          features: null,
         },
       },
     };
