@@ -11,7 +11,12 @@ parsing, and pump recommendations.
 - `app.js` - conversation flow (application/use-case picker, lead-capture
   steps, thank-you sign-off) and all calls to the backend API
 - `style.css` - chat widget styling
-- `favicon.svg`, `WILO_Logo_2013.svg`, `mascot.jpeg` - static assets
+- `favicon.svg`, `WILO_Logo_2013.svg`, `logo.png` - branding assets
+- `application-images/` - pump application icons (Pressure Boosting, Heating
+  Circuits, Domestic Hot Water, Dewatering, Borewell to Overhead Tank, Bottom
+  Tank to Overhead Tank)
+- `Wilo Pump Images/` - pump product images
+- `Question Images/` - contextual images for use-case questions
 
 ## Backend
 
