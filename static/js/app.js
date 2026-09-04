@@ -1619,7 +1619,7 @@
   function mascotImage() {
     var img = document.createElement("img");
     img.className = "mascot";
-    img.src = "./logo.png";
+    img.src = "./images/logos/logo.png";
     img.alt = "Wilo Pumps Selection Chatbot logo";
     return img;
   }
