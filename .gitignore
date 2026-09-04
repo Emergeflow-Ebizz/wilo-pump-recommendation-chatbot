@@ -6,3 +6,5 @@ __pycache__/
 .DS_Store
 .vercel
 venv/
+.claude/
+.pytest_cache/
