@@ -89,7 +89,7 @@
 
   function getPumpImagePath(modelName) {
     if (!modelName) return null;
-    var imageFolderPath = "./Wilo Pump Images/";
+    var imageFolderPath = "./images/wilo-pump-images/";
     var modelUpper = modelName.toUpperCase();
     var pumpImages = {
       "YONOS PICO": imageFolderPath + "Yonos%20PICO.png",
@@ -145,7 +145,7 @@
 
   function getQuestionImagePath(useCaseSlug, questionKey) {
     if (!useCaseSlug || !questionKey) return null;
-    var imageFolderPath = "./Question Images/";
+    var imageFolderPath = "./images/question-images/";
     var questionImages = {
       "pressure_boosting": {
         "num_floors": imageFolderPath + "pressure-boosting/Boosting%20No%20of%20Floors.png",
