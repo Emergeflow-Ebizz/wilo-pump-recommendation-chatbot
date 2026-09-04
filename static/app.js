@@ -208,14 +208,7 @@
         {
           label: "Chinese",
           value: "chinese",
-        },
-        {
-          label: "Korean",
-          value: "korean",
-        },
-        {
-          label: "Turkish",
-          value: "turkish",
+  
         },
       ],
       next: function () {

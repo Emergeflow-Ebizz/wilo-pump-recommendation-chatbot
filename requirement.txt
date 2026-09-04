@@ -1,2 +1,8 @@
 fastapi
-# plus anything else you import (pydantic, jinja2, etc.)
+uvicorn
+pydantic
+pytest
+httpx
+python-dotenv
+google-api-python-client
+google-auth
