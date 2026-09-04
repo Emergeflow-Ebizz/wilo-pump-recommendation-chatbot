@@ -254,42 +254,42 @@
           index: 1,
           label: "Pressure Boosting",
           value: "pressure-boosting",
-          icon: "./Pressure Boosting.png",
+          icon: "./images/applications/Pressure Boosting.png",
           description: "Boost water pressure for residential and commercial supply systems",
         },
         {
           index: 2,
           label: "Heating Circuit",
           value: "heating-circuits",
-          icon: "./Heating Circuits.png",
+          icon: "./images/applications/Heating Circuits.png",
           description: "Circulate hot water in heating systems and radiators",
         },
         {
           index: 3,
           label: "Domestic Hot Water",
           value: "domestic-hot-water",
-          icon: "./Domestic Hot Water.png",
+          icon: "./images/applications/Domestic Hot Water.png",
           description: "Supply hot water for domestic use in homes and buildings",
         },
         {
           index: 4,
           label: "Dewatering",
           value: "dewatering",
-          icon: "./Dewatering.png",
+          icon: "./images/applications/Dewatering.png",
           description: "Remove water from construction and mining sites",
         },
         {
           index: 5,
           label: "Borewell to Overhead Tank",
           value: "water-transfer",
-          icon: "./Borewell to Overhead tank.png",
+          icon: "./images/applications/Borewell to Overhead tank.png",
           description: "Transfer water from boreholes to overhead storage tanks",
         },
         {
           index: 6,
           label: "Bottom Tank to Overhead Tank",
           value: "tank-filling",
-          icon: "./From Bottom tank to Overhead tank.png",
+          icon: "./images/applications/From Bottom tank to Overhead tank.png",
           description: "Fill overhead tanks from ground level storage",
         },
       ],
@@ -437,37 +437,37 @@
           label: "Pressure Boosting",
           description: "Enjoy strong and consistent water pressure.",
           value: "pressure-boosting",
-          icon: "./Pressure Boosting.png",
+          icon: "./images/applications/Pressure Boosting.png",
         },
         {
           label: "Heating Circuit",
           description: "Keep every room comfortably warm.",
           value: "heating-circuits",
-          icon: "./Heating Circuits.png",
+          icon: "./images/applications/Heating Circuits.png",
         },
         {
           label: "Domestic Hot Water",
           description: "Get hot water quickly when you need it.",
           value: "domestic-hot-water",
-          icon: "./Domestic Hot Water.png",
+          icon: "./images/applications/Domestic Hot Water.png",
         },
         {
           label: "Dewatering",
           description: "Remove unwanted water efficiently.",
           value: "dewatering",
-          icon: "./Dewatering.png",
+          icon: "./images/applications/Dewatering.png",
         },
         {
           label: "Borewell to Overhead Tank",
           description: "Supply water from your borewell to the storage tank.",
           value: "water-transfer",
-          icon: "./Borewell to Overhead tank.png",
+          icon: "./images/applications/Borewell to Overhead tank.png",
         },
         {
           label: "Bottom Tank to Overhead Tank",
           description: "Transfer water from the ground tank to the rooftop tank.",
           value: "tank-filling",
-          icon: "./From Bottom tank to Overhead tank.png",
+          icon: "./images/applications/From Bottom tank to Overhead tank.png",
         },
       ],
       next: function (value) {
@@ -881,7 +881,7 @@
           state.virtualOptions = [
             {
               label: "Pressure Boosting",
-              icon: "./Pressure Boosting.png",
+              icon: "./images/applications/Pressure Boosting.png",
               onSelect: function () {
                 addUserMessage("Pressure Boosting");
                 state.virtualOptions = null;
@@ -896,7 +896,7 @@
             },
             {
               label: "Heating Circuit",
-              icon: "./Heating Circuits.png",
+              icon: "./images/applications/Heating Circuits.png",
               onSelect: function () {
                 addUserMessage("Heating Circuit");
                 state.virtualOptions = null;
@@ -911,7 +911,7 @@
             },
             {
               label: "Domestic Hot Water",
-              icon: "./Domestic Hot Water.png",
+              icon: "./images/applications/Domestic Hot Water.png",
               onSelect: function () {
                 addUserMessage("Domestic Hot Water");
                 state.virtualOptions = null;
@@ -926,7 +926,7 @@
             },
             {
               label: "Dewatering",
-              icon: "./Dewatering.png",
+              icon: "./images/applications/Dewatering.png",
               onSelect: function () {
                 addUserMessage("Dewatering");
                 state.virtualOptions = null;
@@ -941,7 +941,7 @@
             },
             {
               label: "Borewell to Overhead Tank",
-              icon: "./Borewell to Overhead tank.png",
+              icon: "./images/applications/Borewell to Overhead tank.png",
               onSelect: function () {
                 addUserMessage("Borewell to Overhead Tank");
                 state.virtualOptions = null;
@@ -956,7 +956,7 @@
             },
             {
               label: "Bottom Tank to Overhead Tank",
-              icon: "./From Bottom tank to Overhead tank.png",
+              icon: "./images/applications/From Bottom tank to Overhead tank.png",
               onSelect: function () {
                 addUserMessage("Bottom Tank to Overhead Tank");
                 state.virtualOptions = null;
@@ -1095,27 +1095,27 @@
           // Add images for delivery_type in water_transfer
           if (data.question.key === "delivery_type" && state.useCaseSlug === "water_transfer") {
             if (value === "ground_floor") {
-              option.icon = './Question Images/water-transfer/' + encodeURIComponent('Borewell to Ground level.png');
+              option.icon = './images/question-images/water-transfer/' + encodeURIComponent('Borewell to Ground level.png');
             } else if (value === "overhead_tank") {
-              option.icon = './Question Images/water-transfer/' + encodeURIComponent('Borewell to Overhead level.jpg');
+              option.icon = './images/question-images/water-transfer/' + encodeURIComponent('Borewell to Overhead level.jpg');
             }
           }
 
           // Add images for inside_or_outside in tank_filling
           if (data.question.key === "inside_or_outside" && state.useCaseSlug === "tank_filling") {
             if (value === "inside") {
-              option.icon = './Question Images/tank-filling/' + encodeURIComponent('Inside the tank (Horizontal).png');
+              option.icon = './images/question-images/tank-filling/' + encodeURIComponent('Inside the tank (Horizontal).png');
             } else if (value === "outside") {
-              option.icon = './Question Images/tank-filling/' + encodeURIComponent('Outside the tank.png');
+              option.icon = './images/question-images/tank-filling/' + encodeURIComponent('Outside the tank.png');
             }
           }
 
           // Add images for horizontal_or_vertical in tank_filling
           if (data.question.key === "horizontal_or_vertical" && state.useCaseSlug === "tank_filling") {
             if (value === "horizontal") {
-              option.icon = './Question Images/tank-filling/' + encodeURIComponent('Inside the tank (Horizontal).png');
+              option.icon = './images/question-images/tank-filling/' + encodeURIComponent('Inside the tank (Horizontal).png');
             } else if (value === "vertical") {
-              option.icon = './Question Images/tank-filling/' + encodeURIComponent('Inside the tank (Verticle).png');
+              option.icon = './images/question-images/tank-filling/' + encodeURIComponent('Inside the tank (Verticle).png');
             }
           }
 
